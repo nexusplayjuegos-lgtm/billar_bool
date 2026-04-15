@@ -1,0 +1,107 @@
+{
+  "meta": {
+    "title": "Bool Billar - Juega 8-Ball y Billar Brasileño Online",
+    "description": "El juego de billar más adictivo de Brasil. ¡Millones de jugadores, torneos diarios y premios reales!"
+  },
+  "navigation": {
+    "play": "Jugar",
+    "shop": "Tienda",
+    "friends": "Amigos",
+    "leaderboard": "Clasificación",
+    "profile": "Perfil",
+    "settings": "Ajustes"
+  },
+  "game": {
+    "yourTurn": "TU TURNO",
+    "opponentTurn": "TURNO DEL OPONENTE",
+    "aim": "Apunta y arrastra hacia atrás",
+    "power": "Potencia",
+    "spin": "Efecto",
+    "shoot": "¡GOLPEAR!",
+    "foul": "¡FALTA!",
+    "foulScratch": "Bola blanca en la tronera",
+    "win": "¡VICTORIA!",
+    "loss": "DERROTA",
+    "winStreak": "Racha: {count}",
+    "coinsWon": "+{amount} monedas",
+    "levelUp": "¡NUEVO NIVEL!",
+    "rotateDevice": "Gira tu dispositivo",
+    "rotateInstructions": "Para una mejor experiencia, juega en modo horizontal"
+  },
+  "shop": {
+    "title": "Tienda Premium",
+    "cues": "Tacos",
+    "tables": "Mesas",
+    "coins": "Comprar Monedas",
+    "cash": "Comprar Cash",
+    "special": "Ofertas Especiales",
+    "buy": "Comprar",
+    "equip": "Equipar",
+    "owned": "Adquirido",
+    "popular": "MÁS VENDIDO",
+    "limited": "EDICIÓN LIMITADA",
+    "save": "AHORRA {percent}%"
+  },
+  "cues": {
+    "beginner": { "name": "Taco Principiante", "desc": "El taco básico para comenzar tu viaje" },
+    "venom": { "name": "Venom Striker", "desc": "Precisión venenosa en cada golpe" },
+    "precision": { "name": "Precision Pro", "desc": "Puntería perfecta para jugadores exigentes" },
+    "fire": { "name": "Fire Storm", "desc": "El poder del fuego en tus manos" },
+    "ice": { "name": "Ice Queen", "desc": "Frialdad y precisión en cada jugada" },
+    "dragon": { "name": "Golden Dragon", "desc": "El taco legendario de los campeones" },
+    "shadow": { "name": "Shadow Assassin", "desc": "Invisible hasta el momento del impacto" }
+  },
+  "modes": {
+    "8ball": {
+      "name": "Londres",
+      "subtitle": "8-Ball Clásico",
+      "desc": "Reglas clásicas de billar. Lisas vs Rayadas. ¡Metes la 8 y pierdes!"
+    },
+    "8ball_vegas": {
+      "name": "Las Vegas",
+      "subtitle": "8-Ball Alto Riesgo",
+      "desc": "Apuestas altas, mayores recompensas. ¿Tienes suerte?"
+    },
+    "sinuca": {
+      "name": "Río de Janeiro",
+      "subtitle": "Billar Brasileño",
+      "desc": "¡El verdadero billar brasileño! Bola roja, taco en blanca. ¡Más puntos gana!"
+    },
+    "sinuca_carioca": {
+      "name": "Carioca Pro",
+      "subtitle": "Billar Avanzado",
+      "desc": "Para maestros del billar brasileño. Reglas avanzadas y mesa premium."
+    },
+    "snooker": {
+      "name": "Londres Pro",
+      "subtitle": "Snooker Profesional",
+      "desc": "Solo para maestros. Mesa grande, bolas numeradas, máxima precisión requerida.",
+      "unlock": "Desbloquea en Nivel 20"
+    },
+    "snooker_champ": {
+      "name": "Campeonato Mundial",
+      "subtitle": "Snooker Élite",
+      "desc": "La élite del snooker mundial. Solo los mejores sobreviven.",
+      "unlock": "Desbloquea en Nivel 35"
+    }
+  },
+  "social": {
+    "friendsOnline": "{count} amigos en línea",
+    "addFriend": "Añadir Amigo",
+    "club": "Mi Club",
+    "chat": {
+      "preset1": "¡Buena suerte!",
+      "preset2": "¡Buen golpe!",
+      "preset3": "¡Casi!",
+      "preset4": "XD",
+      "preset5": "¡Juegas genial!"
+    }
+  },
+  "lobby": {
+    "welcome": "¡Bienvenido, {username}!",
+    "level": "Nivel {level}",
+    "playNow": "JUGAR AHORA",
+    "topPlayers": "Mejores Jugadores",
+    "onlinePlayers": "{count} jugadores en línea"
+  }
+}

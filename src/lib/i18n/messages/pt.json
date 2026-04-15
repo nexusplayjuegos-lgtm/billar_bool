@@ -1,0 +1,107 @@
+{
+  "meta": {
+    "title": "Bool Sinuca - Jogue 8-Ball e Sinuca Brasileira Online",
+    "description": "O jogo de sinuca mais viciante do Brasil. Milhões de jogadores, torneios diários e prêmios reais!"
+  },
+  "navigation": {
+    "play": "Jogar",
+    "shop": "Loja",
+    "friends": "Amigos",
+    "leaderboard": "Ranking",
+    "profile": "Perfil",
+    "settings": "Ajustes"
+  },
+  "game": {
+    "yourTurn": "SUA VEZ",
+    "opponentTurn": "VEZ DO ADVERSÁRIO",
+    "aim": "Mire e arraste para trás",
+    "power": "Força",
+    "spin": "Efeito",
+    "shoot": "BATER!",
+    "foul": "FALTA!",
+    "foulScratch": "Bola branca na caçapa",
+    "win": "VITÓRIA!",
+    "loss": "DERROTA",
+    "winStreak": "Sequência: {count}",
+    "coinsWon": "+{amount} moedas",
+    "levelUp": "NOVO NÍVEL!",
+    "rotateDevice": "Gire seu dispositivo",
+    "rotateInstructions": "Para uma melhor experiência, jogue no modo horizontal"
+  },
+  "shop": {
+    "title": "Loja Premium",
+    "cues": "Tacos",
+    "tables": "Mesas",
+    "coins": "Comprar Moedas",
+    "cash": "Comprar Cash",
+    "special": "Ofertas",
+    "buy": "Comprar",
+    "equip": "Equipar",
+    "owned": "Adquirido",
+    "popular": "MAIS VENDIDO",
+    "limited": "EDIÇÃO LIMITADA",
+    "save": "ECONOMIZE {percent}%"
+  },
+  "cues": {
+    "beginner": { "name": "Taco Iniciante", "desc": "O taco básico para começar sua jornada" },
+    "venom": { "name": "Venom Striker", "desc": "Precisão venenosa em cada tacada" },
+    "precision": { "name": "Precision Pro", "desc": "Mira perfeita para jogadores exigentes" },
+    "fire": { "name": "Fire Storm", "desc": "O poder do fogo nas suas mãos" },
+    "ice": { "name": "Ice Queen", "desc": "Frieza e precisão em cada jogada" },
+    "dragon": { "name": "Golden Dragon", "desc": "O taco lendário dos campeões" },
+    "shadow": { "name": "Shadow Assassin", "desc": "Invisível até o momento do impacto" }
+  },
+  "modes": {
+    "8ball": {
+      "name": "Londres",
+      "subtitle": "8-Ball Clássico",
+      "desc": "As regras clássicas de bilhar. Solidas vs Listradas. Quem fura a 8 perde!"
+    },
+    "8ball_vegas": {
+      "name": "Las Vegas",
+      "subtitle": "8-Ball High Stakes",
+      "desc": "Apostas altas, recompensas maiores. Você está com sorte?"
+    },
+    "sinuca": {
+      "name": "Rio de Janeiro",
+      "subtitle": "Sinuca Brasileira",
+      "desc": "A sinuca de verdade! Bolinha vermelha, tacada na branca. Quem fizer mais pontos ganha!"
+    },
+    "sinuca_carioca": {
+      "name": "Carioca Pro",
+      "subtitle": "Sinuca Avançada",
+      "desc": "Para mestres da sinuca brasileira. Regras avançadas e mesa premium."
+    },
+    "snooker": {
+      "name": "Londres Pro",
+      "subtitle": "Snooker Profissional",
+      "desc": "Para mestres apenas. Mesa grande, bolas numeradas, máxima precisão necessária.",
+      "unlock": "Desbloqueie no Nível 20"
+    },
+    "snooker_champ": {
+      "name": "Campeonato Mundial",
+      "subtitle": "Snooker Elite",
+      "desc": "A elite do snooker mundial. Apenas os melhores sobrevivem.",
+      "unlock": "Desbloqueie no Nível 35"
+    }
+  },
+  "social": {
+    "friendsOnline": "{count} amigos online",
+    "addFriend": "Adicionar Amigo",
+    "club": "Meu Clube",
+    "chat": {
+      "preset1": "Boa sorte!",
+      "preset2": "Boa jogada!",
+      "preset3": "Quase!",
+      "preset4": "XD",
+      "preset5": "Joga muito!"
+    }
+  },
+  "lobby": {
+    "welcome": "Bem-vindo, {username}!",
+    "level": "Nível {level}",
+    "playNow": "JOGAR AGORA",
+    "topPlayers": "Top da Semana",
+    "onlinePlayers": "{count} jogadores online"
+  }
+}

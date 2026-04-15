@@ -1,0 +1,107 @@
+{
+  "meta": {
+    "title": "Bool Pool - Play 8-Ball and Brazilian Pool Online",
+    "description": "The most addictive pool game in Brazil. Millions of players, daily tournaments and real prizes!"
+  },
+  "navigation": {
+    "play": "Play",
+    "shop": "Shop",
+    "friends": "Friends",
+    "leaderboard": "Ranking",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "game": {
+    "yourTurn": "YOUR TURN",
+    "opponentTurn": "OPPONENT'S TURN",
+    "aim": "Aim and drag back",
+    "power": "Power",
+    "spin": "Spin",
+    "shoot": "SHOOT!",
+    "foul": "FOUL!",
+    "foulScratch": "Cue ball in pocket",
+    "win": "VICTORY!",
+    "loss": "DEFEAT",
+    "winStreak": "Streak: {count}",
+    "coinsWon": "+{amount} coins",
+    "levelUp": "NEW LEVEL!",
+    "rotateDevice": "Rotate your device",
+    "rotateInstructions": "For a better experience, play in landscape mode"
+  },
+  "shop": {
+    "title": "Premium Shop",
+    "cues": "Cues",
+    "tables": "Tables",
+    "coins": "Buy Coins",
+    "cash": "Buy Cash",
+    "special": "Special Offers",
+    "buy": "Buy",
+    "equip": "Equip",
+    "owned": "Owned",
+    "popular": "BEST SELLER",
+    "limited": "LIMITED EDITION",
+    "save": "SAVE {percent}%"
+  },
+  "cues": {
+    "beginner": { "name": "Beginner Cue", "desc": "The basic cue to start your journey" },
+    "venom": { "name": "Venom Striker", "desc": "Venomous precision in every shot" },
+    "precision": { "name": "Precision Pro", "desc": "Perfect aim for demanding players" },
+    "fire": { "name": "Fire Storm", "desc": "The power of fire in your hands" },
+    "ice": { "name": "Ice Queen", "desc": "Coldness and precision in every move" },
+    "dragon": { "name": "Golden Dragon", "desc": "The legendary cue of champions" },
+    "shadow": { "name": "Shadow Assassin", "desc": "Invisible until the moment of impact" }
+  },
+  "modes": {
+    "8ball": {
+      "name": "London",
+      "subtitle": "Classic 8-Ball",
+      "desc": "Classic billiard rules. Solids vs Stripes. Scratch the 8 and you lose!"
+    },
+    "8ball_vegas": {
+      "name": "Las Vegas",
+      "subtitle": "8-Ball High Stakes",
+      "desc": "High stakes, bigger rewards. Are you feeling lucky?"
+    },
+    "sinuca": {
+      "name": "Rio de Janeiro",
+      "subtitle": "Brazilian Pool",
+      "desc": "The real Brazilian pool! Red ball, cue on white. Most points wins!"
+    },
+    "sinuca_carioca": {
+      "name": "Carioca Pro",
+      "subtitle": "Advanced Pool",
+      "desc": "For masters of Brazilian pool. Advanced rules and premium table."
+    },
+    "snooker": {
+      "name": "London Pro",
+      "subtitle": "Professional Snooker",
+      "desc": "For masters only. Full-size table, numbered balls, maximum precision required.",
+      "unlock": "Unlock at Level 20"
+    },
+    "snooker_champ": {
+      "name": "World Championship",
+      "subtitle": "Elite Snooker",
+      "desc": "The elite of world snooker. Only the best survive.",
+      "unlock": "Unlock at Level 35"
+    }
+  },
+  "social": {
+    "friendsOnline": "{count} friends online",
+    "addFriend": "Add Friend",
+    "club": "My Club",
+    "chat": {
+      "preset1": "Good luck!",
+      "preset2": "Nice shot!",
+      "preset3": "Close!",
+      "preset4": "LOL",
+      "preset5": "Great play!"
+    }
+  },
+  "lobby": {
+    "welcome": "Welcome, {username}!",
+    "level": "Level {level}",
+    "playNow": "PLAY NOW",
+    "topPlayers": "Top Players",
+    "onlinePlayers": "{count} players online"
+  }
+}
