@@ -4,3 +4,5 @@ export { PowerSlider } from './PowerSlider';
 export { ShootButton } from './ShootButton';
 export { GameHUD } from './GameHUD';
 export { MobileGameScreen } from './MobileGameScreen';
+export { CueStick } from './CueStick';
+export { GameExitButton } from './GameExitButton';

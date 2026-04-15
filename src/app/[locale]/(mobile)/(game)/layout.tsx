@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { MobileScaffold } from '@/components/mobile';
 
 export default function GameLayout({
   children,
@@ -8,8 +9,8 @@ export default function GameLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="h-full">
+    <MobileScaffold hideHeader hideBottomNav className="h-screen overflow-hidden">
       {children}
-    </div>
+    </MobileScaffold>
   );
 }

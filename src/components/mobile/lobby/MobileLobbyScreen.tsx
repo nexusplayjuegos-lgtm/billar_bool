@@ -70,8 +70,13 @@ export function MobileLobbyScreen() {
 
         <div
           ref={scrollRef}
-          className="flex gap-3 overflow-x-auto overflow-y-hidden px-4 pb-2 snap-x snap-mandatory scrollbar-hide touch-pan-x"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="flex gap-3 overflow-x-auto overflow-y-hidden px-4 pb-2 snap-x snap-mandatory scrollbar-hide"
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-x pinch-zoom',
+          }}
         >
           {MOCK_GAME_MODES.map((mode, index) => (
             <div key={mode.id} className="snap-center shrink-0">

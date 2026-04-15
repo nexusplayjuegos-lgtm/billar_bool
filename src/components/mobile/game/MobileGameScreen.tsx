@@ -3,17 +3,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { PoolTable } from './PoolTable';
 import { AimControl } from './AimControl';
 import { PowerSlider } from './PowerSlider';
 import { ShootButton } from './ShootButton';
 import { GameHUD } from './GameHUD';
+import { CueStick } from './CueStick';
+import { GameExitButton } from './GameExitButton';
+import { useLocale } from '@/hooks';
 import { useGameStore } from '@/lib/store';
 import { useVibration } from '@/hooks';
 import { cn } from '@/lib/utils';
 
 export function MobileGameScreen() {
   const t = useTranslations('game');
+  const router = useRouter();
+  const { locale } = useLocale();
   const { gameState, shoot, endGame } = useGameStore();
   const { vibrateHeavy } = useVibration();
 
@@ -22,6 +29,7 @@ export function MobileGameScreen() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [showWinModal, setShowWinModal] = useState(false);
   const [showLoseModal, setShowLoseModal] = useState(false);
+  const [isAiming, setIsAiming] = useState(false);
 
   // Timer countdown
   useEffect(() => {
@@ -40,6 +48,41 @@ export function MobileGameScreen() {
     return () => clearInterval(timer);
   }, [gameState]);
 
+  // Bloquear scroll da página durante o jogo
+  useEffect(() => {
+    const originalStyle = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      width: document.body.style.width,
+      height: document.body.style.height,
+      touchAction: document.body.style.touchAction,
+    };
+
+    // Bloquear scroll
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
+    document.body.style.touchAction = 'none';
+
+    // Prevenir scroll em touch
+    const preventScroll = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+
+    document.addEventListener('touchmove', preventScroll, { passive: false });
+
+    return () => {
+      // Restaurar estilos originais
+      document.body.style.overflow = originalStyle.overflow;
+      document.body.style.position = originalStyle.position;
+      document.body.style.width = originalStyle.width;
+      document.body.style.height = originalStyle.height;
+      document.body.style.touchAction = originalStyle.touchAction;
+      document.removeEventListener('touchmove', preventScroll);
+    };
+  }, []);
+
   const handleShoot = useCallback(() => {
     vibrateHeavy();
     shoot(power, aimAngle, { x: 0, y: 0 });
@@ -55,6 +98,12 @@ export function MobileGameScreen() {
       }
     }, 5000);
   }, [power, aimAngle, shoot, vibrateHeavy]);
+
+  const handleExitGame = useCallback(() => {
+    // Aplicar punição de 50% da taxa de entrada
+    endGame(false);
+    router.push(`/${locale}`);
+  }, [endGame, router, locale]);
 
   if (!gameState) {
     return (
@@ -72,13 +121,36 @@ export function MobileGameScreen() {
     <div className="h-full flex flex-col bg-slate-950">
       {/* Game Area */}
       <div className="flex-1 relative p-4">
-        <GameHUD timeLeft={timeLeft} />
+        {/* Header com GameHUD e Exit Button */}
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex-1">
+            <GameHUD timeLeft={timeLeft} />
+          </div>
+          <GameExitButton
+            onExit={handleExitGame}
+            penalty={gameState?.balls[0]?.id ? 100 : 100}
+            className="ml-2 mt-2"
+          />
+        </div>
 
         {/* Pool Table */}
         <div className="relative h-full flex items-center justify-center">
-          <div className="relative w-full aspect-[2/1]">
+          <div
+            className="relative w-full aspect-[2/1]"
+            onMouseEnter={() => setIsAiming(true)}
+            onMouseLeave={() => setIsAiming(false)}
+            onTouchStart={() => setIsAiming(true)}
+            onTouchEnd={() => setIsAiming(false)}
+          >
             <PoolTable className="w-full h-full" />
             <AimControl onAimChange={setAimAngle} />
+            <CueStick
+              angle={aimAngle}
+              power={power}
+              isAiming={isAiming}
+              cueName="Taco Clássico"
+              cueColor="#8B5A2B"
+            />
           </div>
         </div>
       </div>
@@ -166,20 +238,35 @@ export function MobileGameScreen() {
                 </span>
               </motion.div>
 
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  setShowWinModal(false);
-                  endGame(true);
-                }}
-                className="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-xl"
-              >
-                Jogar Novamente
-              </motion.button>
+              <div className="flex gap-3 justify-center">
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setShowWinModal(false);
+                    endGame(true);
+                  }}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-xl"
+                >
+                  {t('playAgain')}
+                </motion.button>
+
+                <Link href={`/${locale}`}>
+                  <motion.button
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.7 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-6 py-3 bg-slate-700 text-white font-bold rounded-xl"
+                  >
+                    {t('lobby')}
+                  </motion.button>
+                </Link>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -218,20 +305,35 @@ export function MobileGameScreen() {
                 Não desista! Tente novamente.
               </motion.p>
 
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  setShowLoseModal(false);
-                  endGame(false);
-                }}
-                className="px-8 py-3 bg-gradient-to-r from-slate-600 to-slate-700 text-white font-bold rounded-xl"
-              >
-                Tentar de Novo
-              </motion.button>
+              <div className="flex gap-3 justify-center">
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setShowLoseModal(false);
+                    endGame(false);
+                  }}
+                  className="px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 text-white font-bold rounded-xl"
+                >
+                  {t('tryAgain')}
+                </motion.button>
+
+                <Link href={`/${locale}`}>
+                  <motion.button
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.7 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-6 py-3 bg-slate-700 text-white font-bold rounded-xl"
+                  >
+                    {t('lobby')}
+                  </motion.button>
+                </Link>
+              </div>
             </motion.div>
           </motion.div>
         )}

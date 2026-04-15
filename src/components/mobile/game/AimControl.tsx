@@ -15,6 +15,20 @@ export function AimControl({ onAimChange }: AimControlProps) {
   const [aimAngle, setAimAngle] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const handleMove = useCallback((clientX: number, clientY: number) => {
+    if (!isDragging || !containerRef.current || !gameState) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const cueBall = gameState.balls[0];
+
+    const centerX = rect.left + (cueBall.x / 800) * rect.width;
+    const centerY = rect.top + (cueBall.y / 400) * rect.height;
+
+    const angle = Math.atan2(clientY - centerY, clientX - centerX);
+    setAimAngle(angle);
+    onAimChange(angle);
+  }, [isDragging, gameState, onAimChange]);
+
   const handleStart = useCallback((clientX: number, clientY: number) => {
     if (!containerRef.current || !gameState) return;
 
@@ -30,23 +44,21 @@ export function AimControl({ onAimChange }: AimControlProps) {
     setIsDragging(true);
   }, [gameState, onAimChange]);
 
-  const handleMove = useCallback((clientX: number, clientY: number) => {
-    if (!isDragging || !containerRef.current || !gameState) return;
-
-    const rect = containerRef.current.getBoundingClientRect();
-    const cueBall = gameState.balls[0];
-
-    const centerX = rect.left + (cueBall.x / 800) * rect.width;
-    const centerY = rect.top + (cueBall.y / 400) * rect.height;
-
-    const angle = Math.atan2(clientY - centerY, clientX - centerX);
-    setAimAngle(angle);
-    onAimChange(angle);
-  }, [isDragging, gameState, onAimChange]);
-
   const handleEnd = useCallback(() => {
     setIsDragging(false);
   }, []);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    handleStart(touch.clientX, touch.clientY);
+  }, [handleStart]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    handleMove(touch.clientX, touch.clientY);
+  }, [handleMove]);
 
   if (!gameState) return null;
 
@@ -58,13 +70,13 @@ export function AimControl({ onAimChange }: AimControlProps) {
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0"
+      className="absolute inset-0 touch-none"
       onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
       onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
       onMouseUp={handleEnd}
       onMouseLeave={handleEnd}
-      onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
-      onTouchMove={(e) => handleMove(e.touches[0].clientX, e.touches[0].clientY)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
       onTouchEnd={handleEnd}
     >
       {/* Linha de mira */}

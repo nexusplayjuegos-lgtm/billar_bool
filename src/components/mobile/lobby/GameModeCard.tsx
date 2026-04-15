@@ -42,7 +42,7 @@ export function GameModeCard({ mode, index, isSelected, onSelect }: GameModeCard
       whileTap={{ scale: 0.98 }}
       onClick={handleCardClick}
       className={cn(
-        'relative flex-shrink-0 w-56 landscape:w-48 h-52 landscape:h-40 rounded-xl overflow-hidden cursor-pointer',
+        'relative flex-shrink-0 w-56 landscape:w-36 h-52 landscape:h-28 rounded-xl overflow-hidden cursor-pointer',
         'border-2 transition-all duration-300',
         isSelected && !isLocked ? 'ring-2 ring-white/50' : '',
         isLocked
@@ -75,8 +75,8 @@ export function GameModeCard({ mode, index, isSelected, onSelect }: GameModeCard
       {/* Lock Overlay */}
       {isLocked && (
         <div className="absolute inset-0 bg-slate-950/70 flex flex-col items-center justify-center z-10">
-          <Lock className="w-8 h-8 landscape:w-6 landscape:h-6 text-slate-400 mb-1" />
-          <span className="text-slate-300 text-xs font-medium">
+          <Lock className="w-8 h-8 landscape:w-5 landscape:h-5 text-slate-400 mb-1" />
+          <span className="text-slate-300 text-xs landscape:text-[10px] font-medium">
             Nível {mode.minLevel}
           </span>
           {mode.lockedMessageKey && (
@@ -91,10 +91,10 @@ export function GameModeCard({ mode, index, isSelected, onSelect }: GameModeCard
       <div className="relative h-full flex flex-col p-3 landscape:p-2">
         {/* Icon */}
         <div
-          className="w-12 h-12 landscape:w-10 landscape:h-10 rounded-xl flex items-center justify-center mb-2 landscape:mb-1"
+          className="w-12 h-12 landscape:w-8 landscape:h-8 rounded-xl flex items-center justify-center mb-2 landscape:mb-1"
           style={{ background: `linear-gradient(135deg, ${mode.color}60, ${mode.color})` }}
         >
-          <span className="text-2xl landscape:text-xl">
+          <span className="text-2xl landscape:text-lg">
             {mode.type === '8ball' && '🎱'}
             {mode.type === 'brazilian' && '🇧🇷'}
             {mode.type === 'snooker' && '👑'}
@@ -102,26 +102,26 @@ export function GameModeCard({ mode, index, isSelected, onSelect }: GameModeCard
         </div>
 
         {/* Title */}
-        <h3 className="text-white text-base landscape:text-sm font-bold mb-0.5">
+        <h3 className="text-white text-base landscape:text-xs font-bold mb-0.5 landscape:mb-0">
           {t(`${mode.id.split('_')[1]}.name`)}
         </h3>
-        <p className="text-white/70 text-xs landscape:text-[10px] mb-1">
+        <p className="text-white/70 text-xs landscape:text-[9px] mb-1 landscape:mb-0.5">
           {t(`${mode.id.split('_')[1]}.subtitle`)}
         </p>
 
-        {/* Description */}
-        <p className="text-white/50 text-[10px] landscape:text-[9px] leading-relaxed flex-1 line-clamp-2">
+        {/* Description - hidden in landscape */}
+        <p className="text-white/50 text-[10px] leading-relaxed flex-1 line-clamp-2 hidden landscape:hidden">
           {t(`${mode.id.split('_')[1]}.desc`)}
         </p>
 
         {/* Entry Fee & Reward */}
-        <div className="mt-2 landscape:mt-1 space-y-1">
+        <div className="mt-2 landscape:mt-0.5 space-y-1 landscape:space-y-0.5">
           <div className="flex items-center justify-between">
-            <span className="text-white/60 text-[10px]">Entrada:</span>
+            <span className="text-white/60 text-[10px] landscape:text-[8px]">Entrada:</span>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-amber-400" />
               <span className={cn(
-                'text-xs font-bold',
+                'text-xs landscape:text-[10px] font-bold',
                 canAfford ? 'text-amber-400' : 'text-red-400'
               )}>
                 {mode.entryFee.coins}
@@ -129,10 +129,10 @@ export function GameModeCard({ mode, index, isSelected, onSelect }: GameModeCard
             </div>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-white/60 text-[10px]">Prêmio:</span>
+            <span className="text-white/60 text-[10px] landscape:text-[8px]">Prêmio:</span>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-green-400" />
-              <span className="text-green-400 text-xs font-bold">
+              <span className="text-green-400 text-xs landscape:text-[10px] font-bold">
                 {mode.reward.win}
               </span>
             </div>
@@ -145,7 +145,7 @@ export function GameModeCard({ mode, index, isSelected, onSelect }: GameModeCard
             whileTap={{ scale: 0.95 }}
             onClick={handlePlayClick}
             className={cn(
-              'mt-2 landscape:mt-1 w-full py-2 landscape:py-1.5 rounded-lg flex items-center justify-center gap-1.5 font-bold transition-all text-sm landscape:text-xs',
+              'mt-2 landscape:mt-1 w-full py-2 landscape:py-1 rounded-lg flex items-center justify-center gap-1.5 font-bold transition-all text-sm landscape:text-[10px]',
               canAfford
                 ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-400 hover:to-blue-500'
                 : 'bg-slate-700 text-slate-400 cursor-not-allowed'
