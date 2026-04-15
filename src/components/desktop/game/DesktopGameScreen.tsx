@@ -23,12 +23,11 @@ export function DesktopGameScreen({ modeId }: DesktopGameScreenProps) {
   const { gameState, shoot, endGame } = useGameStore();
 
   const [aimAngle, setAimAngle] = useState(0);
-  const [power, setPower] = useState(50);
+  const [power, setPower] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
   const [showWinModal, setShowWinModal] = useState(false);
   const [showLoseModal, setShowLoseModal] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
-  const [isAiming, setIsAiming] = useState(false);
   const [ballsMoving, setBallsMoving] = useState(false);
 
   // Timer countdown
@@ -62,21 +61,25 @@ export function DesktopGameScreen({ modeId }: DesktopGameScreenProps) {
     return () => clearInterval(interval);
   }, [gameState]);
 
-  const handleShoot = useCallback(() => {
-    if (ballsMoving) return;
-    shoot(power, aimAngle, { x: 0, y: 0 });
-    setTimeLeft(30);
+  const handleShoot = useCallback(
+    (shotPower: number, shotAngle: number) => {
+      if (ballsMoving) return;
+      shoot(shotPower, shotAngle, { x: 0, y: 0 });
+      setPower(0);
+      setTimeLeft(30);
 
-    // Simular fim de jogo após 5 segundos
-    setTimeout(() => {
-      const won = Math.random() > 0.5;
-      if (won) {
-        setShowWinModal(true);
-      } else {
-        setShowLoseModal(true);
-      }
-    }, 5000);
-  }, [power, aimAngle, shoot, ballsMoving]);
+      // Simular fim de jogo após 5 segundos
+      setTimeout(() => {
+        const won = Math.random() > 0.5;
+        if (won) {
+          setShowWinModal(true);
+        } else {
+          setShowLoseModal(true);
+        }
+      }, 5000);
+    },
+    [shoot, ballsMoving]
+  );
 
   const handleExit = useCallback(() => {
     // Aplicar punição de 50% da taxa de entrada
@@ -99,7 +102,7 @@ export function DesktopGameScreen({ modeId }: DesktopGameScreenProps) {
   return (
     <div className="h-screen flex flex-col bg-slate-950 overflow-hidden">
       {/* Top Bar */}
-      <header className="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4">
+      <header className="h-14 shrink-0 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4">
         <div className="flex items-center gap-4">
           <Link href={`/${locale}`}>
             <motion.button
@@ -149,31 +152,31 @@ export function DesktopGameScreen({ modeId }: DesktopGameScreenProps) {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Game Area */}
-        <main className="flex-1 flex flex-col p-6">
+        <main className="flex-1 flex flex-col p-4 min-h-0">
           <DesktopGameHUD timeLeft={timeLeft} modeId={modeId} />
 
-          {/* Pool Table */}
-          <div className="flex-1 flex items-center justify-center py-4">
+          {/* Pool Table - ajustado para caber sem scroll */}
+          <div className="flex-1 flex items-center justify-center min-h-0">
             <div
-              className="relative w-full max-w-5xl"
-              style={{ aspectRatio: '2/1' }}
-              onMouseEnter={() => setIsAiming(true)}
-              onMouseLeave={() => setIsAiming(false)}
+              className="relative w-full h-full max-w-5xl"
+              style={{ maxHeight: '100%' }}
             >
               <DesktopPoolTable
                 aimAngle={aimAngle}
                 onAimChange={setAimAngle}
                 power={power}
-                isAiming={isAiming}
+                onPowerChange={setPower}
+                onShoot={handleShoot}
+                disabled={ballsMoving}
               />
             </div>
           </div>
         </main>
 
         {/* Right Sidebar */}
-        <aside className="w-72 bg-slate-900 border-l border-slate-800 p-4 flex flex-col">
+        <aside className="w-72 shrink-0 bg-slate-900 border-l border-slate-800 p-4 flex flex-col">
           <h3 className="text-white font-bold mb-4">{t('matchInfo')}</h3>
 
           {/* Player Info */}
@@ -230,9 +233,8 @@ export function DesktopGameScreen({ modeId }: DesktopGameScreenProps) {
 
       {/* Bottom Controls */}
       <DesktopCueControls
-        power={power}
+        power={Math.round(power)}
         onPowerChange={setPower}
-        onShoot={handleShoot}
         disabled={ballsMoving}
       />
 

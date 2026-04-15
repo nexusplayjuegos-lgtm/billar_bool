@@ -14,8 +14,8 @@ export default function MobileLayout({
   const { isMobile } = useDeviceDetection();
   const pathname = usePathname();
 
-  // Detectar se está em uma rota de jogo (/play/[mode])
-  const isGameRoute = pathname?.includes('/play/');
+  // Detectar se está em uma rota de jogo (/game/[mode])
+  const isGameRoute = pathname?.includes('/game/');
 
   if (!isMobile) {
     return <DesktopLayout>{children}</DesktopLayout>;

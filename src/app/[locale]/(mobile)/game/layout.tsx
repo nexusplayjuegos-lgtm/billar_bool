@@ -3,7 +3,7 @@
 import { ReactNode } from 'react';
 import { MobileScaffold } from '@/components/mobile';
 
-export default function GameLayout({
+export default function MobileGameLayout({
   children,
 }: {
   children: ReactNode;

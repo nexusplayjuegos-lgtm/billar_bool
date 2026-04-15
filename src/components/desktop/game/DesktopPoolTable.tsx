@@ -10,7 +10,9 @@ interface DesktopPoolTableProps {
   aimAngle: number;
   onAimChange: (angle: number) => void;
   power: number;
-  isAiming: boolean;
+  onPowerChange: (power: number) => void;
+  onShoot: (power: number, angle: number) => void;
+  disabled?: boolean;
 }
 
 export function DesktopPoolTable({
@@ -18,12 +20,15 @@ export function DesktopPoolTable({
   aimAngle,
   onAimChange,
   power,
-  isAiming,
+  onPowerChange,
+  onShoot,
+  disabled = false,
 }: DesktopPoolTableProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { gameState, updateGameState } = useGameStore();
-  const [isDragging, setIsDragging] = useState(false);
+  const [isPulling, setIsPulling] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   // Renderização do canvas
   useEffect(() => {
@@ -191,7 +196,7 @@ export function DesktopPoolTable({
 
     drawTable();
     drawBalls();
-  }, [gameState]);
+  }, [gameState, aimAngle, power, isPulling, mousePos]);
 
   // Loop de física
   useEffect(() => {
@@ -229,55 +234,132 @@ export function DesktopPoolTable({
         };
       });
 
+      // Colisão bola-bola
+      for (let i = 0; i < newBalls.length; i++) {
+        for (let j = i + 1; j < newBalls.length; j++) {
+          const ballA = newBalls[i];
+          const ballB = newBalls[j];
+
+          if (ballA.inPocket || ballB.inPocket) continue;
+
+          const dx = ballB.x - ballA.x;
+          const dy = ballB.y - ballA.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const minDistance = ballA.radius + ballB.radius;
+
+          if (distance < minDistance && distance > 0) {
+            // Vetor normal
+            const nx = dx / distance;
+            const ny = dy / distance;
+
+            // Separar bolas sobrepostas
+            const overlap = minDistance - distance;
+            newBalls[i] = {
+              ...ballA,
+              x: ballA.x - nx * overlap * 0.5,
+              y: ballA.y - ny * overlap * 0.5,
+            };
+            newBalls[j] = {
+              ...ballB,
+              x: ballB.x + nx * overlap * 0.5,
+              y: ballB.y + ny * overlap * 0.5,
+            };
+
+            // Velocidade relativa ao longo da normal
+            const dvx = ballB.vx - ballA.vx;
+            const dvy = ballB.vy - ballA.vy;
+            const velAlongNormal = dvx * nx + dvy * ny;
+
+            // Se já estão se afastando, não resolver
+            if (velAlongNormal > 0) continue;
+
+            // Impulso escalar para massas iguais
+            const restitution = 0.9;
+            const impulse = (-(1 + restitution) * velAlongNormal) / 2;
+
+            newBalls[i] = {
+              ...newBalls[i],
+              vx: newBalls[i].vx - impulse * nx,
+              vy: newBalls[i].vy - impulse * ny,
+            };
+            newBalls[j] = {
+              ...newBalls[j],
+              vx: newBalls[j].vx + impulse * nx,
+              vy: newBalls[j].vy + impulse * ny,
+            };
+          }
+        }
+      }
+
       updateGameState({ balls: newBalls });
     }, 16);
 
     return () => clearInterval(interval);
   }, [gameState, updateGameState]);
 
-  // Handlers de mouse para mira
-  const handleMouseDown = useCallback(
+  // Handlers de mouse para pull-back
+  const getMousePos = useCallback(
     (e: React.MouseEvent) => {
-      if (!containerRef.current || !gameState) return;
-
+      if (!containerRef.current || !gameState) return null;
       const rect = containerRef.current.getBoundingClientRect();
-      const cueBall = gameState.balls[0];
-
       const scaleX = 800 / rect.width;
       const scaleY = 400 / rect.height;
-
-      const mouseX = (e.clientX - rect.left) * scaleX;
-      const mouseY = (e.clientY - rect.top) * scaleY;
-
-      const angle = Math.atan2(mouseY - cueBall.y, mouseX - cueBall.x);
-      onAimChange(angle);
-      setIsDragging(true);
+      return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY,
+      };
     },
-    [gameState, onAimChange]
+    [gameState]
+  );
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (disabled || !gameState) return;
+      const pos = getMousePos(e);
+      if (!pos) return;
+
+      const cueBall = gameState.balls[0];
+      const distToCue = Math.sqrt(
+        Math.pow(pos.x - cueBall.x, 2) + Math.pow(pos.y - cueBall.y, 2)
+      );
+
+      // Só inicia pull-back se clicar na bola branca ou bem próximo
+      if (distToCue <= cueBall.radius + 20) {
+        setIsPulling(true);
+        setMousePos(pos);
+      }
+    },
+    [gameState, getMousePos, disabled]
   );
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
-      if (!isDragging || !containerRef.current || !gameState) return;
+      if (!isPulling || !gameState) return;
+      const pos = getMousePos(e);
+      if (!pos) return;
 
-      const rect = containerRef.current.getBoundingClientRect();
+      setMousePos(pos);
+
       const cueBall = gameState.balls[0];
+      const dx = cueBall.x - pos.x;
+      const dy = cueBall.y - pos.y;
+      const angle = Math.atan2(dy, dx);
+      const pullDistance = Math.sqrt(dx * dx + dy * dy);
+      const newPower = Math.min(Math.max(pullDistance * 0.4, 0), 100);
 
-      const scaleX = 800 / rect.width;
-      const scaleY = 400 / rect.height;
-
-      const mouseX = (e.clientX - rect.left) * scaleX;
-      const mouseY = (e.clientY - rect.top) * scaleY;
-
-      const angle = Math.atan2(mouseY - cueBall.y, mouseX - cueBall.x);
       onAimChange(angle);
+      onPowerChange(newPower);
     },
-    [isDragging, gameState, onAimChange]
+    [isPulling, gameState, getMousePos, onAimChange, onPowerChange]
   );
 
   const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
+    if (isPulling && power > 2) {
+      onShoot(power, aimAngle);
+    }
+    setIsPulling(false);
+    onPowerChange(0);
+  }, [isPulling, power, aimAngle, onShoot, onPowerChange]);
 
   if (!gameState) return null;
 
@@ -285,6 +367,14 @@ export function DesktopPoolTable({
   const lineLength = 200;
   const endX = cueBall.x + Math.cos(aimAngle) * lineLength;
   const endY = cueBall.y + Math.sin(aimAngle) * lineLength;
+
+  // Posição do taco visual (puxado para trás)
+  const cueLength = 120;
+  const cuePullback = isPulling ? Math.min(power * 1.2, 80) : 0;
+  const cueStartX = cueBall.x - Math.cos(aimAngle) * (cueBall.radius + 10 + cuePullback);
+  const cueStartY = cueBall.y - Math.sin(aimAngle) * (cueBall.radius + 10 + cuePullback);
+  const cueEndX = cueStartX - Math.cos(aimAngle) * cueLength;
+  const cueEndY = cueStartY - Math.sin(aimAngle) * cueLength;
 
   return (
     <div
@@ -304,50 +394,72 @@ export function DesktopPoolTable({
       />
 
       {/* Linha de mira */}
-      {isAiming && (
-        <svg
-          className="absolute inset-0 w-full h-full pointer-events-none"
-          viewBox="0 0 800 400"
-          preserveAspectRatio="none"
-        >
-          {/* Linha pontilhada */}
-          <line
-            x1={cueBall.x}
-            y1={cueBall.y}
-            x2={endX}
-            y2={endY}
-            stroke="rgba(255, 255, 255, 0.7)"
-            strokeWidth="2"
-            strokeDasharray="10,5"
-          />
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        viewBox="0 0 800 400"
+        preserveAspectRatio="none"
+      >
+        {/* Linha pontilhada */}
+        <line
+          x1={cueBall.x}
+          y1={cueBall.y}
+          x2={endX}
+          y2={endY}
+          stroke="rgba(255, 255, 255, 0.7)"
+          strokeWidth="2"
+          strokeDasharray="10,5"
+        />
 
-          {/* Glow na ponta */}
-          <circle
-            cx={endX}
-            cy={endY}
-            r="8"
-            fill="rgba(59, 130, 246, 0.6)"
-            className="animate-pulse"
-          />
+        {/* Glow na ponta */}
+        <circle
+          cx={endX}
+          cy={endY}
+          r="8"
+          fill="rgba(59, 130, 246, 0.6)"
+          className="animate-pulse"
+        />
 
-          {/* Círculo de precisão */}
-          <circle
-            cx={endX}
-            cy={endY}
-            r="15"
-            fill="none"
-            stroke="rgba(59, 130, 246, 0.3)"
-            strokeWidth="1"
-            strokeDasharray="4,4"
-          />
-        </svg>
-      )}
+        {/* Círculo de precisão */}
+        <circle
+          cx={endX}
+          cy={endY}
+          r="15"
+          fill="none"
+          stroke="rgba(59, 130, 246, 0.3)"
+          strokeWidth="1"
+          strokeDasharray="4,4"
+        />
+
+        {/* Taco visual */}
+        {isPulling && (
+          <g>
+            <line
+              x1={cueStartX}
+              y1={cueStartY}
+              x2={cueEndX}
+              y2={cueEndY}
+              stroke="#d4a574"
+              strokeWidth="6"
+              strokeLinecap="round"
+            />
+            <line
+              x1={cueStartX}
+              y1={cueStartY}
+              x2={cueStartX - Math.cos(aimAngle) * 30}
+              y2={cueStartY - Math.sin(aimAngle) * 30}
+              stroke="#1a1a1a"
+              strokeWidth="7"
+              strokeLinecap="round"
+            />
+          </g>
+        )}
+      </svg>
 
       {/* Efeito de brilho na mesa */}
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
 
       {/* Indicador de potência */}
-      {isAiming && (
+      {isPulling && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -361,8 +473,19 @@ export function DesktopPoolTable({
               power >= 66 && 'text-red-400'
             )}
           >
-            Potência: {power}%
+            Potência: {Math.round(power)}%
           </span>
+        </motion.div>
+      )}
+
+      {/* Instrução */}
+      {!isPulling && !disabled && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-slate-900/60 border border-slate-700/50 text-slate-300 text-sm pointer-events-none"
+        >
+          Clique na bola branca e arraste para trás
         </motion.div>
       )}
     </div>

@@ -28,7 +28,7 @@ export function MobileLobbyScreen() {
     e.preventDefault();
     e.stopPropagation();
     if (selectedMode) {
-      router.push(`/${locale}/play/${selectedMode.id}`);
+      router.push(`/${locale}/game/${selectedMode.id}`);
     }
   };
 

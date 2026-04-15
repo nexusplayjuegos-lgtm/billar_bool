@@ -34,6 +34,17 @@ export function DesktopLayout({ children }: DesktopLayoutProps) {
     return pathname.startsWith(`/${locale}${href}`);
   };
 
+  // Em rotas de jogo, renderizar tela cheia sem sidebar/padding
+  const isGameRoute = pathname?.includes('/play/');
+
+  if (isGameRoute) {
+    return (
+      <div className="h-screen w-full overflow-hidden bg-slate-950">
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 flex">
       {/* Sidebar */}
