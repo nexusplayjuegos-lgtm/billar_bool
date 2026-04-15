@@ -7,7 +7,7 @@ import { MOCK_GAME_MODES, MOCK_LEADERBOARD } from '@/mocks/data';
 import { useUserStore } from '@/lib/store';
 import { formatNumber } from '@/lib/utils';
 
-export default function DesktopHomePage() {
+export function DesktopLobbyScreen() {
   const t = useTranslations();
   const { user } = useUserStore();
 
