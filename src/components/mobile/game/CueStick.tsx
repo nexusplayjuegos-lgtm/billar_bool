@@ -9,6 +9,9 @@ interface CueStickProps {
   isAiming?: boolean;
   cueName?: string;
   cueColor?: string;
+  // Posição da bola branca (em pixels, coordenadas do canvas 800x400)
+  whiteBallX?: number;
+  whiteBallY?: number;
 }
 
 export function CueStick({
@@ -17,24 +20,38 @@ export function CueStick({
   isAiming = true,
   cueName = 'Taco Iniciante',
   cueColor = '#8B5A2B',
+  whiteBallX = 200, // Posição padrão da bola branca
+  whiteBallY = 200,
 }: CueStickProps) {
   // Calcula o recuo baseado na potência (quanto maior, mais recuado)
   const pullback = Math.min(power * 0.8, 60);
 
   if (!isAiming) return null;
 
+  // Converter coordenadas do canvas (800x400) para porcentagem do container
+  const leftPercent = (whiteBallX / 800) * 100;
+  const topPercent = (whiteBallY / 400) * 100;
+
+  // O taco tem 280px de largura, a ponta está a ~240px da origem (direita)
+  // Ajustamos para que a ponta do taco fique na posição da bola branca
+  const cueLength = 280;
+  const tipOffset = 240; // Distância da origem até a ponta do taco
+
   return (
     <div
       className="absolute pointer-events-none"
       style={{
-        transform: `rotate(${angle}rad)`,
-        transformOrigin: 'center center',
-        left: '50%',
-        top: '50%',
-        width: '280px',
+        left: `${leftPercent}%`,
+        top: `${topPercent}%`,
+        width: `${cueLength}px`,
         height: '12px',
-        marginLeft: '-140px',
+        // A ponta do taco deve estar na posição da bola
+        // O taco é desenhado da direita para a esquerda (ponta à direita)
+        marginLeft: `-${tipOffset}px`,
         marginTop: '-6px',
+        transform: `rotate(${angle}rad)`,
+        transformOrigin: `${tipOffset}px center`,
+        zIndex: 5, // Atrás das bolas (que estão no canvas)
       }}
     >
       {/* Container do taco com animação de recuo */}

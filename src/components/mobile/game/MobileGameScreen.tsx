@@ -144,13 +144,17 @@ export function MobileGameScreen() {
           >
             <PoolTable className="w-full h-full" />
             <AimControl onAimChange={setAimAngle} />
-            <CueStick
-              angle={aimAngle}
-              power={power}
-              isAiming={isAiming}
-              cueName="Taco Clássico"
-              cueColor="#8B5A2B"
-            />
+            {gameState && (
+              <CueStick
+                angle={aimAngle}
+                power={power}
+                isAiming={isAiming}
+                cueName="Taco Clássico"
+                cueColor="#8B5A2B"
+                whiteBallX={gameState.balls[0]?.x ?? 200}
+                whiteBallY={gameState.balls[0]?.y ?? 200}
+              />
+            )}
           </div>
         </div>
       </div>
