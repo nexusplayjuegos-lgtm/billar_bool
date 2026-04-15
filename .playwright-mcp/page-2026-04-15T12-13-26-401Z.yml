@@ -1,0 +1,46 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e2]
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - generic [ref=e7]: SI
+          - generic [ref=e8]: "7"
+        - generic [ref=e10]: SinucaMaster
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - generic [ref=e15]: $
+          - generic [ref=e16]: 12.5K
+          - button [ref=e17] [cursor=pointer]:
+            - img [ref=e18]
+        - generic [ref=e19]:
+          - generic [ref=e21]: C
+          - generic [ref=e22]: "45"
+          - button [ref=e23] [cursor=pointer]:
+            - img [ref=e24]
+    - main [ref=e25]
+    - navigation [ref=e29]:
+      - link "Play" [ref=e30] [cursor=pointer]:
+        - /url: /pt
+        - generic [ref=e31]:
+          - img [ref=e33]
+          - generic [ref=e35]: Play
+      - link "3 Shop" [ref=e36] [cursor=pointer]:
+        - /url: /pt/shop
+        - generic [ref=e37]:
+          - generic [ref=e38]:
+            - img [ref=e39]
+            - generic: "3"
+          - generic [ref=e43]: Shop
+      - link "5 Friends" [ref=e44] [cursor=pointer]:
+        - /url: /pt/friends
+        - generic [ref=e45]:
+          - generic [ref=e46]:
+            - img [ref=e47]
+            - generic: "5"
+          - generic [ref=e52]: Friends
+      - link "Ranking" [ref=e53] [cursor=pointer]:
+        - /url: /pt/leaderboard
+        - generic [ref=e54]:
+          - img [ref=e56]
+          - generic [ref=e62]: Ranking

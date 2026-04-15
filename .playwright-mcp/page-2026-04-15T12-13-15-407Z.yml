@@ -1,0 +1,84 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e2]
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - generic [ref=e7]: SI
+          - generic [ref=e8]: "7"
+        - generic [ref=e10]: SinucaMaster
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - generic [ref=e15]: $
+          - generic [ref=e16]: 12.5K
+          - button [ref=e17] [cursor=pointer]:
+            - img [ref=e18]
+        - generic [ref=e19]:
+          - generic [ref=e21]: C
+          - generic [ref=e22]: "45"
+          - button [ref=e23] [cursor=pointer]:
+            - img [ref=e24]
+    - main [ref=e25]:
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - heading "Amigos" [level=1] [ref=e28]:
+            - img [ref=e29]
+            - text: Amigos
+          - button [ref=e34] [cursor=pointer]:
+            - img [ref=e35]
+        - generic [ref=e36]:
+          - generic [ref=e37]:
+            - generic [ref=e39]: JO
+            - generic [ref=e41]:
+              - paragraph [ref=e42]: João_8ball
+              - paragraph [ref=e43]: Online
+            - button "Desafiar" [ref=e44] [cursor=pointer]
+          - generic [ref=e45]:
+            - generic [ref=e47]: MA
+            - generic [ref=e48]:
+              - paragraph [ref=e49]: MariaSinuca
+              - paragraph [ref=e50]: 2h ago
+            - button "Desafiar" [ref=e51] [cursor=pointer]
+          - generic [ref=e52]:
+            - generic [ref=e54]: PE
+            - generic [ref=e56]:
+              - paragraph [ref=e57]: PedroTaco
+              - paragraph [ref=e58]: Online
+            - button "Desafiar" [ref=e59] [cursor=pointer]
+          - generic [ref=e60]:
+            - generic [ref=e62]: AN
+            - generic [ref=e63]:
+              - paragraph [ref=e64]: AnaBilhar
+              - paragraph [ref=e65]: 5h ago
+            - button "Desafiar" [ref=e66] [cursor=pointer]
+          - generic [ref=e67]:
+            - generic [ref=e69]: CA
+            - generic [ref=e71]:
+              - paragraph [ref=e72]: CarlosMesa
+              - paragraph [ref=e73]: Online
+            - button "Desafiar" [ref=e74] [cursor=pointer]
+    - navigation [ref=e75]:
+      - link "Play" [ref=e76] [cursor=pointer]:
+        - /url: /pt
+        - generic [ref=e77]:
+          - img [ref=e79]
+          - generic [ref=e81]: Play
+      - link "3 Shop" [ref=e82] [cursor=pointer]:
+        - /url: /pt/shop
+        - generic [ref=e83]:
+          - generic [ref=e84]:
+            - img [ref=e85]
+            - generic: "3"
+          - generic [ref=e89]: Shop
+      - link "5 Friends" [ref=e90] [cursor=pointer]:
+        - /url: /pt/friends
+        - generic [ref=e91]:
+          - generic [ref=e92]:
+            - img [ref=e93]
+            - generic: "5"
+          - generic [ref=e99]: Friends
+      - link "Ranking" [ref=e100] [cursor=pointer]:
+        - /url: /pt/leaderboard
+        - generic [ref=e101]:
+          - img [ref=e103]
+          - generic [ref=e109]: Ranking

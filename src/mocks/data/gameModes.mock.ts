@@ -85,7 +85,7 @@ export const MOCK_GAME_MODES: GameMode[] = [
     botDifficulty: 0.85,
     icon: "/assets/icons/snooker_crown.png",
     color: "#F59E0B",
-    lockedMessageKey: "modes.snooker.unlock"
+    lockedMessageKey: "snooker.unlock"
   },
   {
     id: "mode_snooker_championship",
@@ -102,6 +102,6 @@ export const MOCK_GAME_MODES: GameMode[] = [
     botDifficulty: 0.95,
     icon: "/assets/icons/snooker_trophy.png",
     color: "#EF4444",
-    lockedMessageKey: "modes.snooker_champ.unlock"
+    lockedMessageKey: "snooker_champ.unlock"
   }
 ];

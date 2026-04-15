@@ -28,7 +28,7 @@ export function MobileBottomNav() {
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="h-16 bg-gradient-to-t from-slate-950 via-slate-900 to-slate-800 border-t border-slate-700/50 flex items-center justify-around px-2"
+      className="h-14 landscape:h-12 bg-gradient-to-t from-slate-950 via-slate-900 to-slate-800 border-t border-slate-700/50 flex items-center justify-around px-2"
     >
       {navItems.map((item) => {
         const Icon = item.icon;

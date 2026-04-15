@@ -1,0 +1,182 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e167]
+  - generic [ref=e168]:
+    - banner [ref=e169]:
+      - generic [ref=e170]:
+        - generic [ref=e171]:
+          - generic [ref=e172]: SI
+          - generic [ref=e173]: "7"
+        - generic [ref=e175]: SinucaMaster
+      - generic [ref=e178]:
+        - generic [ref=e179]:
+          - generic [ref=e181]: $
+          - generic [ref=e182]: 12.5K
+          - button [ref=e183] [cursor=pointer]:
+            - img [ref=e184]
+        - generic [ref=e185]:
+          - generic [ref=e187]: C
+          - generic [ref=e188]: "45"
+          - button [ref=e189] [cursor=pointer]:
+            - img [ref=e190]
+    - main [ref=e191]:
+      - generic [ref=e192]:
+        - generic [ref=e193]:
+          - heading "Bem-vindo, SinucaMaster!" [level=1] [ref=e194]
+          - generic [ref=e195]:
+            - generic [ref=e196]:
+              - img [ref=e197]
+              - text: 12.5K jogadores online
+            - generic [ref=e202]:
+              - img [ref=e203]
+              - text: Bronze III
+        - generic [ref=e206]:
+          - generic [ref=e207]:
+            - heading "Escolha seu modo" [level=2] [ref=e208]
+            - paragraph [ref=e209]: Deslize para ver mais opções
+          - generic [ref=e210]:
+            - generic [ref=e214] [cursor=pointer]:
+              - generic [ref=e216]: 🎱
+              - heading "Londres" [level=3] [ref=e217]
+              - paragraph [ref=e218]: 8-Ball Clássico
+              - paragraph [ref=e219]: As regras clássicas de bilhar. Solidas vs Listradas. Quem fura a 8 perde!
+              - generic [ref=e220]:
+                - generic [ref=e221]:
+                  - generic [ref=e222]: "Entrada:"
+                  - generic [ref=e225]: "100"
+                - generic [ref=e226]:
+                  - generic [ref=e227]: "Prêmio:"
+                  - generic [ref=e230]: "180"
+              - button "JOGAR" [ref=e231]:
+                - img [ref=e232]
+                - text: JOGAR
+            - generic [ref=e237] [cursor=pointer]:
+              - generic [ref=e239]: 🎱
+              - heading "Londres" [level=3] [ref=e240]
+              - paragraph [ref=e241]: 8-Ball Clássico
+              - paragraph [ref=e242]: As regras clássicas de bilhar. Solidas vs Listradas. Quem fura a 8 perde!
+              - generic [ref=e243]:
+                - generic [ref=e244]:
+                  - generic [ref=e245]: "Entrada:"
+                  - generic [ref=e248]: "500"
+                - generic [ref=e249]:
+                  - generic [ref=e250]: "Prêmio:"
+                  - generic [ref=e253]: "900"
+              - button "JOGAR" [ref=e254]:
+                - img [ref=e255]
+                - text: JOGAR
+            - generic [ref=e258] [cursor=pointer]:
+              - generic [ref=e260]: DESTAQUE
+              - generic [ref=e261]:
+                - generic [ref=e263]: 🇧🇷
+                - heading "Rio de Janeiro" [level=3] [ref=e264]
+                - paragraph [ref=e265]: Sinuca Brasileira
+                - paragraph [ref=e266]: A sinuca de verdade! Bolinha vermelha, tacada na branca. Quem fizer mais pontos ganha!
+                - generic [ref=e267]:
+                  - generic [ref=e268]:
+                    - generic [ref=e269]: "Entrada:"
+                    - generic [ref=e272]: "500"
+                  - generic [ref=e273]:
+                    - generic [ref=e274]: "Prêmio:"
+                    - generic [ref=e277]: "950"
+                - button "JOGAR" [ref=e278]:
+                  - img [ref=e279]
+                  - text: JOGAR
+            - generic [ref=e282] [cursor=pointer]:
+              - generic [ref=e284]:
+                - img [ref=e285]
+                - generic [ref=e288]: Nível 10
+              - generic [ref=e289]:
+                - generic [ref=e291]: 🇧🇷
+                - heading "Rio de Janeiro" [level=3] [ref=e292]
+                - paragraph [ref=e293]: Sinuca Brasileira
+                - paragraph [ref=e294]: A sinuca de verdade! Bolinha vermelha, tacada na branca. Quem fizer mais pontos ganha!
+                - generic [ref=e295]:
+                  - generic [ref=e296]:
+                    - generic [ref=e297]: "Entrada:"
+                    - generic [ref=e300]: "1000"
+                  - generic [ref=e301]:
+                    - generic [ref=e302]: "Prêmio:"
+                    - generic [ref=e305]: "1900"
+            - generic [ref=e307] [cursor=pointer]:
+              - generic [ref=e309]:
+                - img [ref=e310]
+                - generic [ref=e313]: Nível 20
+                - generic [ref=e314]: modes.modes.snooker.unlock
+              - generic [ref=e315]:
+                - generic [ref=e317]: 👑
+                - heading "Londres Pro" [level=3] [ref=e318]
+                - paragraph [ref=e319]: Snooker Profissional
+                - paragraph [ref=e320]: Para mestres apenas. Mesa grande, bolas numeradas, máxima precisão necessária.
+                - generic [ref=e321]:
+                  - generic [ref=e322]:
+                    - generic [ref=e323]: "Entrada:"
+                    - generic [ref=e326]: "5000"
+                  - generic [ref=e327]:
+                    - generic [ref=e328]: "Prêmio:"
+                    - generic [ref=e331]: "9000"
+            - generic [ref=e333] [cursor=pointer]:
+              - generic [ref=e335]:
+                - img [ref=e336]
+                - generic [ref=e339]: Nível 35
+                - generic [ref=e340]: modes.modes.snooker_champ.unlock
+              - generic [ref=e341]:
+                - generic [ref=e343]: 👑
+                - heading "Londres Pro" [level=3] [ref=e344]
+                - paragraph [ref=e345]: Snooker Profissional
+                - paragraph [ref=e346]: Para mestres apenas. Mesa grande, bolas numeradas, máxima precisão necessária.
+                - generic [ref=e347]:
+                  - generic [ref=e348]:
+                    - generic [ref=e349]: "Entrada:"
+                    - generic [ref=e352]: "10000"
+                  - generic [ref=e353]:
+                    - generic [ref=e354]: "Prêmio:"
+                    - generic [ref=e357]: "18000"
+        - generic [ref=e358]:
+          - generic [ref=e359]:
+            - heading "Top da Semana" [level=3] [ref=e360]:
+              - img [ref=e361]
+              - text: Top da Semana
+            - button "Ver todos" [ref=e364] [cursor=pointer]
+          - generic [ref=e365]:
+            - generic [ref=e366]:
+              - generic [ref=e367]: 🇵🇭
+              - generic [ref=e368]:
+                - paragraph [ref=e369]: Efren R.
+                - paragraph [ref=e370]: 999M
+            - generic [ref=e371]:
+              - generic [ref=e372]: 🇬🇧
+              - generic [ref=e373]:
+                - paragraph [ref=e374]: Ronnie O.
+                - paragraph [ref=e375]: 875M
+            - generic [ref=e376]:
+              - generic [ref=e377]: 🇧🇷
+              - generic [ref=e378]:
+                - paragraph [ref=e379]: Sinucão
+                - paragraph [ref=e380]: 754M
+        - button [ref=e381] [cursor=pointer]:
+          - img [ref=e383]
+    - navigation [ref=e385]:
+      - link "Play" [ref=e386] [cursor=pointer]:
+        - /url: /pt
+        - generic [ref=e387]:
+          - img [ref=e389]
+          - generic [ref=e392]: Play
+      - link "3 Shop" [ref=e393] [cursor=pointer]:
+        - /url: /pt/shop
+        - generic [ref=e394]:
+          - generic [ref=e395]:
+            - img [ref=e396]
+            - generic [ref=e400]: "3"
+          - generic [ref=e401]: Shop
+      - link "5 Friends" [ref=e402] [cursor=pointer]:
+        - /url: /pt/friends
+        - generic [ref=e403]:
+          - generic [ref=e404]:
+            - img [ref=e405]
+            - generic [ref=e410]: "5"
+          - generic [ref=e411]: Friends
+      - link "Ranking" [ref=e412] [cursor=pointer]:
+        - /url: /pt/leaderboard
+        - generic [ref=e413]:
+          - img [ref=e415]
+          - generic [ref=e421]: Ranking

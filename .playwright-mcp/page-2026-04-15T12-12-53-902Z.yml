@@ -1,0 +1,117 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - heading "BOOL SINUCA" [level=1] [ref=e5]
+      - paragraph [ref=e6]: PREMIERE EDITION
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]: SI
+        - generic [ref=e10]:
+          - paragraph [ref=e11]: SinucaMaster
+          - paragraph [ref=e12]: Nível 7
+      - generic [ref=e13]:
+        - generic [ref=e16]: 12.5K
+        - generic [ref=e19]: "45"
+    - navigation [ref=e20]:
+      - link "Jogar" [ref=e21] [cursor=pointer]:
+        - /url: /pt
+        - generic [ref=e22]:
+          - img [ref=e23]
+          - generic [ref=e25]: Jogar
+      - link "Loja" [ref=e26] [cursor=pointer]:
+        - /url: /pt/shop
+        - generic [ref=e27]:
+          - img [ref=e28]
+          - generic [ref=e32]: Loja
+      - link "Amigos" [ref=e33] [cursor=pointer]:
+        - /url: /pt/friends
+        - generic [ref=e34]:
+          - img [ref=e35]
+          - generic [ref=e40]: Amigos
+      - link "Ranking" [ref=e41] [cursor=pointer]:
+        - /url: /pt/leaderboard
+        - generic [ref=e42]:
+          - img [ref=e43]
+          - generic [ref=e49]: Ranking
+      - link "Ajustes" [ref=e51] [cursor=pointer]:
+        - /url: /pt/settings
+        - generic [ref=e52]:
+          - img [ref=e53]
+          - generic [ref=e56]: Ajustes
+    - paragraph [ref=e58]: BOOL Sinuca Premiere v1.0
+  - main [ref=e59]:
+    - generic [ref=e61]:
+      - heading "Ranking Global" [level=1] [ref=e63]:
+        - img [ref=e64]
+        - text: Ranking Global
+      - generic [ref=e70]:
+        - generic [ref=e71]:
+          - img [ref=e73]
+          - generic [ref=e79]: 🇵🇭
+          - generic [ref=e80]:
+            - paragraph [ref=e81]: Efren Reyes
+            - paragraph [ref=e82]: Nv. 147
+          - generic [ref=e85]: 1000.0M
+        - generic [ref=e86]:
+          - img [ref=e88]
+          - generic [ref=e94]: 🇬🇧
+          - generic [ref=e95]:
+            - paragraph [ref=e96]: Ronnie O'Sullivan
+            - paragraph [ref=e97]: Nv. 145
+          - generic [ref=e100]: 875.0M
+        - generic [ref=e101]:
+          - img [ref=e103]
+          - generic [ref=e109]: 🇧🇷
+          - generic [ref=e110]:
+            - paragraph [ref=e111]: Sinucão_BR
+            - paragraph [ref=e112]: Nv. 132
+          - generic [ref=e115]: 754.2M
+        - generic [ref=e116]:
+          - generic [ref=e117]: "4"
+          - generic [ref=e118]: 🇺🇸
+          - generic [ref=e119]:
+            - paragraph [ref=e120]: PoolKing_USA
+            - paragraph [ref=e121]: Nv. 128
+          - generic [ref=e124]: 698.5M
+        - generic [ref=e125]:
+          - generic [ref=e126]: "5"
+          - generic [ref=e127]: 🇺🇸
+          - generic [ref=e128]:
+            - paragraph [ref=e129]: Shane Van Boening
+            - paragraph [ref=e130]: Nv. 125
+          - generic [ref=e133]: 621.0M
+        - generic [ref=e134]:
+          - generic [ref=e135]: "6"
+          - generic [ref=e136]: 🇷🇺
+          - generic [ref=e137]:
+            - paragraph [ref=e138]: Fedor Gorst
+            - paragraph [ref=e139]: Nv. 122
+          - generic [ref=e142]: 587.3M
+        - generic [ref=e143]:
+          - generic [ref=e144]: "7"
+          - generic [ref=e145]: 🇩🇪
+          - generic [ref=e146]:
+            - paragraph [ref=e147]: Joshua Filler
+            - paragraph [ref=e148]: Nv. 119
+          - generic [ref=e151]: 542.1M
+        - generic [ref=e152]:
+          - generic [ref=e153]: "8"
+          - generic [ref=e154]: 🇹🇼
+          - generic [ref=e155]:
+            - paragraph [ref=e156]: Ko Pin-yi
+            - paragraph [ref=e157]: Nv. 115
+          - generic [ref=e160]: 498.7M
+        - generic [ref=e161]:
+          - generic [ref=e162]: "9"
+          - generic [ref=e163]: 🇦🇹
+          - generic [ref=e164]:
+            - paragraph [ref=e165]: Albin Ouschan
+            - paragraph [ref=e166]: Nv. 112
+          - generic [ref=e169]: 465.2M
+        - generic [ref=e170]:
+          - generic [ref=e171]: "10"
+          - generic [ref=e172]: 🇪🇸
+          - generic [ref=e173]:
+            - paragraph [ref=e174]: David Alcaide
+            - paragraph [ref=e175]: Nv. 108
+          - generic [ref=e178]: 423.8M

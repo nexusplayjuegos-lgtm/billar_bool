@@ -1,0 +1,137 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - heading "BOOL SINUCA" [level=1] [ref=e5]
+      - paragraph [ref=e6]: PREMIERE EDITION
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]: SI
+        - generic [ref=e10]:
+          - paragraph [ref=e11]: SinucaMaster
+          - paragraph [ref=e12]: Nível 7
+      - generic [ref=e13]:
+        - generic [ref=e16]: 12.5K
+        - generic [ref=e19]: "45"
+    - navigation [ref=e20]:
+      - link "Jogar" [ref=e21] [cursor=pointer]:
+        - /url: /pt
+        - generic [ref=e22]:
+          - img [ref=e23]
+          - generic [ref=e25]: Jogar
+      - link "Loja" [ref=e27] [cursor=pointer]:
+        - /url: /pt/shop
+        - generic [ref=e28]:
+          - img [ref=e29]
+          - generic [ref=e33]: Loja
+      - link "Amigos" [ref=e34] [cursor=pointer]:
+        - /url: /pt/friends
+        - generic [ref=e35]:
+          - img [ref=e36]
+          - generic [ref=e41]: Amigos
+      - link "Ranking" [ref=e42] [cursor=pointer]:
+        - /url: /pt/leaderboard
+        - generic [ref=e43]:
+          - img [ref=e44]
+          - generic [ref=e50]: Ranking
+      - link "Ajustes" [ref=e51] [cursor=pointer]:
+        - /url: /pt/settings
+        - generic [ref=e52]:
+          - img [ref=e53]
+          - generic [ref=e56]: Ajustes
+    - paragraph [ref=e58]: BOOL Sinuca Premiere v1.0
+  - main [ref=e59]:
+    - generic [ref=e61]:
+      - generic [ref=e62]:
+        - generic:
+          - heading "Bem-vindo, SinucaMaster!" [level=1]
+          - paragraph: Escolha seu modo de jogo e domine a mesa
+          - button "Jogar Agora" [ref=e63] [cursor=pointer]:
+            - img [ref=e64]
+            - text: Jogar Agora
+      - generic [ref=e68]:
+        - generic [ref=e69]:
+          - generic:
+            - img
+            - generic [ref=e71]: Vitórias
+          - paragraph: "28"
+        - generic [ref=e72]:
+          - generic:
+            - img
+            - generic [ref=e75]: Win Rate
+          - paragraph: 59.5%
+        - generic [ref=e76]:
+          - generic [ref=e77]: Moedas
+          - paragraph: 12.5K
+        - generic [ref=e78]:
+          - generic:
+            - img
+            - generic [ref=e83]: Amigos
+          - paragraph: "12"
+      - generic [ref=e84]:
+        - heading "Modos de Jogo" [level=2] [ref=e85]
+        - generic [ref=e86]:
+          - generic [ref=e87] [cursor=pointer]:
+            - generic:
+              - generic [ref=e88]: 🎱
+              - generic [ref=e89]: Nv. 1+
+            - heading "Londres" [level=3]
+            - paragraph: 8-Ball Clássico
+            - generic:
+              - generic [ref=e90]: 100 🪙
+              - generic [ref=e91]: "+180"
+          - generic [ref=e92] [cursor=pointer]:
+            - generic:
+              - generic [ref=e93]: 🎱
+              - generic [ref=e94]: Nv. 5+
+            - heading "Londres" [level=3]
+            - paragraph: 8-Ball Clássico
+            - generic:
+              - generic [ref=e95]: 500 🪙
+              - generic [ref=e96]: "+900"
+          - generic [ref=e97] [cursor=pointer]:
+            - generic:
+              - generic [ref=e98]: 🇧🇷
+              - generic [ref=e99]: Nv. 5+
+            - heading "Rio de Janeiro" [level=3]
+            - paragraph: Sinuca Brasileira
+            - generic:
+              - generic [ref=e100]: 500 🪙
+              - generic [ref=e101]: "+950"
+      - generic [ref=e102]:
+        - heading "Top Jogadores" [level=2] [ref=e103]
+        - generic [ref=e104]:
+          - generic [ref=e105]:
+            - generic [ref=e106]: "1"
+            - generic [ref=e107]: 🇵🇭
+            - generic [ref=e108]:
+              - paragraph [ref=e109]: Efren Reyes
+              - paragraph [ref=e110]: Nv. 147
+            - generic [ref=e111]: 1000.0M
+          - generic [ref=e112]:
+            - generic [ref=e113]: "2"
+            - generic [ref=e114]: 🇬🇧
+            - generic [ref=e115]:
+              - paragraph [ref=e116]: Ronnie O'Sullivan
+              - paragraph [ref=e117]: Nv. 145
+            - generic [ref=e118]: 875.0M
+          - generic [ref=e119]:
+            - generic [ref=e120]: "3"
+            - generic [ref=e121]: 🇧🇷
+            - generic [ref=e122]:
+              - paragraph [ref=e123]: Sinucão_BR
+              - paragraph [ref=e124]: Nv. 132
+            - generic [ref=e125]: 754.2M
+          - generic [ref=e126]:
+            - generic [ref=e127]: "4"
+            - generic [ref=e128]: 🇺🇸
+            - generic [ref=e129]:
+              - paragraph [ref=e130]: PoolKing_USA
+              - paragraph [ref=e131]: Nv. 128
+            - generic [ref=e132]: 698.5M
+          - generic [ref=e133]:
+            - generic [ref=e134]: "5"
+            - generic [ref=e135]: 🇺🇸
+            - generic [ref=e136]:
+              - paragraph [ref=e137]: Shane Van Boening
+              - paragraph [ref=e138]: Nv. 125
+            - generic [ref=e139]: 621.0M
