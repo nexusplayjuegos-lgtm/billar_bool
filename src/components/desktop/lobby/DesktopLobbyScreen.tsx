@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Play, TrendingUp, Users, Star } from 'lucide-react';
 import { MOCK_GAME_MODES, MOCK_LEADERBOARD } from '@/mocks/data';
 import { useUserStore } from '@/lib/store';
-import { formatNumber } from '@/lib/utils';
+import { formatNumber, getCountryFlag } from '@/lib/utils';
 
 export function DesktopLobbyScreen() {
   const t = useTranslations();
@@ -119,7 +119,7 @@ export function DesktopLobbyScreen() {
               `}>
                 {player.rank}
               </span>
-              <span className="text-2xl">{player.flag}</span>
+              <span className="text-2xl">{getCountryFlag(player.country)}</span>
               <div className="flex-1">
                 <p className="text-white font-medium">{player.username}</p>
                 <p className="text-xs text-slate-400">Nv. {player.level}</p>

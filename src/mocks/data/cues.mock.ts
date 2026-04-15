@@ -15,6 +15,7 @@ export const MOCK_CUES: Cue[] = [
   {
     id: "cue_venom_striker",
     nameKey: "cues.venom.name",
+    descriptionKey: "cues.venom.desc",
     rarity: "rare",
     stats: { power: 5, aim: 6, spin: 4, time: 5 },
     price: { coins: 5000, cash: 0 },
@@ -26,6 +27,7 @@ export const MOCK_CUES: Cue[] = [
   {
     id: "cue_precision_pro",
     nameKey: "cues.precision.name",
+    descriptionKey: "cues.precision.desc",
     rarity: "rare",
     stats: { power: 4, aim: 8, spin: 3, time: 6 },
     price: { coins: 8000, cash: 0 },
@@ -36,6 +38,7 @@ export const MOCK_CUES: Cue[] = [
   {
     id: "cue_fire_storm",
     nameKey: "cues.fire.name",
+    descriptionKey: "cues.fire.desc",
     rarity: "epic",
     stats: { power: 8, aim: 6, spin: 7, time: 5 },
     price: { coins: 15000, cash: 0 },
@@ -47,6 +50,7 @@ export const MOCK_CUES: Cue[] = [
   {
     id: "cue_ice_queen",
     nameKey: "cues.ice.name",
+    descriptionKey: "cues.ice.desc",
     rarity: "epic",
     stats: { power: 6, aim: 7, spin: 8, time: 7 },
     price: { coins: 0, cash: 150 },
@@ -58,6 +62,7 @@ export const MOCK_CUES: Cue[] = [
   {
     id: "cue_golden_dragon",
     nameKey: "cues.dragon.name",
+    descriptionKey: "cues.dragon.desc",
     rarity: "legendary",
     stats: { power: 10, aim: 9, spin: 8, time: 7 },
     price: { coins: 0, cash: 500 },
@@ -69,6 +74,7 @@ export const MOCK_CUES: Cue[] = [
   {
     id: "cue_shadow_assassin",
     nameKey: "cues.shadow.name",
+    descriptionKey: "cues.shadow.desc",
     rarity: "legendary",
     stats: { power: 9, aim: 10, spin: 9, time: 8 },
     price: { coins: 0, cash: 750 },

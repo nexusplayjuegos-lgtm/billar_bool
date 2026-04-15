@@ -1,2 +1,2 @@
 export { cn } from './cn';
-export { formatNumber, formatCurrency, formatTime } from './format';
+export { formatNumber, formatCurrency, formatTime, getCountryFlag } from './format';

@@ -20,3 +20,19 @@ export function formatTime(seconds: number): string {
   const secs = seconds % 60;
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
+
+export function getCountryFlag(countryCode: string): string {
+  const flags: Record<string, string> = {
+    PH: '\ud83c\uddf5\ud83c\udded',
+    UK: '\ud83c\uddec\ud83c\udde7',
+    GB: '\ud83c\uddec\ud83c\udde7',
+    BR: '\ud83c\udde7\ud83c\uddf7',
+    US: '\ud83c\uddfa\ud83c\uddf8',
+    RU: '\ud83c\uddf7\ud83c\uddfa',
+    DE: '\ud83c\udde9\ud83c\uddea',
+    TW: '\ud83c\uddf9\ud83c\uddfc',
+    AT: '\ud83c\udde6\ud83c\uddf9',
+    ES: '\ud83c\uddea\ud83c\uddf8',
+  };
+  return flags[countryCode] || '\ud83c\udf10';
+}

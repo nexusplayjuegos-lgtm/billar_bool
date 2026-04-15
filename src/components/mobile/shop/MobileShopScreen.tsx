@@ -236,7 +236,7 @@ export function MobileShopScreen() {
               className="bg-slate-900 rounded-2xl p-6 max-w-sm w-full"
             >
               <h3 className="text-xl font-bold text-white mb-4">
-                {t(`cues.${previewCue.id.split('_')[1]}.name`)}
+                {t(previewCue.nameKey)}
               </h3>
               <div className="h-48 flex items-center justify-center mb-4">
                 <motion.div
@@ -246,7 +246,7 @@ export function MobileShopScreen() {
                 />
               </div>
               <p className="text-slate-400 text-sm mb-4">
-                {t(`cues.${previewCue.id.split('_')[1]}.desc`)}
+                {t(previewCue.descriptionKey)}
               </p>
               <button
                 onClick={() => setPreviewCue(null)}

@@ -36,7 +36,7 @@ export function CueCard({ cue, index, onPreview }: CueCardProps) {
   const isEquipped = user.equipment.currentCue === cue.id;
   const canAfford = user.currencies.coins >= cue.price.coins && 
                     user.currencies.cash >= cue.price.cash;
-  const isLocked = cue.levelRequired && user.level < cue.levelRequired;
+  const isLocked = Boolean(cue.levelRequired && user.level < cue.levelRequired);
 
   const handleBuy = () => {
     if (!isOwned && canAfford && !isLocked) {
@@ -92,7 +92,7 @@ export function CueCard({ cue, index, onPreview }: CueCardProps) {
               {cue.rarity}
             </span>
             <h3 className="text-white font-bold mt-1">
-              {t(`cues.${cue.id.split('_')[1]}.name`)}
+              {t(cue.nameKey)}
             </h3>
           </div>
           <button

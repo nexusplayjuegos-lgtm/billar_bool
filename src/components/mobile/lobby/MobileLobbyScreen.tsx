@@ -9,7 +9,7 @@ import { MOCK_GAME_MODES } from '@/mocks/data';
 import { useUserStore } from '@/lib/store';
 import { useGameStore } from '@/lib/store';
 import { GameMode } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, getCountryFlag } from '@/lib/utils';
 
 export function MobileLobbyScreen() {
   const t = useTranslations();
@@ -99,15 +99,15 @@ export function MobileLobbyScreen() {
         </div>
         <div className="flex gap-2">
           {[
-            { name: 'Efren R.', coins: '999M', flag: '🇵🇭' },
-            { name: 'Ronnie O.', coins: '875M', flag: '🇬🇧' },
-            { name: 'Sinucão', coins: '754M', flag: '🇧🇷' },
+            { name: 'Efren R.', coins: '999M', country: 'PH' },
+            { name: 'Ronnie O.', coins: '875M', country: 'GB' },
+            { name: 'Sinucão', coins: '754M', country: 'BR' },
           ].map((player, i) => (
             <div
               key={i}
               className="flex-1 bg-slate-800/50 rounded-lg p-2 flex items-center gap-2"
             >
-              <span className="text-lg">{player.flag}</span>
+              <span className="text-lg">{getCountryFlag(player.country)}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-white truncate">{player.name}</p>
                 <p className="text-[10px] text-amber-400">{player.coins}</p>

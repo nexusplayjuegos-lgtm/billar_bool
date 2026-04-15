@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Trophy, Medal } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { MOCK_LEADERBOARD } from '@/mocks/data';
-import { formatNumber } from '@/lib/utils';
+import { formatNumber, getCountryFlag } from '@/lib/utils';
 
 export default function LeaderboardPage() {
   const t = useTranslations();
@@ -40,7 +40,7 @@ export default function LeaderboardPage() {
             `}>
               {player.rank <= 3 ? <Medal className="w-4 h-4" /> : player.rank}
             </div>
-            <span className="text-2xl">{player.flag}</span>
+            <span className="text-2xl">{getCountryFlag(player.country)}</span>
             <div className="flex-1">
               <p className="text-white font-medium">{player.username}</p>
               <p className="text-xs text-slate-400">Nv. {player.level}</p>

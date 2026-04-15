@@ -1,15 +1,12 @@
+const createNextIntlPlugin = require('next-intl/plugin');
+
+const withNextIntl = createNextIntlPlugin('./src/lib/i18n/config.ts');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
   images: {
-    domains: [],
-  },
-  i18n: {
-    locales: ['en', 'es', 'pt'],
-    defaultLocale: 'pt',
+    unoptimized: true,
   },
 }
 
-module.exports = nextConfig
+module.exports = withNextIntl(nextConfig)
