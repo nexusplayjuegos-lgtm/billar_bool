@@ -275,7 +275,9 @@ class GameEngine {
       this.applyRules();
     }
 
-    if (wasMoving !== anyMoving || this.pocketedThisTurn.length > 0) {
+    // BUG FIX: emitir a cada frame enquanto as bolas estiverem se movendo
+    // para que o React possa re-renderizar a mesa em tempo real.
+    if (anyMoving || wasMoving !== anyMoving || this.pocketedThisTurn.length > 0) {
       this.emit();
     }
   }
