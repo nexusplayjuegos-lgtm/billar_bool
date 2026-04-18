@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Ball } from '@/types';
+import { cn } from '@/lib/utils';
 
 interface AimOverlayProps {
   balls: Ball[];
@@ -25,12 +26,18 @@ export function AimOverlay({ balls, aimAngle, power, isAiming }: AimOverlayProps
   const cueEndX = cueStartX - Math.cos(aimAngle) * cueLength;
   const cueEndY = cueStartY - Math.sin(aimAngle) * cueLength;
 
+  const powerColor =
+    power < 33 ? 'text-green-400 border-green-500/50 bg-green-500/20' :
+    power < 66 ? 'text-yellow-400 border-yellow-500/50 bg-yellow-500/20' :
+    'text-red-400 border-red-500/50 bg-red-500/20';
+
   return (
     <svg
       className="absolute inset-0 w-full h-full pointer-events-none"
       viewBox="0 0 800 400"
       preserveAspectRatio="none"
     >
+      {/* Linha de mira */}
       <line
         x1={cueBall.x}
         y1={cueBall.y}
@@ -50,6 +57,8 @@ export function AimOverlay({ balls, aimAngle, power, isAiming }: AimOverlayProps
         strokeWidth="1"
         strokeDasharray="4,4"
       />
+
+      {/* Taco visual */}
       <g>
         <line
           x1={cueStartX}
@@ -69,6 +78,31 @@ export function AimOverlay({ balls, aimAngle, power, isAiming }: AimOverlayProps
           strokeWidth="7"
           strokeLinecap="round"
         />
+      </g>
+
+      {/* Indicador de potência discreto próximo à bola branca */}
+      <g>
+        <rect
+          x={cueBall.x - 22}
+          y={cueBall.y - 28}
+          width="44"
+          height="18"
+          rx="9"
+          className={cn('stroke-current', powerColor)}
+          fill="rgba(15, 23, 42, 0.85)"
+          strokeWidth="1"
+        />
+        <text
+          x={cueBall.x}
+          y={cueBall.y - 16}
+          textAnchor="middle"
+          fontSize="10"
+          fontWeight="bold"
+          fill="currentColor"
+          className={cn('', powerColor)}
+        >
+          {Math.round(power)}%
+        </text>
       </g>
     </svg>
   );
