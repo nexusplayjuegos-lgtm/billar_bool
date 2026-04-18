@@ -164,13 +164,13 @@ class GameEngine {
   placeCueBall(x: number, y: number) {
     const cueBall = this.state.balls[0];
     if (!cueBall) return;
-    // Permite posicionar em toda a área jogável da mesa
     const margin = 5;
     cueBall.x = Math.max(WALL_LEFT + margin, Math.min(WALL_RIGHT - margin, x));
     cueBall.y = Math.max(WALL_TOP + margin, Math.min(WALL_BOTTOM - margin, y));
     cueBall.vx = 0;
     cueBall.vy = 0;
     cueBall.inPocket = false;
+    this.state.ballInHand = false;
     this.emit();
   }
 

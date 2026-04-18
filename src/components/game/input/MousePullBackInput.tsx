@@ -24,7 +24,6 @@ export function MousePullBackInput({
 }: MousePullBackInputProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPulling, setIsPulling] = useState(false);
-  const [justPlaced, setJustPlaced] = useState(false);
 
   const getLogicalPos = useCallback(
     (clientX: number, clientY: number) => {
@@ -46,11 +45,9 @@ export function MousePullBackInput({
       const pos = getLogicalPos(e.clientX, e.clientY);
       if (!pos) return;
 
-      // Ball-in-hand: reposiciona a bola branca no primeiro clique
-      if (ballInHand && onPlaceCueBall && !justPlaced) {
+      // Ball-in-hand: clique único posiciona a bola branca
+      if (ballInHand && onPlaceCueBall) {
         onPlaceCueBall(pos.x, pos.y);
-        setJustPlaced(true);
-        setTimeout(() => setJustPlaced(false), 300);
         return;
       }
 
@@ -63,7 +60,7 @@ export function MousePullBackInput({
         setIsPulling(true);
       }
     },
-    [balls, disabled, getLogicalPos, ballInHand, onPlaceCueBall, justPlaced]
+    [balls, disabled, getLogicalPos, ballInHand, onPlaceCueBall]
   );
 
   const handleMouseMove = useCallback(
@@ -91,10 +88,12 @@ export function MousePullBackInput({
     }
   }, [isPulling, onShoot]);
 
+  const cursorClass = ballInHand && !disabled ? 'cursor-pointer' : 'cursor-crosshair';
+
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 cursor-crosshair"
+      className={`absolute inset-0 ${cursorClass}`}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}

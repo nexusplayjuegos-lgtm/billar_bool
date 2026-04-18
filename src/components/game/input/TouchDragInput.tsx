@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback, useState, useEffect } from 'react';
+import { useRef, useCallback, useState } from 'react';
 import { Ball } from '@/types';
 
 interface TouchDragInputProps {
@@ -24,7 +24,6 @@ export function TouchDragInput({
 }: TouchDragInputProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [isPlacing, setIsPlacing] = useState(false);
 
   const getLogicalPos = useCallback(
     (clientX: number, clientY: number) => {
@@ -46,9 +45,8 @@ export function TouchDragInput({
       const pos = getLogicalPos(clientX, clientY);
       if (!pos) return;
 
-      // Ball-in-hand: arrasta a bola branca
+      // Ball-in-hand: toque único posiciona a bola branca
       if (ballInHand && onPlaceCueBall) {
-        setIsPlacing(true);
         onPlaceCueBall(pos.x, pos.y);
         return;
       }
@@ -69,11 +67,6 @@ export function TouchDragInput({
 
   const handleMove = useCallback(
     (clientX: number, clientY: number) => {
-      if (isPlacing && ballInHand && onPlaceCueBall) {
-        const pos = getLogicalPos(clientX, clientY);
-        if (pos) onPlaceCueBall(pos.x, pos.y);
-        return;
-      }
       if (!isDragging) return;
       const pos = getLogicalPos(clientX, clientY);
       if (!pos) return;
@@ -87,22 +80,16 @@ export function TouchDragInput({
       onAimChange(angle);
       onPowerChange(power);
     },
-    [isDragging, isPlacing, balls, getLogicalPos, onAimChange, onPowerChange, ballInHand, onPlaceCueBall]
+    [isDragging, balls, getLogicalPos, onAimChange, onPowerChange]
   );
 
   const handleEnd = useCallback(() => {
-    if (isPlacing) {
-      setIsPlacing(false);
-      return;
-    }
     if (!isDragging) return;
     setIsDragging(false);
     onShoot();
-  }, [isDragging, isPlacing, onShoot]);
+  }, [isDragging, onShoot]);
 
-  const cursorClass = ballInHand && !disabled
-    ? 'cursor-grab active:cursor-grabbing'
-    : 'cursor-default';
+  const cursorClass = ballInHand && !disabled ? 'cursor-pointer' : 'cursor-default';
 
   return (
     <div
