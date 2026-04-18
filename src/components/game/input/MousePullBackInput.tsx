@@ -8,6 +8,8 @@ interface MousePullBackInputProps {
   onAimChange: (angle: number) => void;
   onPowerChange: (power: number) => void;
   onShoot: () => void;
+  onPlaceCueBall?: (x: number, y: number) => void;
+  ballInHand?: boolean;
   disabled?: boolean;
 }
 
@@ -16,10 +18,13 @@ export function MousePullBackInput({
   onAimChange,
   onPowerChange,
   onShoot,
+  onPlaceCueBall,
+  ballInHand = false,
   disabled = false,
 }: MousePullBackInputProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPulling, setIsPulling] = useState(false);
+  const [justPlaced, setJustPlaced] = useState(false);
 
   const getLogicalPos = useCallback(
     (clientX: number, clientY: number) => {
@@ -40,6 +45,15 @@ export function MousePullBackInput({
       if (disabled) return;
       const pos = getLogicalPos(e.clientX, e.clientY);
       if (!pos) return;
+
+      // Ball-in-hand: reposiciona a bola branca no primeiro clique
+      if (ballInHand && onPlaceCueBall && !justPlaced) {
+        onPlaceCueBall(pos.x, pos.y);
+        setJustPlaced(true);
+        setTimeout(() => setJustPlaced(false), 300);
+        return;
+      }
+
       const cueBall = balls[0];
       if (!cueBall || cueBall.inPocket) return;
       const dist = Math.sqrt(
@@ -49,7 +63,7 @@ export function MousePullBackInput({
         setIsPulling(true);
       }
     },
-    [balls, disabled, getLogicalPos]
+    [balls, disabled, getLogicalPos, ballInHand, onPlaceCueBall, justPlaced]
   );
 
   const handleMouseMove = useCallback(

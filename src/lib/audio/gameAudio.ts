@@ -1,6 +1,27 @@
 'use client';
 
 let audioCtx: AudioContext | null = null;
+let audioUnlocked = false;
+
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  const ctx = getAudioContext();
+  if (ctx.state === 'suspended') {
+    ctx.resume();
+  }
+}
+
+// Unlock audio on first user interaction (critical for mobile Safari/Chrome)
+if (typeof window !== 'undefined') {
+  const unlock = () => {
+    unlockAudio();
+    document.removeEventListener('touchstart', unlock);
+    document.removeEventListener('click', unlock);
+  };
+  document.addEventListener('touchstart', unlock, { once: true });
+  document.addEventListener('click', unlock, { once: true });
+}
 
 function getAudioContext(): AudioContext {
   if (!audioCtx) {

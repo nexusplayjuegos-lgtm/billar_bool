@@ -37,6 +37,7 @@ export interface EngineState {
   ballsMoving: boolean;
   pocketedBalls: number[];
   shots: number;
+  ballInHand: boolean;
 }
 
 export type EngineListener = (state: EngineState) => void;
@@ -96,6 +97,7 @@ class GameEngine {
   private readonly stepMs = 1000 / 60;
   private pocketedThisTurn: number[] = [];
   private groupsAssigned = false;
+  private firstContact: number | null = null; // id da primeira bola tocada na tacada
 
   constructor() {
     this.state = this.createInitialState();
@@ -115,6 +117,7 @@ class GameEngine {
       ballsMoving: false,
       pocketedBalls: [],
       shots: 0,
+      ballInHand: false,
     };
   }
 
@@ -150,10 +153,31 @@ class GameEngine {
     cueBall.vy = Math.sin(angle) * speed;
     this.state.shots += 1;
     this.pocketedThisTurn = [];
+    this.firstContact = null;
     this.state.foul = false;
     this.state.scratch = false;
+    this.state.ballInHand = false;
     playCueHit(power);
     this.emit();
+  }
+
+  placeCueBall(x: number, y: number) {
+    const cueBall = this.state.balls[0];
+    if (!cueBall) return;
+    cueBall.x = Math.max(WALL_LEFT + 10, Math.min(WALL_RIGHT - 10, x));
+    cueBall.y = Math.max(WALL_TOP + 10, Math.min(WALL_BOTTOM - 10, y));
+    cueBall.vx = 0;
+    cueBall.vy = 0;
+    cueBall.inPocket = false;
+    this.state.ballInHand = false;
+    this.emit();
+  }
+
+  timeoutTurn() {
+    if (this.state.gameOver || this.state.ballsMoving) return;
+    this.state.foul = true;
+    this.state.ballInHand = true;
+    this.switchTurn();
   }
 
   subscribe(listener: EngineListener) {
@@ -268,6 +292,12 @@ class GameEngine {
           if (impactIntensity > 0.05) {
             playBallHit(Math.min(impactIntensity, 1));
           }
+
+          // Registra primeira bola tocada pela bola branca
+          if (this.firstContact === null) {
+            if (a.id === 0) this.firstContact = b.id;
+            else if (b.id === 0) this.firstContact = a.id;
+          }
         }
       }
     }
@@ -323,8 +353,36 @@ class GameEngine {
       cueBall.y = 200;
       cueBall.vx = 0;
       cueBall.vy = 0;
+      this.state.ballInHand = true;
       this.switchTurn();
       return;
+    }
+
+    // Verifica se a bola branca tocou alguma bola
+    if (this.firstContact === null) {
+      // Não tocou em nenhuma bola = falta
+      this.state.foul = true;
+      this.state.ballInHand = true;
+      this.switchTurn();
+      return;
+    }
+
+    // Verifica se a primeira bola tocada pertence ao grupo do jogador
+    if (this.groupsAssigned) {
+      const firstBall = this.state.balls.find((b) => b.id === this.firstContact);
+      const playerGroup = player === 1 ? this.state.player1Type : this.state.player2Type;
+      if (firstBall && firstBall.number && firstBall.number !== 8 && playerGroup) {
+        const isOwnGroup =
+          (playerGroup === 'solid' && firstBall.number <= 7) ||
+          (playerGroup === 'stripe' && firstBall.number >= 9);
+        if (!isOwnGroup) {
+          // Toque na bola do adversário primeiro = falta
+          this.state.foul = true;
+          this.state.ballInHand = true;
+          this.switchTurn();
+          return;
+        }
+      }
     }
 
     const eight = this.state.balls.find((b) => b.number === 8);
@@ -394,6 +452,7 @@ class GameEngine {
     }
 
     if (!keptTurn) {
+      this.state.ballInHand = true;
       this.switchTurn();
     }
   }
@@ -497,6 +556,7 @@ class GameEngine {
     this.state.currentPlayer = this.state.currentPlayer === 1 ? 2 : 1;
     this.state.turn += 1;
     this.pocketedThisTurn = [];
+    this.firstContact = null;
     playTurnChange();
   }
 }

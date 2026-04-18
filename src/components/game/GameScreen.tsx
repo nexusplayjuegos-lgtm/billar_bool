@@ -13,6 +13,8 @@ export interface InputHandlers {
   onAimChange: (angle: number) => void;
   onPowerChange: (power: number) => void;
   onShoot: () => void;
+  onPlaceCueBall: (x: number, y: number) => void;
+  ballInHand: boolean;
 }
 
 interface GameScreenProps {
@@ -63,10 +65,12 @@ export function GameScreen({
   }, []);
 
   useEffect(() => {
-    if (!engineState || engineState.gameOver) return;
+    if (!engineState || engineState.gameOver || engineState.ballsMoving) return;
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
+          // Tempo esgotado = falta
+          gameEngine.timeoutTurn();
           return 30;
         }
         return prev - 1;
@@ -108,6 +112,10 @@ export function GameScreen({
     setIsAiming(false);
   }, [power, aimAngle]);
 
+  const handlePlaceCueBall = useCallback((x: number, y: number) => {
+    gameEngine.placeCueBall(x, y);
+  }, []);
+
   if (!engineState) {
     return (
       <div className="h-dvh h-screen flex items-center justify-center bg-slate-950">
@@ -124,6 +132,8 @@ export function GameScreen({
     onAimChange: handleAimChange,
     onPowerChange: handlePowerChange,
     onShoot: handleShoot,
+    onPlaceCueBall: handlePlaceCueBall,
+    ballInHand: engineState.ballInHand && engineState.currentPlayer === 1,
   };
 
   return (
@@ -141,6 +151,16 @@ export function GameScreen({
           {overlay && overlay(engineState, inputHandlers)}
         </MatchTable>
       </div>
+
+      {/* Indicador de ball-in-hand */}
+      {engineState.ballInHand && engineState.currentPlayer === 1 && !engineState.ballsMoving && !engineState.gameOver && (
+        <div className="absolute top-14 left-1/2 -translate-x-1/2 z-30">
+          <div className="px-4 py-1.5 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-500/40 flex items-center gap-2">
+            <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+            <span className="text-xs text-amber-300 font-bold">{t('ballInHand')}</span>
+          </div>
+        </div>
+      )}
 
       {/* Indicador de vez do bot */}
       {engineState.currentPlayer === 2 && !engineState.ballsMoving && !engineState.gameOver && (

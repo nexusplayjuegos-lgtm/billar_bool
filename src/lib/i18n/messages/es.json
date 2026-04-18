@@ -27,7 +27,8 @@
     "levelUp": "¡NUEVO NIVEL!",
     "rotateDevice": "Gira tu dispositivo",
     "rotateInstructions": "Para una mejor experiencia, juega en modo horizontal",
-    "botThinking": "Bot pensando..."
+    "botThinking": "Bot pensando...",
+    "ballInHand": "BOLA EN MANO — Toca para colocar"
   },
   "shop": {
     "title": "Tienda Premium",

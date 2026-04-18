@@ -82,6 +82,8 @@ export function DesktopGameScreen({ modeId }: DesktopGameScreenProps) {
           onAimChange={handlers.onAimChange}
           onPowerChange={handlers.onPowerChange}
           onShoot={handlers.onShoot}
+          onPlaceCueBall={handlers.onPlaceCueBall}
+          ballInHand={handlers.ballInHand}
           disabled={engineState.ballsMoving || engineState.gameOver || engineState.currentPlayer === 2}
         />
       )}

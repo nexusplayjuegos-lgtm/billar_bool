@@ -8,6 +8,8 @@ interface TouchDragInputProps {
   onAimChange: (angle: number) => void;
   onPowerChange: (power: number) => void;
   onShoot: () => void;
+  onPlaceCueBall?: (x: number, y: number) => void;
+  ballInHand?: boolean;
   disabled?: boolean;
 }
 
@@ -16,10 +18,13 @@ export function TouchDragInput({
   onAimChange,
   onPowerChange,
   onShoot,
+  onPlaceCueBall,
+  ballInHand = false,
   disabled = false,
 }: TouchDragInputProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [justPlaced, setJustPlaced] = useState(false);
 
   const getLogicalPos = useCallback(
     (clientX: number, clientY: number) => {
@@ -40,6 +45,15 @@ export function TouchDragInput({
       if (disabled) return;
       const pos = getLogicalPos(clientX, clientY);
       if (!pos) return;
+
+      // Ball-in-hand: reposiciona a bola branca no primeiro toque
+      if (ballInHand && onPlaceCueBall && !justPlaced) {
+        onPlaceCueBall(pos.x, pos.y);
+        setJustPlaced(true);
+        setTimeout(() => setJustPlaced(false), 300);
+        return;
+      }
+
       const cueBall = balls[0];
       if (!cueBall || cueBall.inPocket) return;
       setIsDragging(true);
@@ -51,7 +65,7 @@ export function TouchDragInput({
       onAimChange(angle);
       onPowerChange(power);
     },
-    [balls, disabled, getLogicalPos, onAimChange, onPowerChange]
+    [balls, disabled, getLogicalPos, onAimChange, onPowerChange, ballInHand, onPlaceCueBall, justPlaced]
   );
 
   const handleMove = useCallback(

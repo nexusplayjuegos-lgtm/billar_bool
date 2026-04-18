@@ -93,6 +93,11 @@ export function AimOverlay({ balls, aimAngle, power, isAiming }: AimOverlayProps
 
   const bounce = wallBounce();
 
+  // Ângulo de saída da bola alvo após colisão
+  const targetExitAngle = collision.targetBall && ghostX !== null && ghostY !== null
+    ? Math.atan2(collision.targetBall.y - ghostY, collision.targetBall.x - ghostX)
+    : null;
+
   // Taco mais curto e proporcional
   const cueLength = 85;
   const cuePullback = Math.min(power * 1.0, 65);
@@ -179,17 +184,25 @@ export function AimOverlay({ balls, aimAngle, power, isAiming }: AimOverlayProps
             strokeWidth="1"
             strokeDasharray="3,2"
           />
-          {/* Seta indicando direção após colisão */}
-          {collision.targetBall && (
-            <line
-              x1={ghostX}
-              y1={ghostY}
-              x2={ghostX + Math.cos(aimAngle) * 40}
-              y2={ghostY + Math.sin(aimAngle) * 40}
-              stroke="rgba(255, 255, 255, 0.3)"
-              strokeWidth="1"
-              strokeDasharray="4,3"
-            />
+          {/* Linha de saída da BOLA ALVO após colisão */}
+          {collision.targetBall && targetExitAngle !== null && (
+            <>
+              <line
+                x1={collision.targetBall.x}
+                y1={collision.targetBall.y}
+                x2={collision.targetBall.x + Math.cos(targetExitAngle) * 60}
+                y2={collision.targetBall.y + Math.sin(targetExitAngle) * 60}
+                stroke="rgba(255, 255, 255, 0.5)"
+                strokeWidth="1.5"
+                strokeDasharray="5,3"
+              />
+              <circle
+                cx={collision.targetBall.x + Math.cos(targetExitAngle) * 60}
+                cy={collision.targetBall.y + Math.sin(targetExitAngle) * 60}
+                r="4"
+                fill="rgba(59, 130, 246, 0.4)"
+              />
+            </>
           )}
         </>
       )}
