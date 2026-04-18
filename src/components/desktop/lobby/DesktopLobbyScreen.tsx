@@ -3,13 +3,17 @@
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { Play, TrendingUp, Users, Star } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { MOCK_GAME_MODES, MOCK_LEADERBOARD } from '@/mocks/data';
 import { useUserStore } from '@/lib/store';
 import { formatNumber, getCountryFlag } from '@/lib/utils';
+import { useLocale } from '@/hooks';
 
 export function DesktopLobbyScreen() {
   const t = useTranslations();
   const { user } = useUserStore();
+  const router = useRouter();
+  const { locale } = useLocale();
 
   return (
     <div className="space-y-8">
@@ -26,7 +30,10 @@ export function DesktopLobbyScreen() {
           <p className="text-white/80 text-lg mb-6">
             Escolha seu modo de jogo e domine a mesa
           </p>
-          <button className="px-6 py-3 bg-white text-purple-600 font-bold rounded-xl flex items-center gap-2 hover:bg-white/90 transition-colors">
+          <button
+            onClick={() => router.push(`/${locale}/play/${MOCK_GAME_MODES[0].id}`)}
+            className="px-6 py-3 bg-white text-purple-600 font-bold rounded-xl flex items-center gap-2 hover:bg-white/90 transition-colors"
+          >
             <Play className="w-5 h-5" />
             Jogar Agora
           </button>
@@ -71,6 +78,7 @@ export function DesktopLobbyScreen() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.1 }}
               whileHover={{ scale: 1.02 }}
+              onClick={() => router.push(`/${locale}/play/${mode.id}`)}
               className="bg-slate-800/50 rounded-xl p-4 cursor-pointer hover:bg-slate-800 transition-colors"
               style={{ borderLeft: `4px solid ${mode.color}` }}
             >

@@ -27,7 +27,7 @@ export function MobileScaffold({
     <>
       <ForceLandscapeOverlay isPortrait={isPortrait} />
 
-      <div className={cn('flex flex-col h-screen bg-slate-950', className)}>
+      <div className={cn('flex flex-col h-dvh h-screen bg-slate-950', className)}>
         {!hideHeader && <MobileHeader />}
 
         <motion.main
