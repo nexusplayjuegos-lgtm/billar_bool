@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User, Currencies, Equipment } from '@/types';
-import { MOCK_USER } from '@/mocks/data';
+import { NEW_PLAYER } from '@/mocks/data';
 
 interface UserState {
   user: User;
@@ -13,8 +13,12 @@ interface UserState {
   setUser: (user: User) => void;
   updateCurrencies: (currencies: Partial<Currencies>) => void;
   updateEquipment: (equipment: Partial<Equipment>) => void;
+  addCoins: (amount: number) => void;
+  removeCoins: (amount: number) => void;
+  addCash: (amount: number) => void;
   addXP: (amount: number) => void;
   levelUp: () => void;
+  updateStats: (result: 'win' | 'loss', coinsWon?: number) => void;
   buyCue: (cueId: string, price: Currencies) => boolean;
   equipCue: (cueId: string) => void;
   reset: () => void;
@@ -23,7 +27,7 @@ interface UserState {
 export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
-      user: MOCK_USER,
+      user: NEW_PLAYER,
       isLoading: false,
 
       setUser: (user) => set({ user }),
@@ -44,21 +48,57 @@ export const useUserStore = create<UserState>()(
           },
         })),
 
+      addCoins: (amount) =>
+        set((state) => ({
+          user: {
+            ...state.user,
+            currencies: {
+              ...state.user.currencies,
+              coins: state.user.currencies.coins + amount,
+            },
+          },
+        })),
+
+      removeCoins: (amount) =>
+        set((state) => ({
+          user: {
+            ...state.user,
+            currencies: {
+              ...state.user.currencies,
+              coins: Math.max(0, state.user.currencies.coins - amount),
+            },
+          },
+        })),
+
+      addCash: (amount) =>
+        set((state) => ({
+          user: {
+            ...state.user,
+            currencies: {
+              ...state.user.currencies,
+              cash: state.user.currencies.cash + amount,
+            },
+          },
+        })),
+
       addXP: (amount) =>
         set((state) => {
-          const newXP = state.user.currentXP + amount;
-          if (newXP >= state.user.nextLevelXP) {
-            return {
-              user: {
-                ...state.user,
-                currentXP: newXP - state.user.nextLevelXP,
-                nextLevelXP: Math.floor(state.user.nextLevelXP * 1.2),
-                level: state.user.level + 1,
-              },
-            };
+          let newXP = state.user.currentXP + amount;
+          let newLevel = state.user.level;
+          let newNextLevelXP = state.user.nextLevelXP;
+          // Level up loop para múltiplos levels de uma vez
+          while (newXP >= newNextLevelXP) {
+            newXP -= newNextLevelXP;
+            newLevel += 1;
+            newNextLevelXP = Math.floor(newNextLevelXP * 1.2);
           }
           return {
-            user: { ...state.user, currentXP: newXP },
+            user: {
+              ...state.user,
+              currentXP: newXP,
+              nextLevelXP: newNextLevelXP,
+              level: newLevel,
+            },
           };
         }),
 
@@ -71,6 +111,23 @@ export const useUserStore = create<UserState>()(
             nextLevelXP: Math.floor(state.user.nextLevelXP * 1.2),
           },
         })),
+
+      updateStats: (result, coinsWon = 0) =>
+        set((state) => {
+          const newStats = { ...state.user.stats };
+          newStats.totalGames += 1;
+          if (result === 'win') {
+            newStats.wins += 1;
+            newStats.currentWinStreak += 1;
+            newStats.maxWinStreak = Math.max(newStats.maxWinStreak, newStats.currentWinStreak);
+            newStats.totalCoinsWon += coinsWon;
+          } else {
+            newStats.losses += 1;
+            newStats.currentWinStreak = 0;
+          }
+          newStats.winRate = Math.round((newStats.wins / newStats.totalGames) * 100);
+          return { user: { ...state.user, stats: newStats } };
+        }),
 
       buyCue: (cueId, price) => {
         const state = get();
@@ -107,10 +164,11 @@ export const useUserStore = create<UserState>()(
           },
         })),
 
-      reset: () => set({ user: MOCK_USER }),
+      reset: () => set({ user: NEW_PLAYER }),
     }),
     {
       name: 'bool-user-storage',
+      version: 1,
     }
   )
 );

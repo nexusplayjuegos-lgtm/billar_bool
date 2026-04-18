@@ -7,14 +7,15 @@ import { Play, TrendingUp, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { GameModeCard } from './GameModeCard';
 import { MOCK_GAME_MODES } from '@/mocks/data';
-import { useUserStore } from '@/lib/store';
+import { useUserStore, useGameStore } from '@/lib/store';
 import { GameMode } from '@/types';
 import { cn, getCountryFlag } from '@/lib/utils';
 import { useLocale } from '@/hooks';
 
 export function MobileLobbyScreen() {
   const t = useTranslations();
-  const { user } = useUserStore();
+  const { user, removeCoins } = useUserStore();
+  const { startGame } = useGameStore();
   const router = useRouter();
   const { locale } = useLocale();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -27,9 +28,12 @@ export function MobileLobbyScreen() {
   const handlePlay = (e: React.MouseEvent | React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (selectedMode) {
-      router.push(`/${locale}/game/${selectedMode.id}`);
-    }
+    if (!selectedMode) return;
+    if (user.currencies.coins < selectedMode.entryFee.coins) return;
+    // Deduz entrada e inicia game store
+    removeCoins(selectedMode.entryFee.coins);
+    startGame(selectedMode.id, selectedMode.entryFee.coins, selectedMode.reward.win);
+    router.push(`/${locale}/game/${selectedMode.id}`);
   };
 
   return (

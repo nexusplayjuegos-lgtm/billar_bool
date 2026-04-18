@@ -21,6 +21,7 @@ export interface UserStats {
   losses: number;
   winRate: number;
   maxWinStreak: number;
+  currentWinStreak: number;
   bestBreak: number;
   totalCoinsWon: number;
   country: string;

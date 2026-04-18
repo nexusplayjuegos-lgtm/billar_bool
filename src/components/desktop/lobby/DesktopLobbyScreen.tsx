@@ -5,13 +5,14 @@ import { useTranslations } from 'next-intl';
 import { Play, TrendingUp, Users, Star } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { MOCK_GAME_MODES, MOCK_LEADERBOARD } from '@/mocks/data';
-import { useUserStore } from '@/lib/store';
+import { useUserStore, useGameStore } from '@/lib/store';
 import { formatNumber, getCountryFlag } from '@/lib/utils';
 import { useLocale } from '@/hooks';
 
 export function DesktopLobbyScreen() {
   const t = useTranslations();
-  const { user } = useUserStore();
+  const { user, removeCoins } = useUserStore();
+  const { startGame } = useGameStore();
   const router = useRouter();
   const { locale } = useLocale();
 
@@ -31,7 +32,14 @@ export function DesktopLobbyScreen() {
             Escolha seu modo de jogo e domine a mesa
           </p>
           <button
-            onClick={() => router.push(`/${locale}/play/${MOCK_GAME_MODES[0].id}`)}
+            onClick={() => {
+              const mode = MOCK_GAME_MODES[0];
+              if (user.currencies.coins >= mode.entryFee.coins) {
+                removeCoins(mode.entryFee.coins);
+                startGame(mode.id, mode.entryFee.coins, mode.reward.win);
+                router.push(`/${locale}/play/${mode.id}`);
+              }
+            }}
             className="px-6 py-3 bg-white text-purple-600 font-bold rounded-xl flex items-center gap-2 hover:bg-white/90 transition-colors"
           >
             <Play className="w-5 h-5" />
@@ -78,7 +86,13 @@ export function DesktopLobbyScreen() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.1 }}
               whileHover={{ scale: 1.02 }}
-              onClick={() => router.push(`/${locale}/play/${mode.id}`)}
+              onClick={() => {
+                if (user.currencies.coins >= mode.entryFee.coins) {
+                  removeCoins(mode.entryFee.coins);
+                  startGame(mode.id, mode.entryFee.coins, mode.reward.win);
+                  router.push(`/${locale}/play/${mode.id}`);
+                }
+              }}
               className="bg-slate-800/50 rounded-xl p-4 cursor-pointer hover:bg-slate-800 transition-colors"
               style={{ borderLeft: `4px solid ${mode.color}` }}
             >

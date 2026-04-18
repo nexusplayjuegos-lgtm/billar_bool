@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useLocale } from '@/hooks';
 import { gameEngine, EngineState } from '@/lib/engine/gameEngine';
 import { playTick } from '@/lib/audio/gameAudio';
-import { useGameStore } from '@/lib/store';
+import { useGameStore, useUserStore } from '@/lib/store';
 import { MatchTable } from './MatchTable';
 import { Confetti } from './Confetti';
 
@@ -39,7 +39,8 @@ export function GameScreen({
 }: GameScreenProps) {
   const t = useTranslations('game');
   const { locale } = useLocale();
-  const { endGame } = useGameStore();
+  const { endGame, potentialReward, entryFee } = useGameStore();
+  const { addCoins, removeCoins, addXP, updateStats } = useUserStore();
 
   const [engineState, setEngineState] = useState<EngineState | null>(null);
   const [aimAngle, setAimAngle] = useState(0);
@@ -54,7 +55,19 @@ export function GameScreen({
     const unsubscribe = gameEngine.subscribe((state) => {
       setEngineState(state);
       if (state.gameOver && state.winner) {
-        if (state.winner === 1) {
+        const won = state.winner === 1;
+        const reward = won ? potentialReward : Math.floor(potentialReward * 0.1);
+        // Atualiza economia e stats
+        if (won) {
+          addCoins(reward);
+          updateStats('win', reward);
+          addXP(100);
+        } else {
+          addCoins(reward);
+          updateStats('loss', 0);
+          addXP(25);
+        }
+        if (won) {
           setShowWinModal(true);
         } else {
           setShowLoseModal(true);
@@ -65,7 +78,7 @@ export function GameScreen({
       unsubscribe();
       gameEngine.stop();
     };
-  }, []);
+  }, [addCoins, addXP, potentialReward, updateStats]);
 
   useEffect(() => {
     if (!engineState || engineState.gameOver || engineState.ballsMoving) return;
@@ -215,7 +228,7 @@ export function GameScreen({
                 className="flex items-center justify-center gap-2 mb-6"
               >
                 <div className="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center text-amber-900 font-bold text-sm">$</div>
-                <span className="text-3xl font-bold text-amber-400">+1,800</span>
+                <span className="text-3xl font-bold text-amber-400">+{potentialReward.toLocaleString()}</span>
               </motion.div>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <motion.button
