@@ -26,7 +26,8 @@
     "coinsWon": "+{amount} coins",
     "levelUp": "NEW LEVEL!",
     "rotateDevice": "Rotate your device",
-    "rotateInstructions": "For a better experience, play in landscape mode"
+    "rotateInstructions": "For a better experience, play in landscape mode",
+    "botThinking": "Bot thinking..."
   },
   "shop": {
     "title": "Premium Shop",

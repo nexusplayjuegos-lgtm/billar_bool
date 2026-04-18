@@ -11,9 +11,10 @@ interface MatchTableProps {
   power: number;
   isAiming: boolean;
   children: ReactNode;
+  scale?: number;
 }
 
-export function MatchTable({ balls, aimAngle, power, isAiming, children }: MatchTableProps) {
+export function MatchTable({ balls, aimAngle, power, isAiming, children, scale = 1 }: MatchTableProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 800, height: 400 });
 
@@ -27,9 +28,9 @@ export function MatchTable({ balls, aimAngle, power, isAiming, children }: Match
       const pw = parent.clientWidth;
       const ph = parent.clientHeight;
       if (pw <= 0 || ph <= 0) return;
-      const scale = Math.min(pw / 800, ph / 400);
-      const width = Math.max(1, 800 * scale);
-      const height = Math.max(1, 400 * scale);
+      const baseScale = Math.min(pw / 800, ph / 400) * scale;
+      const width = Math.max(1, 800 * baseScale);
+      const height = Math.max(1, 400 * baseScale);
       setSize({ width, height });
     };
 
@@ -39,7 +40,7 @@ export function MatchTable({ balls, aimAngle, power, isAiming, children }: Match
       ro.observe(el.parentElement);
     }
     return () => ro.disconnect();
-  }, []);
+  }, [scale]);
 
   return (
     <div ref={containerRef} className="w-full h-full flex items-center justify-center">

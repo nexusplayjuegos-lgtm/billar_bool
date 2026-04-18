@@ -1,6 +1,7 @@
 'use client';
 
 import { Ball } from '@/types';
+import { playCueHit, playBallHit, playWallHit, playPocket, playWin, playTurnChange } from '@/lib/audio/gameAudio';
 
 const TABLE_WIDTH = 800;
 const TABLE_HEIGHT = 400;
@@ -151,6 +152,7 @@ class GameEngine {
     this.pocketedThisTurn = [];
     this.state.foul = false;
     this.state.scratch = false;
+    playCueHit(power);
     this.emit();
   }
 
@@ -207,22 +209,30 @@ class GameEngine {
       if (ball.vx !== 0 || ball.vy !== 0) anyMoving = true;
     }
 
+    let wallHit = false;
     for (const ball of this.state.balls) {
       if (ball.inPocket) continue;
       if (ball.x < WALL_LEFT) {
         ball.vx = -ball.vx * WALL_RESTITUTION;
         ball.x = WALL_LEFT;
+        wallHit = true;
       } else if (ball.x > WALL_RIGHT) {
         ball.vx = -ball.vx * WALL_RESTITUTION;
         ball.x = WALL_RIGHT;
+        wallHit = true;
       }
       if (ball.y < WALL_TOP) {
         ball.vy = -ball.vy * WALL_RESTITUTION;
         ball.y = WALL_TOP;
+        wallHit = true;
       } else if (ball.y > WALL_BOTTOM) {
         ball.vy = -ball.vy * WALL_RESTITUTION;
         ball.y = WALL_BOTTOM;
+        wallHit = true;
       }
+    }
+    if (wallHit) {
+      playWallHit();
     }
 
     const balls = this.state.balls;
@@ -254,6 +264,10 @@ class GameEngine {
           a.vy -= impulse * ny;
           b.vx += impulse * nx;
           b.vy += impulse * ny;
+          const impactIntensity = Math.abs(velAlongNormal) / 8;
+          if (impactIntensity > 0.05) {
+            playBallHit(Math.min(impactIntensity, 1));
+          }
         }
       }
     }
@@ -271,6 +285,7 @@ class GameEngine {
           if (!this.state.pocketedBalls.includes(ball.id)) {
             this.state.pocketedBalls.push(ball.id);
           }
+          playPocket();
           break;
         }
       }
@@ -281,6 +296,10 @@ class GameEngine {
 
     if (wasMoving && !anyMoving) {
       this.applyRules();
+      // Se passou para a vez do bot, inicia jogada do bot
+      if (!this.state.gameOver && this.state.currentPlayer === 2) {
+        this.scheduleBotPlay();
+      }
     }
 
     // BUG FIX: emitir a cada frame enquanto as bolas estiverem se movendo
@@ -325,6 +344,7 @@ class GameEngine {
         this.state.winner = player === 1 ? 2 : 1;
       }
       this.state.gameOver = true;
+      playWin();
       return;
     }
 
@@ -378,10 +398,106 @@ class GameEngine {
     }
   }
 
+  // ===== BOT PLAYER =====
+  private botTimeout = 0;
+
+  private scheduleBotPlay() {
+    if (this.botTimeout) clearTimeout(this.botTimeout);
+    const delay = 1500 + Math.random() * 1500;
+    this.botTimeout = window.setTimeout(() => this.botPlay(), delay);
+  }
+
+  private botPlay() {
+    if (this.state.gameOver || this.state.ballsMoving || this.state.currentPlayer !== 2) return;
+
+    const cueBall = this.state.balls[0];
+    if (!cueBall || cueBall.inPocket) return;
+
+    // Identifica bolas alvo válidas para o bot
+    const botGroup = this.state.player2Type;
+    let targets = this.state.balls.filter((b) => {
+      if (b.id === 0 || b.inPocket) return false;
+      if (!this.groupsAssigned) return true; // Pode atacar qualquer uma
+      if (b.number === 8) {
+        // Só atacar 8 se já derrubou todas do grupo
+        const groupBalls = this.state.balls.filter(
+          (x) =>
+            !x.inPocket &&
+            x.number !== 0 &&
+            x.number !== 8 &&
+            ((botGroup === 'solid' && x.number && x.number <= 7) ||
+              (botGroup === 'stripe' && x.number && x.number >= 9))
+        );
+        return groupBalls.length === 0;
+      }
+      if (botGroup === 'solid') return b.number && b.number <= 7;
+      if (botGroup === 'stripe') return b.number && b.number >= 9;
+      return true;
+    });
+
+    if (targets.length === 0) {
+      // Sem alvos, taca em qualquer direção aleatória
+      const randomAngle = Math.random() * Math.PI * 2;
+      this.shoot(40 + Math.random() * 30, randomAngle, { x: 0, y: 0 });
+      return;
+    }
+
+    // Ordena alvos por proximidade
+    targets.sort((a, b) => {
+      const da = Math.sqrt((a.x - cueBall.x) ** 2 + (a.y - cueBall.y) ** 2);
+      const db = Math.sqrt((b.x - cueBall.x) ** 2 + (b.y - cueBall.y) ** 2);
+      return da - db;
+    });
+
+    // Tenta os 3 alvos mais próximos
+    for (let i = 0; i < Math.min(3, targets.length); i++) {
+      const target = targets[i];
+      const dx = target.x - cueBall.x;
+      const dy = target.y - cueBall.y;
+      const baseAngle = Math.atan2(dy, dx);
+
+      // Erro aleatório baseado na "dificuldade" (80% precisão)
+      const error = (Math.random() - 0.5) * 0.12;
+      const angle = baseAngle + error;
+
+      // Potência baseada na distância (mais perto = menos potência)
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const basePower = Math.min(30 + dist * 0.15, 85);
+      const powerVariation = (Math.random() - 0.5) * 10;
+      const power = Math.min(Math.max(basePower + powerVariation, 25), 90);
+
+      // Verifica se não vai dar scratch (bola branca na caçapa)
+      // Simplificado: se o ângulo aponta para longe das caçapas, aceita
+      const safe = this.isSafeAngle(cueBall, angle);
+      if (safe || i === targets.length - 1) {
+        this.shoot(power, angle, { x: 0, y: 0 });
+        return;
+      }
+    }
+
+    // Fallback: taca no alvo mais próximo
+    const closest = targets[0];
+    const angle = Math.atan2(closest.y - cueBall.y, closest.x - cueBall.x);
+    this.shoot(50, angle, { x: 0, y: 0 });
+  }
+
+  private isSafeAngle(cueBall: Ball, angle: number): boolean {
+    // Verifica se a direção não aponta diretamente para uma caçapa
+    for (const pocket of POCKETS) {
+      const dx = pocket.x - cueBall.x;
+      const dy = pocket.y - cueBall.y;
+      const pocketAngle = Math.atan2(dy, dx);
+      const diff = Math.abs(((pocketAngle - angle + Math.PI) % (Math.PI * 2)) - Math.PI);
+      if (diff < 0.3) return false;
+    }
+    return true;
+  }
+
   private switchTurn() {
     this.state.currentPlayer = this.state.currentPlayer === 1 ? 2 : 1;
     this.state.turn += 1;
     this.pocketedThisTurn = [];
+    playTurnChange();
   }
 }
 

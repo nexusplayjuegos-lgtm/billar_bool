@@ -82,14 +82,14 @@ export function DesktopGameScreen({ modeId }: DesktopGameScreenProps) {
           onAimChange={handlers.onAimChange}
           onPowerChange={handlers.onPowerChange}
           onShoot={handlers.onShoot}
-          disabled={engineState.ballsMoving || engineState.gameOver}
+          disabled={engineState.ballsMoving || engineState.gameOver || engineState.currentPlayer === 2}
         />
       )}
       footer={(engineState, power, setPower, onShoot) => (
         <DesktopCueControls
           power={Math.round(power)}
           onPowerChange={setPower}
-          disabled={engineState.ballsMoving || engineState.gameOver}
+          disabled={engineState.ballsMoving || engineState.gameOver || engineState.currentPlayer === 2}
         />
       )}
     />

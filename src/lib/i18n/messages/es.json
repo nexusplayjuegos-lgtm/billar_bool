@@ -26,7 +26,8 @@
     "coinsWon": "+{amount} monedas",
     "levelUp": "¡NUEVO NIVEL!",
     "rotateDevice": "Gira tu dispositivo",
-    "rotateInstructions": "Para una mejor experiencia, juega en modo horizontal"
+    "rotateInstructions": "Para una mejor experiencia, juega en modo horizontal",
+    "botThinking": "Bot pensando..."
   },
   "shop": {
     "title": "Tienda Premium",

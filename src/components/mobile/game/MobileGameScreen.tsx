@@ -25,6 +25,7 @@ export function MobileGameScreen() {
       <GameScreen
         blockScroll
         onExit={handleExitGame}
+        tableScale={0.92}
         header={(engineState, timeLeft) => (
           <div className="shrink-0 h-12 px-3 flex items-center justify-between bg-slate-950/80 backdrop-blur-sm z-20 border-b border-slate-800/50">
             <div className="flex-1 min-w-0">
@@ -43,7 +44,7 @@ export function MobileGameScreen() {
             onAimChange={handlers.onAimChange}
             onPowerChange={handlers.onPowerChange}
             onShoot={handlers.onShoot}
-            disabled={engineState.ballsMoving || engineState.gameOver}
+            disabled={engineState.ballsMoving || engineState.gameOver || engineState.currentPlayer === 2}
           />
         )}
       />

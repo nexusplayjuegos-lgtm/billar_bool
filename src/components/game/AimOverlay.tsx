@@ -10,19 +10,94 @@ interface AimOverlayProps {
   isAiming: boolean;
 }
 
+function getCollisionDistance(
+  cueBall: Ball,
+  targetBall: Ball,
+  angle: number
+): number | null {
+  const dx = targetBall.x - cueBall.x;
+  const dy = targetBall.y - cueBall.y;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+
+  const proj = dx * cos + dy * sin;
+  if (proj <= 0) return null;
+
+  const perp = Math.abs(dx * (-sin) + dy * cos);
+  const hitDist = cueBall.radius + targetBall.radius + 0.5;
+
+  if (perp > hitDist) return null;
+
+  const collisionDist = proj - Math.sqrt(hitDist * hitDist - perp * perp);
+  return collisionDist;
+}
+
+function findFirstCollision(cueBall: Ball, balls: Ball[], angle: number) {
+  let minDist: number | null = null;
+  let targetBall: Ball | null = null;
+
+  for (const ball of balls) {
+    if (ball.id === cueBall.id || ball.inPocket) continue;
+    const dist = getCollisionDistance(cueBall, ball, angle);
+    if (dist !== null && (minDist === null || dist < minDist)) {
+      minDist = dist;
+      targetBall = ball;
+    }
+  }
+
+  return { distance: minDist, targetBall };
+}
+
 export function AimOverlay({ balls, aimAngle, power, isAiming }: AimOverlayProps) {
   const cueBall = balls[0];
   if (!cueBall || cueBall.inPocket || !isAiming) return null;
 
-  const lineLength = 200;
+  const MAX_LINE = 250;
+  const collision = findFirstCollision(cueBall, balls, aimAngle);
+
+  const lineLength = collision.distance !== null ? Math.min(MAX_LINE, collision.distance) : MAX_LINE;
   const endX = cueBall.x + Math.cos(aimAngle) * lineLength;
   const endY = cueBall.y + Math.sin(aimAngle) * lineLength;
 
+  // Ghost ball position (where cue ball would be at collision)
+  const ghostX = collision.distance !== null
+    ? cueBall.x + Math.cos(aimAngle) * collision.distance
+    : null;
+  const ghostY = collision.distance !== null
+    ? cueBall.y + Math.sin(aimAngle) * collision.distance
+    : null;
+
+  // Bounce preview (simple wall reflection)
+  const wallBounce = () => {
+    let bx = endX;
+    let by = endY;
+    let bAngle = aimAngle;
+    let remaining = MAX_LINE - lineLength;
+
+    if (remaining <= 0) return null;
+
+    // Simple wall check for preview
+    if (bx < 30 || bx > 770) {
+      bAngle = Math.PI - bAngle;
+      bx = bx < 30 ? 30 : 770;
+    }
+    if (by < 30 || by > 370) {
+      bAngle = -bAngle;
+      by = by < 30 ? 30 : 370;
+    }
+
+    const bounceEndX = bx + Math.cos(bAngle) * remaining * 0.6;
+    const bounceEndY = by + Math.sin(bAngle) * remaining * 0.6;
+    return { x1: bx, y1: by, x2: bounceEndX, y2: bounceEndY };
+  };
+
+  const bounce = wallBounce();
+
   // Taco mais curto e proporcional
-  const cueLength = 90;
-  const cuePullback = Math.min(power * 1.0, 70);
-  const cueStartX = cueBall.x - Math.cos(aimAngle) * (cueBall.radius + 8 + cuePullback);
-  const cueStartY = cueBall.y - Math.sin(aimAngle) * (cueBall.radius + 8 + cuePullback);
+  const cueLength = 85;
+  const cuePullback = Math.min(power * 1.0, 65);
+  const cueStartX = cueBall.x - Math.cos(aimAngle) * (cueBall.radius + 6 + cuePullback);
+  const cueStartY = cueBall.y - Math.sin(aimAngle) * (cueBall.radius + 6 + cuePullback);
   const cueEndX = cueStartX - Math.cos(aimAngle) * cueLength;
   const cueEndY = cueStartY - Math.sin(aimAngle) * cueLength;
 
@@ -31,8 +106,8 @@ export function AimOverlay({ balls, aimAngle, power, isAiming }: AimOverlayProps
   const ringStartY = cueStartY - Math.sin(aimAngle) * 2;
   const ringEndX = cueStartX - Math.cos(aimAngle) * 10;
   const ringEndY = cueStartY - Math.sin(aimAngle) * 10;
-  const tipEndX = ringEndX - Math.cos(aimAngle) * 6;
-  const tipEndY = ringEndY - Math.sin(aimAngle) * 6;
+  const tipEndX = ringEndX - Math.cos(aimAngle) * 5;
+  const tipEndY = ringEndY - Math.sin(aimAngle) * 5;
 
   const powerColor =
     power < 33
@@ -57,26 +132,67 @@ export function AimOverlay({ balls, aimAngle, power, isAiming }: AimOverlayProps
         </linearGradient>
       </defs>
 
-      {/* Linha de mira sólida (estilo 8 Ball Pool) */}
+      {/* Linha de mira principal */}
       <line
         x1={cueBall.x}
         y1={cueBall.y}
         x2={endX}
         y2={endY}
-        stroke="rgba(255, 255, 255, 0.85)"
+        stroke="rgba(255, 255, 255, 0.9)"
         strokeWidth="1.5"
       />
+
+      {/* Linha de ricochete (após colisão com parede) */}
+      {bounce && (
+        <line
+          x1={bounce.x1}
+          y1={bounce.y1}
+          x2={bounce.x2}
+          y2={bounce.y2}
+          stroke="rgba(255, 255, 255, 0.35)"
+          strokeWidth="1"
+          strokeDasharray="6,4"
+        />
+      )}
+
       {/* Círculo de precisão na ponta */}
-      <circle cx={endX} cy={endY} r="6" fill="rgba(59, 130, 246, 0.5)" className="animate-pulse" />
+      <circle cx={endX} cy={endY} r="5" fill="rgba(59, 130, 246, 0.5)" className="animate-pulse" />
       <circle
         cx={endX}
         cy={endY}
-        r="12"
+        r="10"
         fill="none"
-        stroke="rgba(59, 130, 246, 0.25)"
+        stroke="rgba(59, 130, 246, 0.2)"
         strokeWidth="1"
         strokeDasharray="3,3"
       />
+
+      {/* Ghost ball na posição de colisão */}
+      {ghostX !== null && ghostY !== null && (
+        <>
+          <circle
+            cx={ghostX}
+            cy={ghostY}
+            r={cueBall.radius}
+            fill="rgba(255, 255, 255, 0.15)"
+            stroke="rgba(255, 255, 255, 0.4)"
+            strokeWidth="1"
+            strokeDasharray="3,2"
+          />
+          {/* Seta indicando direção após colisão */}
+          {collision.targetBall && (
+            <line
+              x1={ghostX}
+              y1={ghostY}
+              x2={ghostX + Math.cos(aimAngle) * 40}
+              y2={ghostY + Math.sin(aimAngle) * 40}
+              stroke="rgba(255, 255, 255, 0.3)"
+              strokeWidth="1"
+              strokeDasharray="4,3"
+            />
+          )}
+        </>
+      )}
 
       {/* Taco profissional */}
       <g>

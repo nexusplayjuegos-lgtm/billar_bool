@@ -21,6 +21,7 @@ interface GameScreenProps {
   footer?: (state: EngineState, power: number, setPower: (p: number) => void, onShoot: () => void) => ReactNode;
   onExit: () => void;
   blockScroll?: boolean;
+  tableScale?: number;
 }
 
 export function GameScreen({
@@ -29,6 +30,7 @@ export function GameScreen({
   footer,
   onExit,
   blockScroll = false,
+  tableScale,
 }: GameScreenProps) {
   const t = useTranslations('game');
   const { locale } = useLocale();
@@ -134,10 +136,21 @@ export function GameScreen({
           aimAngle={aimAngle}
           power={power}
           isAiming={isAiming}
+          scale={tableScale}
         >
           {overlay && overlay(engineState, inputHandlers)}
         </MatchTable>
       </div>
+
+      {/* Indicador de vez do bot */}
+      {engineState.currentPlayer === 2 && !engineState.ballsMoving && !engineState.gameOver && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30">
+          <div className="px-4 py-2 bg-slate-900/90 backdrop-blur-sm rounded-full border border-slate-700/50 flex items-center gap-2">
+            <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+            <span className="text-sm text-slate-300 font-medium">{t('botThinking')}</span>
+          </div>
+        </div>
+      )}
 
       {footer && footer(engineState, power, setPower, handleShoot)}
 
