@@ -8,6 +8,7 @@ interface AimOverlayProps {
   aimAngle: number;
   power: number;
   isAiming: boolean;
+  isBreakShot?: boolean;
 }
 
 function getCollisionDistance(
@@ -48,7 +49,7 @@ function findFirstCollision(cueBall: Ball, balls: Ball[], angle: number) {
   return { distance: minDist, targetBall };
 }
 
-export function AimOverlay({ balls, aimAngle, power, isAiming }: AimOverlayProps) {
+export function AimOverlay({ balls, aimAngle, power, isAiming, isBreakShot }: AimOverlayProps) {
   const cueBall = balls[0];
   if (!cueBall || cueBall.inPocket || !isAiming) return null;
 
@@ -136,6 +137,19 @@ export function AimOverlay({ balls, aimAngle, power, isAiming }: AimOverlayProps
           <stop offset="100%" stopColor="#7a5a22" />
         </linearGradient>
       </defs>
+
+      {/* Head string line during break shot */}
+      {isBreakShot && (
+        <line
+          x1={200}
+          y1={30}
+          x2={200}
+          y2={370}
+          stroke="rgba(251, 191, 36, 0.5)"
+          strokeWidth="1.5"
+          strokeDasharray="8,4"
+        />
+      )}
 
       {/* Linha de mira principal */}
       <line

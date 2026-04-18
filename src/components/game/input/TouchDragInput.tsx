@@ -24,6 +24,7 @@ export function TouchDragInput({
 }: TouchDragInputProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const justPlacedRef = useRef(false);
 
   const getLogicalPos = useCallback(
     (clientX: number, clientY: number) => {
@@ -47,7 +48,10 @@ export function TouchDragInput({
 
       // Ball-in-hand: toque único posiciona a bola branca
       if (ballInHand && onPlaceCueBall) {
+        if (justPlacedRef.current) return;
+        justPlacedRef.current = true;
         onPlaceCueBall(pos.x, pos.y);
+        setTimeout(() => { justPlacedRef.current = false; }, 300);
         return;
       }
 
@@ -100,14 +104,19 @@ export function TouchDragInput({
       onMouseUp={handleEnd}
       onMouseLeave={handleEnd}
       onTouchStart={(e) => {
+        e.preventDefault();
         const touch = e.touches[0];
         handleStart(touch.clientX, touch.clientY);
       }}
       onTouchMove={(e) => {
+        e.preventDefault();
         const touch = e.touches[0];
         handleMove(touch.clientX, touch.clientY);
       }}
-      onTouchEnd={handleEnd}
+      onTouchEnd={(e) => {
+        e.preventDefault();
+        handleEnd();
+      }}
     />
   );
 }

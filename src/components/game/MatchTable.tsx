@@ -10,11 +10,12 @@ interface MatchTableProps {
   aimAngle: number;
   power: number;
   isAiming: boolean;
+  isBreakShot?: boolean;
   children: ReactNode;
   scale?: number;
 }
 
-export function MatchTable({ balls, aimAngle, power, isAiming, children, scale = 1 }: MatchTableProps) {
+export function MatchTable({ balls, aimAngle, power, isAiming, isBreakShot, children, scale = 1 }: MatchTableProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 800, height: 400 });
 
@@ -46,7 +47,7 @@ export function MatchTable({ balls, aimAngle, power, isAiming, children, scale =
     <div ref={containerRef} className="w-full h-full flex items-center justify-center">
       <div className="relative" style={{ width: size.width, height: size.height }}>
         <PoolTable balls={balls} className="w-full h-full" />
-        <AimOverlay balls={balls} aimAngle={aimAngle} power={power} isAiming={isAiming} />
+        <AimOverlay balls={balls} aimAngle={aimAngle} power={power} isAiming={isAiming} isBreakShot={isBreakShot} />
         {children}
       </div>
     </div>

@@ -24,6 +24,7 @@ export function MousePullBackInput({
 }: MousePullBackInputProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPulling, setIsPulling] = useState(false);
+  const justPlacedRef = useRef(false);
 
   const getLogicalPos = useCallback(
     (clientX: number, clientY: number) => {
@@ -47,7 +48,10 @@ export function MousePullBackInput({
 
       // Ball-in-hand: clique único posiciona a bola branca
       if (ballInHand && onPlaceCueBall) {
+        if (justPlacedRef.current) return;
+        justPlacedRef.current = true;
         onPlaceCueBall(pos.x, pos.y);
+        setTimeout(() => { justPlacedRef.current = false; }, 300);
         return;
       }
 

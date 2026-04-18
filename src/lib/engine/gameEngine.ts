@@ -38,6 +38,7 @@ export interface EngineState {
   pocketedBalls: number[];
   shots: number;
   ballInHand: boolean;
+  isBreakShot: boolean;
 }
 
 export type EngineListener = (state: EngineState) => void;
@@ -117,7 +118,8 @@ class GameEngine {
       ballsMoving: false,
       pocketedBalls: [],
       shots: 0,
-      ballInHand: false,
+      ballInHand: true,
+      isBreakShot: true,
     };
   }
 
@@ -157,6 +159,7 @@ class GameEngine {
     this.state.foul = false;
     this.state.scratch = false;
     this.state.ballInHand = false;
+    this.state.isBreakShot = false;
     playCueHit(power);
     this.emit();
   }
@@ -165,8 +168,16 @@ class GameEngine {
     const cueBall = this.state.balls[0];
     if (!cueBall) return;
     const margin = 5;
-    cueBall.x = Math.max(WALL_LEFT + margin, Math.min(WALL_RIGHT - margin, x));
-    cueBall.y = Math.max(WALL_TOP + margin, Math.min(WALL_BOTTOM - margin, y));
+    let clampedX = Math.max(WALL_LEFT + margin, Math.min(WALL_RIGHT - margin, x));
+    const clampedY = Math.max(WALL_TOP + margin, Math.min(WALL_BOTTOM - margin, y));
+
+    // During break shot, cue ball must be behind the head string (x <= 200)
+    if (this.state.isBreakShot) {
+      clampedX = Math.min(clampedX, 200 - margin);
+    }
+
+    cueBall.x = clampedX;
+    cueBall.y = clampedY;
     cueBall.vx = 0;
     cueBall.vy = 0;
     cueBall.inPocket = false;

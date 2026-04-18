@@ -29,7 +29,12 @@
     "rotateDevice": "Gira tu dispositivo",
     "rotateInstructions": "Para una mejor experiencia, juega en modo horizontal",
     "botThinking": "Bot pensando...",
-    "ballInHand": "BOLA EN MANO — Toca para colocar"
+    "ballInHand": "BOLA EN MANO — Toca para colocar",
+    "breakShot": "APERTURA — Coloca detrás de la línea",
+    "playAgain": "Jugar de Nuevo",
+    "doubleBet": "Duplicar Apuesta",
+    "tryAgain": "Intentar de Nuevo",
+    "lobby": "Lobby"
   },
   "shop": {
     "title": "Tienda Premium",

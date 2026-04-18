@@ -9,6 +9,7 @@ import { gameEngine, EngineState } from '@/lib/engine/gameEngine';
 import { playTick } from '@/lib/audio/gameAudio';
 import { useGameStore } from '@/lib/store';
 import { MatchTable } from './MatchTable';
+import { Confetti } from './Confetti';
 
 export interface InputHandlers {
   onAimChange: (angle: number) => void;
@@ -16,6 +17,7 @@ export interface InputHandlers {
   onShoot: () => void;
   onPlaceCueBall: (x: number, y: number) => void;
   ballInHand: boolean;
+  isBreakShot: boolean;
 }
 
 interface GameScreenProps {
@@ -73,7 +75,9 @@ export function GameScreen({
           gameEngine.timeoutTurn();
           return 30;
         }
-        playTick();
+        if (prev <= 11) {
+          playTick();
+        }
         return prev - 1;
       });
     }, 1000);
@@ -135,6 +139,7 @@ export function GameScreen({
     onShoot: handleShoot,
     onPlaceCueBall: handlePlaceCueBall,
     ballInHand: engineState.ballInHand && engineState.currentPlayer === 1,
+    isBreakShot: engineState.isBreakShot,
   };
 
   return (
@@ -147,18 +152,21 @@ export function GameScreen({
           aimAngle={aimAngle}
           power={power}
           isAiming={isAiming}
+          isBreakShot={engineState.isBreakShot}
           scale={tableScale}
         >
           {overlay && overlay(engineState, inputHandlers)}
         </MatchTable>
       </div>
 
-      {/* Indicador de ball-in-hand */}
+      {/* Indicador de ball-in-hand / break shot */}
       {engineState.ballInHand && engineState.currentPlayer === 1 && !engineState.ballsMoving && !engineState.gameOver && (
         <div className="absolute top-14 left-1/2 -translate-x-1/2 z-30">
           <div className="px-4 py-1.5 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-500/40 flex items-center gap-2">
             <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-            <span className="text-xs text-amber-300 font-bold">{t('ballInHand')}</span>
+            <span className="text-xs text-amber-300 font-bold">
+              {engineState.isBreakShot ? t('breakShot') : t('ballInHand')}
+            </span>
           </div>
         </div>
       )}
@@ -184,12 +192,13 @@ export function GameScreen({
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
           >
+            <Confetti active={showWinModal} />
             <motion.div
               initial={{ scale: 0.5, y: 100 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.5, y: 100 }}
               transition={{ type: 'spring', stiffness: 300 }}
-              className="text-center"
+              className="text-center relative z-[70]"
             >
               <motion.h1
                 initial={{ scale: 0 }}
@@ -205,10 +214,10 @@ export function GameScreen({
                 transition={{ delay: 0.4 }}
                 className="flex items-center justify-center gap-2 mb-6"
               >
-                <div className="w-8 h-8 rounded-full bg-amber-400" />
+                <div className="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center text-amber-900 font-bold text-sm">$</div>
                 <span className="text-3xl font-bold text-amber-400">+1,800</span>
               </motion.div>
-              <div className="flex gap-3 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <motion.button
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -223,11 +232,25 @@ export function GameScreen({
                 >
                   {t('playAgain')}
                 </motion.button>
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.7 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setShowWinModal(false);
+                    endGame(true);
+                  }}
+                  className="px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold rounded-xl"
+                >
+                  {t('doubleBet')}
+                </motion.button>
                 <Link href={`/${locale}`}>
                   <motion.button
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.7 }}
+                    transition={{ delay: 0.8 }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className="px-6 py-3 bg-slate-700 text-white font-bold rounded-xl"

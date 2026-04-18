@@ -29,7 +29,12 @@
     "rotateDevice": "Rotate your device",
     "rotateInstructions": "For a better experience, play in landscape mode",
     "botThinking": "Bot thinking...",
-    "ballInHand": "BALL IN HAND — Tap to place"
+    "ballInHand": "BALL IN HAND — Tap to place",
+    "breakShot": "BREAK — Place behind the head string",
+    "playAgain": "Play Again",
+    "doubleBet": "Double Bet",
+    "tryAgain": "Try Again",
+    "lobby": "Lobby"
   },
   "shop": {
     "title": "Premium Shop",
