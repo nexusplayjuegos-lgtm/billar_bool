@@ -1,14 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback, ReactNode, useRef } from 'react';
+import { useState, useEffect, useCallback, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useLocale } from '@/hooks';
 import { gameEngine, EngineState } from '@/lib/engine/gameEngine';
 import { useGameStore } from '@/lib/store';
-import { PoolTable } from './PoolTable';
-import { AimOverlay } from './AimOverlay';
+import { MatchTable } from './MatchTable';
 
 export interface InputHandlers {
   onAimChange: (angle: number) => void;
@@ -42,9 +41,6 @@ export function GameScreen({
   const [timeLeft, setTimeLeft] = useState(30);
   const [showWinModal, setShowWinModal] = useState(false);
   const [showLoseModal, setShowLoseModal] = useState(false);
-
-  const tableAreaRef = useRef<HTMLDivElement>(null);
-  const [tableSize, setTableSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     gameEngine.start();
@@ -92,27 +88,6 @@ export function GameScreen({
     };
   }, [blockScroll]);
 
-  // ResizeObserver para calcular tamanho exato da mesa com contain
-  useEffect(() => {
-    const el = tableAreaRef.current;
-    if (!el) return;
-
-    const compute = () => {
-      const rect = el.getBoundingClientRect();
-      const availableWidth = rect.width;
-      const availableHeight = rect.height;
-      const scale = Math.min(availableWidth / 800, availableHeight / 400);
-      const width = Math.max(0, 800 * scale);
-      const height = Math.max(0, 400 * scale);
-      setTableSize({ width, height });
-    };
-
-    compute();
-    const ro = new ResizeObserver(compute);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
   const handleAimChange = useCallback((angle: number) => {
     setAimAngle(angle);
     setIsAiming(true);
@@ -153,25 +128,15 @@ export function GameScreen({
     <div className="h-dvh h-screen w-full flex flex-col bg-slate-950 overflow-hidden relative select-none">
       {header && header(engineState, timeLeft)}
 
-      <div
-        ref={tableAreaRef}
-        className="flex-1 min-h-0 relative flex items-center justify-center overflow-hidden"
-      >
-        {tableSize.width > 0 && tableSize.height > 0 && (
-          <div
-            className="relative"
-            style={{ width: tableSize.width, height: tableSize.height }}
-          >
-            <PoolTable balls={engineState.balls} className="w-full h-full" />
-            <AimOverlay
-              balls={engineState.balls}
-              aimAngle={aimAngle}
-              power={power}
-              isAiming={isAiming}
-            />
-            {overlay && overlay(engineState, inputHandlers)}
-          </div>
-        )}
+      <div className="flex-1 min-h-0 relative overflow-hidden">
+        <MatchTable
+          balls={engineState.balls}
+          aimAngle={aimAngle}
+          power={power}
+          isAiming={isAiming}
+        >
+          {overlay && overlay(engineState, inputHandlers)}
+        </MatchTable>
       </div>
 
       {footer && footer(engineState, power, setPower, handleShoot)}
