@@ -143,6 +143,7 @@ export interface Ball {
   number?: number;
   isStriped?: boolean;
   inPocket: boolean;
+  rotation: number;
 }
 
 export interface GameState {

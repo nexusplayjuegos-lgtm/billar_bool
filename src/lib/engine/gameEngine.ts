@@ -51,6 +51,7 @@ function createInitialBalls(): Ball[] {
     radius: 10,
     color: '#FFFFFF',
     inPocket: false,
+    rotation: 0,
   });
 
   const startX = 600;
@@ -76,6 +77,7 @@ function createInitialBalls(): Ball[] {
         number: ballIndex + 1,
         isStriped: ballIndex >= 7 && ballIndex < 14,
         inPocket: false,
+        rotation: 0,
       });
       ballIndex++;
     }
@@ -193,6 +195,12 @@ class GameEngine {
       ball.y += ball.vy;
       ball.vx *= FRICTION;
       ball.vy *= FRICTION;
+
+      // Atualiza rotação visual proporcional à velocidade
+      const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+      if (speed > 0.01) {
+        ball.rotation += speed * 0.15;
+      }
 
       if (Math.abs(ball.vx) < STOP_THRESHOLD) ball.vx = 0;
       if (Math.abs(ball.vy) < STOP_THRESHOLD) ball.vy = 0;
