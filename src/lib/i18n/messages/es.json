@@ -12,6 +12,7 @@
     "settings": "Ajustes"
   },
   "game": {
+    "you": "Tú",
     "yourTurn": "TU TURNO",
     "opponentTurn": "TURNO DEL OPONENTE",
     "aim": "Apunta y arrastra hacia atrás",

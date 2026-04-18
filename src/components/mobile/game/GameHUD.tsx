@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { Timer, Coins } from 'lucide-react';
+import { Timer } from 'lucide-react';
 import { useGameStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { EngineState } from '@/lib/engine/gameEngine';
@@ -18,81 +18,120 @@ export function GameHUD({ timeLeft, engineState }: GameHUDProps) {
 
   const isPlayerTurn = engineState.currentPlayer === 1;
 
+  // Bolas do jogador 1 (sólidas 1-7 ou listradas 9-15)
+  const p1Balls = engineState.balls.filter((b) => {
+    if (!b.number || b.number === 0 || b.number === 8) return false;
+    if (!engineState.player1Type) return false;
+    if (engineState.player1Type === 'solid') return b.number <= 7;
+    return b.number >= 9;
+  });
+  const p1Pocketed = p1Balls.filter((b) => b.inPocket).length;
+  const p1Total = p1Balls.length;
+
+  // Bolas do jogador 2 (bot)
+  const p2Balls = engineState.balls.filter((b) => {
+    if (!b.number || b.number === 0 || b.number === 8) return false;
+    if (!engineState.player2Type) return false;
+    if (engineState.player2Type === 'solid') return b.number <= 7;
+    return b.number >= 9;
+  });
+  const p2Pocketed = p2Balls.filter((b) => b.inPocket).length;
+  const p2Total = p2Balls.length;
+
   return (
-    <div className="flex items-center justify-between w-full gap-2">
+    <div className="flex items-center justify-between w-full gap-1">
       {/* Player 1 (User) */}
-      <div className="flex items-center gap-1.5 min-w-0">
-        <div
-          className={cn(
-            'w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-[10px] border-2 shrink-0',
-            isPlayerTurn
-              ? 'bg-gradient-to-br from-blue-400 to-blue-600 border-white/40'
-              : 'bg-gradient-to-br from-slate-600 to-slate-700 border-white/10'
+      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+        <div className="relative">
+          <div
+            className={cn(
+              'w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs border-2 shrink-0',
+              isPlayerTurn
+                ? 'bg-gradient-to-br from-blue-500 to-blue-700 border-white/50 shadow-lg shadow-blue-500/30'
+                : 'bg-gradient-to-br from-slate-600 to-slate-800 border-white/20'
+            )}
+          >
+            EU
+          </div>
+          {isPlayerTurn && (
+            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-950" />
           )}
-        >
-          1
         </div>
         <div className="flex flex-col min-w-0">
-          <span className="text-white text-[10px] font-medium truncate leading-tight">
-            {engineState.player1Type
-              ? engineState.player1Type === 'solid'
-                ? '1-7'
-                : '9-15'
-              : '—'}
+          <span className="text-white text-[10px] font-bold truncate leading-tight">
+            {t('you')}
           </span>
-          {isPlayerTurn && (
-            <span className="text-blue-400 text-[9px] leading-tight">{t('yourTurn')}</span>
-          )}
+          {/* Bolas derrubadas */}
+          <div className="flex items-center gap-0.5 mt-0.5">
+            {engineState.player1Type ? (
+              <span className={cn(
+                'text-[9px] font-bold',
+                engineState.player1Type === 'solid' ? 'text-yellow-400' : 'text-blue-400'
+              )}>
+                {engineState.player1Type === 'solid' ? 'LISAS' : 'LISTRADAS'} {p1Pocketed}/{p1Total}
+              </span>
+            ) : (
+              <span className="text-slate-500 text-[9px]">—</span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Center Info */}
-      <div className="flex items-center gap-1.5 shrink-0">
+      <div className="flex flex-col items-center gap-0.5 shrink-0">
         <motion.div
-          animate={timeLeft <= 10 ? { scale: [1, 1.1, 1] } : {}}
+          animate={timeLeft <= 10 ? { scale: [1, 1.15, 1] } : {}}
           transition={{ duration: 0.5, repeat: timeLeft <= 10 ? Infinity : 0 }}
           className={cn(
-            'flex items-center gap-1 px-2 py-0.5 rounded-full font-bold',
+            'flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold',
             timeLeft <= 10
-              ? 'bg-red-500/20 text-red-400 border border-red-500/50'
-              : 'bg-slate-900/80 text-white border border-slate-700'
+              ? 'bg-red-500/25 text-red-400 border border-red-500/50'
+              : 'bg-slate-800/90 text-white border border-slate-600'
           )}
         >
           <Timer className="w-3 h-3" />
-          <span className="text-xs">{timeLeft}s</span>
+          <span className="text-xs tabular-nums">{timeLeft}s</span>
         </motion.div>
-
-        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30">
-          <Coins className="w-3 h-3 text-amber-400" />
-          <span className="text-amber-400 text-xs font-bold">
-            {potentialReward > 0 ? potentialReward.toLocaleString() : '—'}
+        {potentialReward > 0 && (
+          <span className="text-amber-400 text-[10px] font-bold">
+            🏆 {potentialReward.toLocaleString()}
           </span>
-        </div>
+        )}
       </div>
 
       {/* Player 2 (Bot) */}
-      <div className="flex items-center gap-1.5 min-w-0">
+      <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end">
         <div className="flex flex-col min-w-0 text-right">
-          <span className="text-white text-[10px] font-medium truncate leading-tight">
-            {engineState.player2Type
-              ? engineState.player2Type === 'solid'
-                ? '1-7'
-                : '9-15'
-              : '—'}
+          <span className="text-white text-[10px] font-bold truncate leading-tight">
+            BOT
           </span>
-          {!isPlayerTurn && (
-            <span className="text-red-400 text-[9px] leading-tight">{t('opponentTurn')}</span>
-          )}
+          <div className="flex items-center justify-end gap-0.5 mt-0.5">
+            {engineState.player2Type ? (
+              <span className={cn(
+                'text-[9px] font-bold',
+                engineState.player2Type === 'solid' ? 'text-yellow-400' : 'text-blue-400'
+              )}>
+                {p2Pocketed}/{p2Total} {engineState.player2Type === 'solid' ? 'LISAS' : 'LISTRADAS'}
+              </span>
+            ) : (
+              <span className="text-slate-500 text-[9px]">—</span>
+            )}
+          </div>
         </div>
-        <div
-          className={cn(
-            'w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-[10px] border-2 shrink-0',
-            !isPlayerTurn
-              ? 'bg-gradient-to-br from-red-400 to-red-600 border-white/40'
-              : 'bg-gradient-to-br from-slate-600 to-slate-700 border-white/10'
+        <div className="relative">
+          <div
+            className={cn(
+              'w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs border-2 shrink-0',
+              !isPlayerTurn
+                ? 'bg-gradient-to-br from-red-500 to-red-700 border-white/50 shadow-lg shadow-red-500/30'
+                : 'bg-gradient-to-br from-slate-600 to-slate-800 border-white/20'
+            )}
+          >
+            🤖
+          </div>
+          {!isPlayerTurn && (
+            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-950" />
           )}
-        >
-          2
         </div>
       </div>
     </div>

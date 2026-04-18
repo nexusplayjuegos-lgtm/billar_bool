@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useLocale } from '@/hooks';
 import { gameEngine, EngineState } from '@/lib/engine/gameEngine';
+import { playTick } from '@/lib/audio/gameAudio';
 import { useGameStore } from '@/lib/store';
 import { MatchTable } from './MatchTable';
 
@@ -69,10 +70,10 @@ export function GameScreen({
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          // Tempo esgotado = falta
           gameEngine.timeoutTurn();
           return 30;
         }
+        playTick();
         return prev - 1;
       });
     }, 1000);

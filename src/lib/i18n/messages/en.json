@@ -12,6 +12,7 @@
     "settings": "Settings"
   },
   "game": {
+    "you": "You",
     "yourTurn": "YOUR TURN",
     "opponentTurn": "OPPONENT'S TURN",
     "aim": "Aim and drag back",

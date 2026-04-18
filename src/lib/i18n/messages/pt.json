@@ -12,6 +12,7 @@
     "settings": "Ajustes"
   },
   "game": {
+    "you": "Você",
     "yourTurn": "SUA VEZ",
     "opponentTurn": "VEZ DO ADVERSÁRIO",
     "aim": "Mire e arraste para trás",

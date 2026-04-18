@@ -27,14 +27,13 @@ export function PoolTable({ balls, className }: PoolTableProps) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, 800, 400);
 
-    // === MESA PROFISSIONAL ===
+    const borderWidth = 18;
 
     // Borda externa (madeira escura)
     ctx.fillStyle = '#1a1008';
     ctx.fillRect(0, 0, 800, 400);
 
     // Borda com bevel 3D
-    const borderWidth = 18;
     ctx.fillStyle = '#2d1f12';
     ctx.fillRect(4, 4, 800 - 8, 400 - 8);
     ctx.strokeStyle = '#4a3520';
@@ -65,7 +64,6 @@ export function PoolTable({ balls, className }: PoolTableProps) {
     const diamonds = [150, 250, 350, 450, 550, 650];
     ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
     diamonds.forEach((x) => {
-      // Topo
       ctx.beginPath();
       ctx.moveTo(x, borderWidth + 4);
       ctx.lineTo(x + 4, borderWidth + 8);
@@ -73,7 +71,6 @@ export function PoolTable({ balls, className }: PoolTableProps) {
       ctx.lineTo(x - 4, borderWidth + 8);
       ctx.closePath();
       ctx.fill();
-      // Baixo
       ctx.beginPath();
       ctx.moveTo(x, 400 - borderWidth - 4);
       ctx.lineTo(x + 4, 400 - borderWidth - 8);
@@ -84,7 +81,6 @@ export function PoolTable({ balls, className }: PoolTableProps) {
     });
     const sideDiamonds = [100, 200, 300];
     sideDiamonds.forEach((y) => {
-      // Esquerda
       ctx.beginPath();
       ctx.moveTo(borderWidth + 4, y);
       ctx.lineTo(borderWidth + 8, y + 4);
@@ -92,7 +88,6 @@ export function PoolTable({ balls, className }: PoolTableProps) {
       ctx.lineTo(borderWidth + 8, y - 4);
       ctx.closePath();
       ctx.fill();
-      // Direita
       ctx.beginPath();
       ctx.moveTo(800 - borderWidth - 4, y);
       ctx.lineTo(800 - borderWidth - 8, y + 4);
@@ -113,12 +108,10 @@ export function PoolTable({ balls, className }: PoolTableProps) {
     ];
 
     pockets.forEach((pocket) => {
-      // Sombra profunda
       ctx.beginPath();
       ctx.arc(pocket.x + 1, pocket.y + 1, 18, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
       ctx.fill();
-      // Anel metálico externo
       ctx.beginPath();
       ctx.arc(pocket.x, pocket.y, 17, 0, Math.PI * 2);
       ctx.fillStyle = '#2a2a2a';
@@ -128,19 +121,17 @@ export function PoolTable({ balls, className }: PoolTableProps) {
       ctx.strokeStyle = '#555555';
       ctx.lineWidth = 1.5;
       ctx.stroke();
-      // Fundo escuro da caçapa
       ctx.beginPath();
       ctx.arc(pocket.x, pocket.y, 14, 0, Math.PI * 2);
       ctx.fillStyle = '#0a0a0a';
       ctx.fill();
-      // Brilho interno sutil
       ctx.beginPath();
       ctx.arc(pocket.x - 3, pocket.y - 3, 6, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
       ctx.fill();
     });
 
-    // Head string (linha de cabeça)
+    // Head string
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
     ctx.lineWidth = 1;
     ctx.setLineDash([6, 4]);
@@ -156,9 +147,18 @@ export function PoolTable({ balls, className }: PoolTableProps) {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
     ctx.fill();
 
+    // Reflexo sutil no feltro (DEPOIS da mesa, ANTES das bolas)
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(800, 0);
+    ctx.lineTo(800, 60);
+    ctx.lineTo(0, 90);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.015)';
+    ctx.fill();
+
     // === BOLAS ===
     balls.forEach((ball) => {
-      // Animação de queda na caçapa
       if (ball.inPocket) {
         const animKey = ball.id;
         let progress = pocketAnim.get(animKey) ?? 0;
@@ -183,16 +183,6 @@ export function PoolTable({ balls, className }: PoolTableProps) {
 
       drawBall(ctx, ball);
     });
-
-    // === REFLEXO SUTIL NO FELTRO ===
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(800, 0);
-    ctx.lineTo(800, 80);
-    ctx.lineTo(0, 120);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
-    ctx.fill();
   }, [balls, pocketAnim]);
 
   return (
@@ -231,8 +221,8 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
     ballGradient.addColorStop(0.5, '#f0f0f0');
     ballGradient.addColorStop(1, '#c8c8c8');
   } else if (ball.number === 8) {
-    ballGradient.addColorStop(0, '#404040');
-    ballGradient.addColorStop(0.5, '#1a1a1a');
+    ballGradient.addColorStop(0, '#505050');
+    ballGradient.addColorStop(0.4, '#202020');
     ballGradient.addColorStop(1, '#000000');
   } else {
     ballGradient.addColorStop(0, '#ffffff');
@@ -243,12 +233,19 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   ctx.fillStyle = ballGradient;
   ctx.fill();
 
-  // Marca de rotação (para visualizar rolamento)
+  // Marca de rolagem — linha sutil que gira com a bola
   if (ball.number !== undefined && ball.number >= 0) {
+    ctx.save();
     ctx.beginPath();
-    ctx.arc(ball.radius * 0.6, 0, 1.8, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.fill();
+    ctx.arc(0, 0, ball.radius - 1, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-ball.radius + 2, 0);
+    ctx.lineTo(ball.radius - 2, 0);
+    ctx.stroke();
+    ctx.restore();
   }
 
   // Faixa branca para bolas listradas
@@ -258,27 +255,41 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
     ctx.arc(0, 0, ball.radius, 0, Math.PI * 2);
     ctx.clip();
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(-ball.radius, -4, ball.radius * 2, 8);
+    ctx.fillRect(-ball.radius, -3.5, ball.radius * 2, 7);
     ctx.restore();
   }
 
   // Número da bola
   if (ball.number && ball.number > 0) {
-    ctx.beginPath();
-    ctx.arc(0, 0, 6.5, 0, Math.PI * 2);
-    ctx.fillStyle = 'white';
-    ctx.fill();
-    ctx.fillStyle = ball.number === 8 ? 'white' : 'black';
-    ctx.font = 'bold 8px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(ball.number.toString(), 0, 0);
+    if (ball.number === 8) {
+      // Bola 8: círculo branco com 8 em preto
+      ctx.beginPath();
+      ctx.arc(0, 0, 6, 0, Math.PI * 2);
+      ctx.fillStyle = 'white';
+      ctx.fill();
+      ctx.fillStyle = 'black';
+      ctx.font = 'bold 8px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('8', 0, 0);
+    } else {
+      // Outras bolas: círculo branco com número em preto
+      ctx.beginPath();
+      ctx.arc(0, 0, 6, 0, Math.PI * 2);
+      ctx.fillStyle = 'white';
+      ctx.fill();
+      ctx.fillStyle = 'black';
+      ctx.font = 'bold 8px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(ball.number.toString(), 0, 0);
+    }
   }
 
-  // Brilho da bola
+  // Brilho da bola (specular highlight)
   ctx.beginPath();
-  ctx.arc(-3.5, -3.5, 3.5, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+  ctx.arc(-3, -3, 3, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
   ctx.fill();
 
   ctx.restore();

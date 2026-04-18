@@ -1,40 +1,38 @@
 'use client';
 
 let audioCtx: AudioContext | null = null;
-let audioUnlocked = false;
 
-function unlockAudio() {
-  if (audioUnlocked) return;
-  audioUnlocked = true;
-  const ctx = getAudioContext();
-  if (ctx.state === 'suspended') {
-    ctx.resume();
+function getAudioContext(): AudioContext | null {
+  if (typeof window === 'undefined') return null;
+  if (!audioCtx) {
+    // Lazy creation — some browsers require AudioContext to be created inside a user gesture
+    try {
+      audioCtx = new AudioContext();
+    } catch {
+      return null;
+    }
   }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(() => {});
+  }
+  return audioCtx;
 }
 
 // Unlock audio on first user interaction (critical for mobile Safari/Chrome)
 if (typeof window !== 'undefined') {
   const unlock = () => {
-    unlockAudio();
-    document.removeEventListener('touchstart', unlock);
-    document.removeEventListener('click', unlock);
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
   };
-  document.addEventListener('touchstart', unlock, { once: true });
-  document.addEventListener('click', unlock, { once: true });
-}
-
-function getAudioContext(): AudioContext {
-  if (!audioCtx) {
-    audioCtx = new AudioContext();
-  }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-  return audioCtx;
+  document.addEventListener('touchstart', unlock, { once: true, passive: true });
+  document.addEventListener('click', unlock, { once: true, passive: true });
 }
 
 function playNoise(duration: number, frequency: number, volume: number, type: OscillatorType = 'sine') {
   const ctx = getAudioContext();
+  if (!ctx) return;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = type;
@@ -49,9 +47,9 @@ function playNoise(duration: number, frequency: number, volume: number, type: Os
 
 export function playCueHit(power: number = 50) {
   const ctx = getAudioContext();
+  if (!ctx) return;
   const duration = 0.15 + (power / 100) * 0.1;
 
-  // Impacto principal
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = 'triangle';
@@ -64,12 +62,12 @@ export function playCueHit(power: number = 50) {
   osc.start(ctx.currentTime);
   osc.stop(ctx.currentTime + duration);
 
-  // Click de madeira
   playNoise(0.05, 800, 0.15, 'square');
 }
 
 export function playBallHit(intensity: number = 0.5) {
   const ctx = getAudioContext();
+  if (!ctx) return;
   const duration = 0.08 + intensity * 0.06;
 
   const osc = ctx.createOscillator();
@@ -91,8 +89,8 @@ export function playWallHit() {
 
 export function playPocket() {
   const ctx = getAudioContext();
+  if (!ctx) return;
 
-  // Som de queda
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = 'sine';
@@ -105,7 +103,6 @@ export function playPocket() {
   osc.start(ctx.currentTime);
   osc.stop(ctx.currentTime + 0.3);
 
-  // Reverb sutil
   playNoise(0.2, 150, 0.08, 'sine');
 }
 
@@ -115,7 +112,8 @@ export function playNearMiss() {
 
 export function playWin() {
   const ctx = getAudioContext();
-  const notes = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6
+  if (!ctx) return;
+  const notes = [523.25, 659.25, 783.99, 1046.5];
   notes.forEach((freq, i) => {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -133,4 +131,20 @@ export function playWin() {
 
 export function playTurnChange() {
   playNoise(0.08, 350, 0.1, 'sine');
+}
+
+// Simple tick-tock for timer
+export function playTick() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(880, ctx.currentTime);
+  gain.gain.setValueAtTime(0.08, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 0.04);
 }

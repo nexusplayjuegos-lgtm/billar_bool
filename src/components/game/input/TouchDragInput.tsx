@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import { Ball } from '@/types';
 
 interface TouchDragInputProps {
@@ -24,7 +24,7 @@ export function TouchDragInput({
 }: TouchDragInputProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [justPlaced, setJustPlaced] = useState(false);
+  const [isPlacing, setIsPlacing] = useState(false);
 
   const getLogicalPos = useCallback(
     (clientX: number, clientY: number) => {
@@ -46,11 +46,10 @@ export function TouchDragInput({
       const pos = getLogicalPos(clientX, clientY);
       if (!pos) return;
 
-      // Ball-in-hand: reposiciona a bola branca no primeiro toque
-      if (ballInHand && onPlaceCueBall && !justPlaced) {
+      // Ball-in-hand: arrasta a bola branca
+      if (ballInHand && onPlaceCueBall) {
+        setIsPlacing(true);
         onPlaceCueBall(pos.x, pos.y);
-        setJustPlaced(true);
-        setTimeout(() => setJustPlaced(false), 300);
         return;
       }
 
@@ -65,11 +64,16 @@ export function TouchDragInput({
       onAimChange(angle);
       onPowerChange(power);
     },
-    [balls, disabled, getLogicalPos, onAimChange, onPowerChange, ballInHand, onPlaceCueBall, justPlaced]
+    [balls, disabled, getLogicalPos, onAimChange, onPowerChange, ballInHand, onPlaceCueBall]
   );
 
   const handleMove = useCallback(
     (clientX: number, clientY: number) => {
+      if (isPlacing && ballInHand && onPlaceCueBall) {
+        const pos = getLogicalPos(clientX, clientY);
+        if (pos) onPlaceCueBall(pos.x, pos.y);
+        return;
+      }
       if (!isDragging) return;
       const pos = getLogicalPos(clientX, clientY);
       if (!pos) return;
@@ -83,19 +87,27 @@ export function TouchDragInput({
       onAimChange(angle);
       onPowerChange(power);
     },
-    [isDragging, balls, getLogicalPos, onAimChange, onPowerChange]
+    [isDragging, isPlacing, balls, getLogicalPos, onAimChange, onPowerChange, ballInHand, onPlaceCueBall]
   );
 
   const handleEnd = useCallback(() => {
+    if (isPlacing) {
+      setIsPlacing(false);
+      return;
+    }
     if (!isDragging) return;
     setIsDragging(false);
     onShoot();
-  }, [isDragging, onShoot]);
+  }, [isDragging, isPlacing, onShoot]);
+
+  const cursorClass = ballInHand && !disabled
+    ? 'cursor-grab active:cursor-grabbing'
+    : 'cursor-default';
 
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 touch-none"
+      className={`absolute inset-0 touch-none ${cursorClass}`}
       onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
       onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
       onMouseUp={handleEnd}
