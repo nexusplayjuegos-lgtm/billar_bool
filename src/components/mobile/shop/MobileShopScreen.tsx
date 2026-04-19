@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { CueCard } from './CueCard';
+import { TableCard } from './TableCard';
 import { PaymentModal } from './PaymentModal';
+import { TABLE_DESIGNS } from '@/lib/shop/tableDesigns';
 import { MOCK_CUES } from '@/mocks/data';
 import { Cue } from '@/types';
 import { cn } from '@/lib/utils';
@@ -90,10 +92,15 @@ export function MobileShopScreen() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="flex flex-col items-center justify-center h-64 text-slate-500"
+              className="grid grid-cols-2 gap-3"
             >
-              <div className="text-4xl mb-4">🎱</div>
-              <p>Mesas em breve...</p>
+              {TABLE_DESIGNS.map((table, index) => (
+                <TableCard
+                  key={table.id}
+                  tableId={table.id}
+                  index={index}
+                />
+              ))}
             </motion.div>
           )}
 

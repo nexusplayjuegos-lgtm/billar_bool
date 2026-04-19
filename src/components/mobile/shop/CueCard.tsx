@@ -6,51 +6,12 @@ import { useTranslations } from 'next-intl';
 import { useUserStore } from '@/lib/store';
 import { Cue } from '@/types';
 import { cn } from '@/lib/utils';
+import { CueCanvas } from './CueCanvas';
 
 interface CueCardProps {
   cue: Cue;
   index: number;
   onPreview: (cue: Cue) => void;
-}
-
-// SVG de Taco Realista
-function CueSVG({ color, rarity }: { color: string; rarity: string }) {
-  const getRarityColor = () => {
-    switch (rarity) {
-      case 'legendary': return ['#FFD700', '#FFA500', '#8B4513'];
-      case 'epic': return ['#9333ea', '#c084fc', '#581c87'];
-      case 'rare': return ['#3b82f6', '#60a5fa', '#1e40af'];
-      default: return ['#9ca3af', '#d1d5db', '#4b5563'];
-    }
-  };
-
-  const [tip, shaft, butt] = getRarityColor();
-
-  return (
-    <svg viewBox="0 0 200 40" className="w-full h-full">
-      {/* Sombra */}
-      <ellipse cx="100" cy="35" rx="90" ry="3" fill="rgba(0,0,0,0.3)" />
-
-      {/* Ponta do taco (couro) */}
-      <ellipse cx="20" cy="20" rx="8" ry="10" fill={tip} />
-      <ellipse cx="20" cy="20" rx="5" ry="7" fill={color} />
-
-      {/* Shaft (madeira) */}
-      <rect x="28" y="14" width="120" height="12" rx="2" fill={shaft} />
-      <rect x="28" y="14" width="120" height="6" rx="2" fill="rgba(255,255,255,0.2)" />
-
-      {/* Anéis decorativos */}
-      <rect x="148" y="13" width="4" height="14" fill="#FFD700" />
-      <rect x="154" y="13" width="2" height="14" fill="#C0C0C0" />
-
-      {/* Butt (cabo) */}
-      <rect x="158" y="12" width="30" height="16" rx="3" fill={butt} />
-      <rect x="158" y="12" width="30" height="4" rx="3" fill="rgba(255,255,255,0.1)" />
-
-      {/* Logo no cabo */}
-      <circle cx="173" cy="20" r="4" fill="rgba(255,255,255,0.3)" />
-    </svg>
-  );
 }
 
 export function CueCard({ cue, index, onPreview }: CueCardProps) {
@@ -118,9 +79,9 @@ export function CueCard({ cue, index, onPreview }: CueCardProps) {
         </svg>
       </button>
 
-      {/* Visual do Taco */}
-      <div className="h-28 mb-3 relative mt-6">
-        <CueSVG color={cue.visual?.includes('green') ? '#22c55e' : cue.visual?.includes('blue') ? '#3b82f6' : cue.visual?.includes('orange') ? '#f97316' : cue.visual?.includes('cyan') ? '#06b6d4' : cue.visual?.includes('gold') ? '#eab308' : cue.visual?.includes('purple') ? '#a855f7' : '#8B4513'} rarity={cue.rarity} />
+      {/* Visual do Taco - Canvas 2D Profissional */}
+      <div className="h-28 mb-3 relative mt-6 flex items-center justify-center">
+        <CueCanvas cueId={cue.id} width={260} height={52} />
 
         {/* Badge de equipado */}
         {isEquipped && (
