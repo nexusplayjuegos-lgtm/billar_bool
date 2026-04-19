@@ -120,6 +120,20 @@
     "topPlayers": "Top Players",
     "onlinePlayers": "{count} players online"
   },
+  "settings": {
+    "title": "Settings",
+    "sound": "Sound",
+    "music": "Music",
+    "vibration": "Vibration",
+    "notifications": "Notifications",
+    "language": "Language",
+    "languagePt": "Portuguese",
+    "languageEn": "English",
+    "languageEs": "Spanish",
+    "resetData": "Reset Data",
+    "resetConfirm": "Are you sure? All data will be lost!",
+    "version": "Version"
+  },
   "auth": {
       "loginTitle": "Entrar na sua conta",
       "registerTitle": "Criar nova conta",

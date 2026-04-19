@@ -122,6 +122,20 @@
   },
 
 
+  "settings": {
+    "title": "Ajustes",
+    "sound": "Sonido",
+    "music": "Música",
+    "vibration": "Vibración",
+    "notifications": "Notificaciones",
+    "language": "Idioma",
+    "languagePt": "Portugués",
+    "languageEn": "Inglés",
+    "languageEs": "Español",
+    "resetData": "Restablecer Datos",
+    "resetConfirm": "¿Estás seguro? ¡Todos los datos se perderán!",
+    "version": "Versión"
+  },
   "auth": {
         "loginTitle": "Entrar na sua conta",
         "registerTitle": "Criar nova conta",

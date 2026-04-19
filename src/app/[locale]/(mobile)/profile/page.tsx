@@ -1,14 +1,21 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { User, Settings, LogOut } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useUserStore } from '@/lib/store';
 import { formatNumber } from '@/lib/utils';
+import { SettingsScreen } from '@/components/mobile/settings';
 
 export default function ProfilePage() {
   const t = useTranslations();
   const { profile } = useUserStore();
+  const [showSettings, setShowSettings] = useState(false);
+
+  if (showSettings) {
+    return <SettingsScreen onClose={() => setShowSettings(false)} />;
+  }
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4">
@@ -60,9 +67,12 @@ export default function ProfilePage() {
           <User className="w-5 h-5 text-slate-400" />
           <span className="text-white">Editar Perfil</span>
         </button>
-        <button className="w-full flex items-center gap-3 p-4 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition-colors">
+        <button
+          onClick={() => setShowSettings(true)}
+          className="w-full flex items-center gap-3 p-4 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition-colors"
+        >
           <Settings className="w-5 h-5 text-slate-400" />
-          <span className="text-white">Configurações</span>
+          <span className="text-white">{t('navigation.settings')}</span>
         </button>
         <button className="w-full flex items-center gap-3 p-4 bg-red-500/10 rounded-xl hover:bg-red-500/20 transition-colors">
           <LogOut className="w-5 h-5 text-red-400" />
