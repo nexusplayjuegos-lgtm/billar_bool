@@ -206,7 +206,6 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
   ctx.fill();
 
-  // ===== Corpo da bola (SEM rotação) =====
   ctx.save();
   ctx.translate(ball.x, ball.y);
 
@@ -269,7 +268,7 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
     }
   }
 
-  // Brilho da bola (specular highlight)
+  // Brilho fixo (specular highlight estático — não gira)
   ctx.beginPath();
   ctx.arc(-3, -3, 3, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
@@ -277,29 +276,34 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
 
   ctx.restore();
 
-  // ===== Brilho móvel — ilusão de rolamento =====
-  // Em 2D top-down, um círculo perfeito não mostra rotação.
-  // O brilho/specular que "caminha" pela superfície cria a ilusão de rolamento.
-  const rollDistance = ball.rotation; // acumulado no engine como distance/radius
-  const shineCycle = 100; // pixels de rollDistance para um ciclo completo
-  const shinePhase = (Math.abs(rollDistance) % shineCycle) / shineCycle;
-  const shineAngle = shinePhase * Math.PI * 2;
+  // =============================================
+  // BRILHO DE ROLAMENTO CORRIGIDO
+  // O brilho desliza na direcção do movimento
+  // em vez de orbitar em círculo (efeito roleta)
+  // =============================================
+  const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
 
-  // Brilho principal que se move pela superfície
-  const shineX = ball.x + Math.cos(shineAngle) * ball.radius * 0.35;
-  const shineY = ball.y + Math.sin(shineAngle) * ball.radius * 0.25;
+  if (speed > 0.1) {
+    // Direcção normalizada do movimento
+    const dirX = ball.vx / speed;
+    const dirY = ball.vy / speed;
 
-  ctx.beginPath();
-  ctx.arc(shineX, shineY, ball.radius * 0.18, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-  ctx.fill();
+    // Ciclo de 0 a 1 baseado na distância percorrida (rotation acumulado no engine)
+    const shineCycle = 100;
+    const shinePhase = (Math.abs(ball.rotation) % shineCycle) / shineCycle;
 
-  // Brilho secundário mais sutil (lado oposto)
-  const shine2X = ball.x + Math.cos(shineAngle + Math.PI) * ball.radius * 0.2;
-  const shine2Y = ball.y + Math.sin(shineAngle + Math.PI) * ball.radius * 0.15;
+    // O brilho desliza da frente para trás ao longo da direcção do movimento
+    // shinePhase 0.0 = frente da bola, shinePhase 1.0 = volta à frente
+    const shineOffset = (shinePhase - 0.5) * ball.radius * 1.4;
+    const shineX = ball.x + dirX * shineOffset;
+    const shineY = ball.y + dirY * shineOffset;
 
-  ctx.beginPath();
-  ctx.arc(shine2X, shine2Y, ball.radius * 0.1, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-  ctx.fill();
+    // Opacidade proporcional à velocidade — desaparece quando para
+    const alpha = Math.min(0.55, speed * 0.08);
+
+    ctx.beginPath();
+    ctx.arc(shineX, shineY, ball.radius * 0.18, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+    ctx.fill();
+  }
 }
