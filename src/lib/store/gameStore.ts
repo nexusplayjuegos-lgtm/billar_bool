@@ -5,6 +5,7 @@ import { create } from 'zustand';
 interface GameStore {
   isPlaying: boolean;
   currentMode: string | null;
+  modeType: '8ball' | 'brazilian' | 'snooker' | null;
   entryFee: number;
   potentialReward: number;
 
@@ -21,7 +22,7 @@ interface GameStore {
   pocketedBalls: number[];
   shots: number;
 
-  startGame: (mode: string, entryFee: number, reward: number) => void;
+  startGame: (mode: string, modeType: '8ball' | 'brazilian' | 'snooker', entryFee: number, reward: number) => void;
   endGame: (won: boolean) => void;
   setUIState: (state: Partial<Pick<GameStore, 'currentPlayer' | 'player1Type' | 'player2Type' | 'turn' | 'gameOver' | 'winner' | 'foul' | 'scratch' | 'ballsMoving' | 'pocketedBalls' | 'shots'>>) => void;
   reset: () => void;
@@ -30,6 +31,7 @@ interface GameStore {
 export const useGameStore = create<GameStore>((set) => ({
   isPlaying: false,
   currentMode: null,
+  modeType: null,
   entryFee: 0,
   potentialReward: 0,
 
@@ -45,10 +47,11 @@ export const useGameStore = create<GameStore>((set) => ({
   pocketedBalls: [],
   shots: 0,
 
-  startGame: (mode, entryFee, reward) =>
+  startGame: (mode, modeType, entryFee, reward) =>
     set({
       isPlaying: true,
       currentMode: mode,
+      modeType,
       entryFee,
       potentialReward: reward,
       currentPlayer: 1,
@@ -77,6 +80,7 @@ export const useGameStore = create<GameStore>((set) => ({
     set({
       isPlaying: false,
       currentMode: null,
+      modeType: null,
       entryFee: 0,
       potentialReward: 0,
       currentPlayer: 1,

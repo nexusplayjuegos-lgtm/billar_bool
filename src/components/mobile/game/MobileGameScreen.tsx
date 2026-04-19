@@ -12,7 +12,7 @@ import { GameExitButton } from './GameExitButton';
 export function MobileGameScreen() {
   const router = useRouter();
   const { locale } = useLocale();
-  const { endGame } = useGameStore();
+  const { endGame, modeType } = useGameStore();
   const { containerRef } = useImmersiveMatch();
 
   const handleExitGame = useCallback(() => {
@@ -26,6 +26,7 @@ export function MobileGameScreen() {
         blockScroll
         onExit={handleExitGame}
         tableScale={0.92}
+        gameMode={modeType === 'brazilian' ? 'brazilian' : '8ball'}
         header={(engineState, timeLeft) => (
           <div className="shrink-0 h-12 px-3 flex items-center justify-between bg-slate-950/80 backdrop-blur-sm z-20 border-b border-slate-800/50">
             <div className="flex-1 min-w-0">

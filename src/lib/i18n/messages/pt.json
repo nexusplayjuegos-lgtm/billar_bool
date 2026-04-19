@@ -34,7 +34,12 @@
     "playAgain": "Jogar Novamente",
     "doubleBet": "Dobrar Aposta",
     "tryAgain": "Tentar de Novo",
-    "lobby": "Lobby"
+    "lobby": "Lobby",
+    "points": "Pontos",
+    "foulNoRed": "Falta! Não encostou na vermelha",
+    "pointSequence": "+1 ponto!",
+    "pointBoca": "+2 pontos! BOCA!",
+    "targetPoints": "Meta: {points}"
   },
   "shop": {
     "title": "Loja Premium",

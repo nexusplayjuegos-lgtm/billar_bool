@@ -27,6 +27,7 @@ interface GameScreenProps {
   onExit: () => void;
   blockScroll?: boolean;
   tableScale?: number;
+  gameMode?: '8ball' | 'brazilian';
 }
 
 export function GameScreen({
@@ -36,6 +37,7 @@ export function GameScreen({
   onExit,
   blockScroll = false,
   tableScale,
+  gameMode = '8ball',
 }: GameScreenProps) {
   const t = useTranslations('game');
   const { locale } = useLocale();
@@ -51,6 +53,7 @@ export function GameScreen({
   const [showLoseModal, setShowLoseModal] = useState(false);
 
   useEffect(() => {
+    gameEngine.setMode(gameMode);
     gameEngine.start();
     const unsubscribe = gameEngine.subscribe((state) => {
       setEngineState(state);
@@ -78,7 +81,7 @@ export function GameScreen({
       unsubscribe();
       gameEngine.stop();
     };
-  }, [addCoins, addXP, potentialReward, updateStats]);
+  }, [addCoins, addXP, potentialReward, updateStats, gameMode]);
 
   useEffect(() => {
     if (!engineState || engineState.gameOver || engineState.ballsMoving) return;

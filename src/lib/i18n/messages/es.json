@@ -34,7 +34,12 @@
     "playAgain": "Jugar de Nuevo",
     "doubleBet": "Duplicar Apuesta",
     "tryAgain": "Intentar de Nuevo",
-    "lobby": "Lobby"
+    "lobby": "Lobby",
+    "points": "Puntos",
+    "foulNoRed": "¡Falta! No tocó la roja",
+    "pointSequence": "¡+1 punto!",
+    "pointBoca": "¡+2 puntos! ¡TRONERA!",
+    "targetPoints": "Meta: {points}"
   },
   "shop": {
     "title": "Tienda Premium",

@@ -11,7 +11,7 @@ export default function GamePage({ params }: { params: { mode: string } }) {
   useEffect(() => {
     const modeData = MOCK_GAME_MODES.find((m) => m.id === params.mode);
     if (modeData) {
-      startGame(modeData.id, modeData.entryFee.coins, modeData.reward.win);
+      startGame(modeData.id, modeData.type, modeData.entryFee.coins, modeData.reward.win);
     }
   }, [params.mode, startGame]);
 

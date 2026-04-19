@@ -34,7 +34,12 @@
     "playAgain": "Play Again",
     "doubleBet": "Double Bet",
     "tryAgain": "Try Again",
-    "lobby": "Lobby"
+    "lobby": "Lobby",
+    "points": "Points",
+    "foulNoRed": "Foul! Didn't hit the red ball",
+    "pointSequence": "+1 point!",
+    "pointBoca": "+2 points! POCKET!",
+    "targetPoints": "Target: {points}"
   },
   "shop": {
     "title": "Premium Shop",

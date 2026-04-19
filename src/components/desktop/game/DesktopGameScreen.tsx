@@ -20,7 +20,7 @@ export function DesktopGameScreen({ modeId }: DesktopGameScreenProps) {
   const t = useTranslations('game');
   const { locale } = useLocale();
   const router = useRouter();
-  const { endGame } = useGameStore();
+  const { endGame, modeType } = useGameStore();
 
   const handleExit = useCallback(() => {
     endGame(false);
@@ -30,6 +30,7 @@ export function DesktopGameScreen({ modeId }: DesktopGameScreenProps) {
   return (
     <GameScreen
       onExit={handleExit}
+      gameMode={modeType === 'brazilian' ? 'brazilian' : '8ball'}
       header={(engineState, _timeLeft) => (
         <header className="shrink-0 h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4">
           <div className="flex items-center gap-4">

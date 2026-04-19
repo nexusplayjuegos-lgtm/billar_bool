@@ -32,7 +32,7 @@ export function MobileLobbyScreen() {
     if (user.currencies.coins < selectedMode.entryFee.coins) return;
     // Deduz entrada e inicia game store
     removeCoins(selectedMode.entryFee.coins);
-    startGame(selectedMode.id, selectedMode.entryFee.coins, selectedMode.reward.win);
+    startGame(selectedMode.id, selectedMode.type, selectedMode.entryFee.coins, selectedMode.reward.win);
     router.push(`/${locale}/game/${selectedMode.id}`);
   };
 

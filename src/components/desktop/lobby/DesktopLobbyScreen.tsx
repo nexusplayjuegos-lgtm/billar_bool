@@ -36,7 +36,7 @@ export function DesktopLobbyScreen() {
               const mode = MOCK_GAME_MODES[0];
               if (user.currencies.coins >= mode.entryFee.coins) {
                 removeCoins(mode.entryFee.coins);
-                startGame(mode.id, mode.entryFee.coins, mode.reward.win);
+                startGame(mode.id, mode.type, mode.entryFee.coins, mode.reward.win);
                 router.push(`/${locale}/play/${mode.id}`);
               }
             }}
@@ -89,7 +89,7 @@ export function DesktopLobbyScreen() {
               onClick={() => {
                 if (user.currencies.coins >= mode.entryFee.coins) {
                   removeCoins(mode.entryFee.coins);
-                  startGame(mode.id, mode.entryFee.coins, mode.reward.win);
+                  startGame(mode.id, mode.type, mode.entryFee.coins, mode.reward.win);
                   router.push(`/${locale}/play/${mode.id}`);
                 }
               }}

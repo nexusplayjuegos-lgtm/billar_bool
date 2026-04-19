@@ -2,6 +2,7 @@
 
 import { Ball } from '@/types';
 import { playCueHit, playBallHit, playWallHit, playPocket, playWin, playTurnChange } from '@/lib/audio/gameAudio';
+import { getBotDecision, BotDifficulty } from '@/lib/ai/botAI';
 
 const TABLE_WIDTH = 800;
 const TABLE_HEIGHT = 400;
@@ -39,11 +40,16 @@ export interface EngineState {
   shots: number;
   ballInHand: boolean;
   isBreakShot: boolean;
+  mode: '8ball' | 'brazilian';
+  // Sinuca-specific
+  player1Points: number;
+  player2Points: number;
+  maxPoints: number;
 }
 
 export type EngineListener = (state: EngineState) => void;
 
-function createInitialBalls(): Ball[] {
+function create8BallBalls(): Ball[] {
   const balls: Ball[] = [];
   balls.push({
     id: 0,
@@ -88,6 +94,50 @@ function createInitialBalls(): Ball[] {
   return balls;
 }
 
+function createBrazilianBalls(): Ball[] {
+  return [
+    {
+      id: 0,
+      x: 200,
+      y: 200,
+      vx: 0,
+      vy: 0,
+      radius: 10,
+      color: '#FFFFFF',
+      inPocket: false,
+      rotation: 0,
+    },
+    {
+      id: 1,
+      x: 400,
+      y: 200,
+      vx: 0,
+      vy: 0,
+      radius: 10,
+      color: '#EF4444',
+      number: 1,
+      inPocket: false,
+      rotation: 0,
+    },
+    {
+      id: 2,
+      x: 600,
+      y: 200,
+      vx: 0,
+      vy: 0,
+      radius: 10,
+      color: '#FCD34D',
+      number: 2,
+      inPocket: false,
+      rotation: 0,
+    },
+  ];
+}
+
+function createInitialBalls(mode: '8ball' | 'brazilian'): Ball[] {
+  return mode === 'brazilian' ? createBrazilianBalls() : create8BallBalls();
+}
+
 class GameEngine {
   private state: EngineState;
   private listeners: EngineListener[] = [];
@@ -98,15 +148,22 @@ class GameEngine {
   private readonly stepMs = 1000 / 60;
   private pocketedThisTurn: number[] = [];
   private groupsAssigned = false;
-  private firstContact: number | null = null; // id da primeira bola tocada na tacada
+  private firstContact: number | null = null;
+  // Sinuca-specific tracking
+  private redBallContact = false;    // branca encostou na vermelha
+  private yellowBallContact = false; // vermelha encostou na amarela
+  private redBallPocketed = false;   // vermelha caiu na caçapa
+  private mode: '8ball' | 'brazilian' = '8ball';
+  private botDifficulty: BotDifficulty = 'medium';
 
-  constructor() {
-    this.state = this.createInitialState();
+  constructor(mode: '8ball' | 'brazilian' = '8ball') {
+    this.mode = mode;
+    this.state = this.createInitialState(mode);
   }
 
-  private createInitialState(): EngineState {
+  private createInitialState(mode: '8ball' | 'brazilian'): EngineState {
     return {
-      balls: createInitialBalls(),
+      balls: createInitialBalls(mode),
       currentPlayer: 1,
       player1Type: null,
       player2Type: null,
@@ -120,7 +177,20 @@ class GameEngine {
       shots: 0,
       ballInHand: true,
       isBreakShot: true,
+      mode,
+      player1Points: 0,
+      player2Points: 0,
+      maxPoints: mode === 'brazilian' ? 10 : 0,
     };
+  }
+
+  setMode(mode: '8ball' | 'brazilian') {
+    this.mode = mode;
+    this.reset();
+  }
+
+  setBotDifficulty(difficulty: BotDifficulty) {
+    this.botDifficulty = difficulty;
   }
 
   start() {
@@ -139,9 +209,13 @@ class GameEngine {
 
   reset() {
     this.stop();
-    this.state = this.createInitialState();
+    this.state = this.createInitialState(this.mode);
     this.pocketedThisTurn = [];
     this.groupsAssigned = false;
+    this.firstContact = null;
+    this.redBallContact = false;
+    this.yellowBallContact = false;
+    this.redBallPocketed = false;
     this.emit();
   }
 
@@ -156,6 +230,9 @@ class GameEngine {
     this.state.shots += 1;
     this.pocketedThisTurn = [];
     this.firstContact = null;
+    this.redBallContact = false;
+    this.yellowBallContact = false;
+    this.redBallPocketed = false;
     this.state.foul = false;
     this.state.scratch = false;
     this.state.ballInHand = false;
@@ -171,7 +248,6 @@ class GameEngine {
     let clampedX = Math.max(WALL_LEFT + margin, Math.min(WALL_RIGHT - margin, x));
     const clampedY = Math.max(WALL_TOP + margin, Math.min(WALL_BOTTOM - margin, y));
 
-    // During break shot, cue ball must be behind the head string (x <= 200)
     if (this.state.isBreakShot) {
       clampedX = Math.min(clampedX, 200 - margin);
     }
@@ -234,7 +310,6 @@ class GameEngine {
       ball.vx *= FRICTION;
       ball.vy *= FRICTION;
 
-      // Atualiza rotação visual proporcional à velocidade
       const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
       if (speed > 0.01) {
         ball.rotation += speed * 0.15;
@@ -305,10 +380,20 @@ class GameEngine {
             playBallHit(Math.min(impactIntensity, 1));
           }
 
-          // Registra primeira bola tocada pela bola branca
+          // Track contacts for rules
           if (this.firstContact === null) {
             if (a.id === 0) this.firstContact = b.id;
             else if (b.id === 0) this.firstContact = a.id;
+          }
+          // Sinuca: track red ball contact (white → red)
+          if (this.mode === 'brazilian') {
+            if ((a.id === 0 && b.id === 1) || (a.id === 1 && b.id === 0)) {
+              this.redBallContact = true;
+            }
+            // Sinuca: track yellow ball contact (red → yellow)
+            if ((a.id === 1 && b.id === 2) || (a.id === 2 && b.id === 1)) {
+              this.yellowBallContact = true;
+            }
           }
         }
       }
@@ -327,6 +412,9 @@ class GameEngine {
           if (!this.state.pocketedBalls.includes(ball.id)) {
             this.state.pocketedBalls.push(ball.id);
           }
+          if (this.mode === 'brazilian' && ball.id === 1) {
+            this.redBallPocketed = true;
+          }
           playPocket();
           break;
         }
@@ -337,21 +425,23 @@ class GameEngine {
     this.state.ballsMoving = anyMoving;
 
     if (wasMoving && !anyMoving) {
-      this.applyRules();
-      // Se passou para a vez do bot, inicia jogada do bot
+      if (this.mode === 'brazilian') {
+        this.applyBrazilianRules();
+      } else {
+        this.apply8BallRules();
+      }
       if (!this.state.gameOver && this.state.currentPlayer === 2) {
         this.scheduleBotPlay();
       }
     }
 
-    // BUG FIX: emitir a cada frame enquanto as bolas estiverem se movendo
-    // para que o React possa re-renderizar a mesa em tempo real.
     if (anyMoving || wasMoving !== anyMoving || this.pocketedThisTurn.length > 0) {
       this.emit();
     }
   }
 
-  private applyRules() {
+  // ===== 8-BALL RULES =====
+  private apply8BallRules() {
     if (this.state.gameOver) return;
 
     const cueBall = this.state.balls[0];
@@ -370,16 +460,13 @@ class GameEngine {
       return;
     }
 
-    // Verifica se a bola branca tocou alguma bola
     if (this.firstContact === null) {
-      // Não tocou em nenhuma bola = falta
       this.state.foul = true;
       this.state.ballInHand = true;
       this.switchTurn();
       return;
     }
 
-    // Verifica se a primeira bola tocada pertence ao grupo do jogador
     if (this.groupsAssigned) {
       const firstBall = this.state.balls.find((b) => b.id === this.firstContact);
       const playerGroup = player === 1 ? this.state.player1Type : this.state.player2Type;
@@ -388,7 +475,6 @@ class GameEngine {
           (playerGroup === 'solid' && firstBall.number <= 7) ||
           (playerGroup === 'stripe' && firstBall.number >= 9);
         if (!isOwnGroup) {
-          // Toque na bola do adversário primeiro = falta
           this.state.foul = true;
           this.state.ballInHand = true;
           this.switchTurn();
@@ -469,6 +555,86 @@ class GameEngine {
     }
   }
 
+  // ===== BRAZILIAN RULES =====
+  private applyBrazilianRules() {
+    if (this.state.gameOver) return;
+
+    const cueBall = this.state.balls[0];
+    const player = this.state.currentPlayer;
+    let pointsEarned = 0;
+    let keptTurn = false;
+
+    // 1. Branca na caçapa = falta, ball-in-hand adversário
+    if (cueBall.inPocket) {
+      this.state.scratch = true;
+      this.state.foul = true;
+      cueBall.inPocket = false;
+      cueBall.x = 200;
+      cueBall.y = 200;
+      cueBall.vx = 0;
+      cueBall.vy = 0;
+      this.state.ballInHand = true;
+      this.switchTurn();
+      return;
+    }
+
+    // 2. Não encostou na vermelha = falta, passa vez
+    if (!this.redBallContact) {
+      this.state.foul = true;
+      this.switchTurn();
+      return;
+    }
+
+    // 3. Vermelha caiu na caçapa = 2 pontos (boca)
+    if (this.redBallPocketed) {
+      pointsEarned += 2;
+      // Respawn vermelha no centro
+      const redBall = this.state.balls.find((b) => b.id === 1);
+      if (redBall) {
+        redBall.inPocket = false;
+        redBall.x = 400;
+        redBall.y = 200;
+        redBall.vx = 0;
+        redBall.vy = 0;
+      }
+      keptTurn = true;
+    }
+
+    // 4. Vermelha encostou na amarela = 1 ponto
+    if (this.yellowBallContact) {
+      pointsEarned += 1;
+      keptTurn = true;
+    }
+
+    // Aplicar pontos
+    if (pointsEarned > 0) {
+      if (player === 1) {
+        this.state.player1Points += pointsEarned;
+      } else {
+        this.state.player2Points += pointsEarned;
+      }
+    }
+
+    // 5. Verificar vitória (10 pontos)
+    if (this.state.player1Points >= this.state.maxPoints) {
+      this.state.winner = 1;
+      this.state.gameOver = true;
+      playWin();
+      return;
+    }
+    if (this.state.player2Points >= this.state.maxPoints) {
+      this.state.winner = 2;
+      this.state.gameOver = true;
+      playWin();
+      return;
+    }
+
+    // 6. Sem pontos = passa vez
+    if (!keptTurn) {
+      this.switchTurn();
+    }
+  }
+
   // ===== BOT PLAYER =====
   private botTimeout = 0;
 
@@ -484,84 +650,37 @@ class GameEngine {
     const cueBall = this.state.balls[0];
     if (!cueBall || cueBall.inPocket) return;
 
-    // Identifica bolas alvo válidas para o bot
-    const botGroup = this.state.player2Type;
-    let targets = this.state.balls.filter((b) => {
-      if (b.id === 0 || b.inPocket) return false;
-      if (!this.groupsAssigned) return true; // Pode atacar qualquer uma
-      if (b.number === 8) {
-        // Só atacar 8 se já derrubou todas do grupo
-        const groupBalls = this.state.balls.filter(
-          (x) =>
-            !x.inPocket &&
-            x.number !== 0 &&
-            x.number !== 8 &&
-            ((botGroup === 'solid' && x.number && x.number <= 7) ||
-              (botGroup === 'stripe' && x.number && x.number >= 9))
-        );
-        return groupBalls.length === 0;
-      }
-      if (botGroup === 'solid') return b.number && b.number <= 7;
-      if (botGroup === 'stripe') return b.number && b.number >= 9;
-      return true;
-    });
-
-    if (targets.length === 0) {
-      // Sem alvos, taca em qualquer direção aleatória
-      const randomAngle = Math.random() * Math.PI * 2;
-      this.shoot(40 + Math.random() * 30, randomAngle, { x: 0, y: 0 });
-      return;
-    }
-
-    // Ordena alvos por proximidade
-    targets.sort((a, b) => {
-      const da = Math.sqrt((a.x - cueBall.x) ** 2 + (a.y - cueBall.y) ** 2);
-      const db = Math.sqrt((b.x - cueBall.x) ** 2 + (b.y - cueBall.y) ** 2);
-      return da - db;
-    });
-
-    // Tenta os 3 alvos mais próximos
-    for (let i = 0; i < Math.min(3, targets.length); i++) {
-      const target = targets[i];
-      const dx = target.x - cueBall.x;
-      const dy = target.y - cueBall.y;
-      const baseAngle = Math.atan2(dy, dx);
-
-      // Erro aleatório baseado na "dificuldade" (80% precisão)
-      const error = (Math.random() - 0.5) * 0.12;
-      const angle = baseAngle + error;
-
-      // Potência baseada na distância (mais perto = menos potência)
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const basePower = Math.min(30 + dist * 0.15, 85);
-      const powerVariation = (Math.random() - 0.5) * 10;
-      const power = Math.min(Math.max(basePower + powerVariation, 25), 90);
-
-      // Verifica se não vai dar scratch (bola branca na caçapa)
-      // Simplificado: se o ângulo aponta para longe das caçapas, aceita
-      const safe = this.isSafeAngle(cueBall, angle);
-      if (safe || i === targets.length - 1) {
-        this.shoot(power, angle, { x: 0, y: 0 });
+    // Ball-in-hand: posiciona a bola branca
+    if (this.state.ballInHand) {
+      if (this.mode === 'brazilian') {
+        // Posiciona perto da vermelha
+        const redBall = this.state.balls.find((b) => b.id === 1);
+        if (redBall && !redBall.inPocket) {
+          const offsetX = (Math.random() - 0.5) * 100;
+          const offsetY = (Math.random() - 0.5) * 100;
+          this.placeCueBall(
+            Math.max(WALL_LEFT + 10, Math.min(WALL_RIGHT - 10, redBall.x - 80 + offsetX)),
+            Math.max(WALL_TOP + 10, Math.min(WALL_BOTTOM - 10, redBall.y + offsetY))
+          );
+          return;
+        }
+      } else {
+        this.placeCueBall(200 + Math.random() * 100, 150 + Math.random() * 100);
         return;
       }
     }
 
-    // Fallback: taca no alvo mais próximo
-    const closest = targets[0];
-    const angle = Math.atan2(closest.y - cueBall.y, closest.x - cueBall.x);
-    this.shoot(50, angle, { x: 0, y: 0 });
-  }
+    const decision = getBotDecision(
+      this.state.balls,
+      cueBall,
+      this.botDifficulty,
+      this.mode,
+      POCKETS,
+      this.state.player2Type,
+      this.groupsAssigned
+    );
 
-  private isSafeAngle(cueBall: Ball, angle: number): boolean {
-    // Verifica se a direção não aponta diretamente para uma caçapa
-    for (const pocket of POCKETS) {
-      const dx = pocket.x - cueBall.x;
-      const dy = pocket.y - cueBall.y;
-      const pocketAngle = Math.atan2(dy, dx);
-      const diff = Math.abs(((pocketAngle - angle + Math.PI) % (Math.PI * 2)) - Math.PI);
-      if (diff < 0.3) return false;
-    }
-    return true;
+    this.shoot(decision.power, decision.angle, { x: 0, y: 0 });
   }
 
   private switchTurn() {
@@ -569,8 +688,12 @@ class GameEngine {
     this.state.turn += 1;
     this.pocketedThisTurn = [];
     this.firstContact = null;
+    this.redBallContact = false;
+    this.yellowBallContact = false;
+    this.redBallPocketed = false;
     playTurnChange();
   }
 }
 
-export const gameEngine = new GameEngine();
+// Singleton para 8-ball (default)
+export const gameEngine = new GameEngine('8ball');
