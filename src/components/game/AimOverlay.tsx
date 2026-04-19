@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Ball } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -9,6 +10,12 @@ interface AimOverlayProps {
   power: number;
   isAiming: boolean;
   isBreakShot?: boolean;
+}
+
+interface CollisionInfo {
+  point: { x: number; y: number } | null;
+  targetBall: Ball | null;
+  targetDirection: { x: number; y: number } | null;
 }
 
 function getCollisionDistance(
@@ -33,7 +40,7 @@ function getCollisionDistance(
   return collisionDist;
 }
 
-function findFirstCollision(cueBall: Ball, balls: Ball[], angle: number) {
+function findFirstCollision(cueBall: Ball, balls: Ball[], angle: number): CollisionInfo {
   let minDist: number | null = null;
   let targetBall: Ball | null = null;
 
@@ -46,247 +53,267 @@ function findFirstCollision(cueBall: Ball, balls: Ball[], angle: number) {
     }
   }
 
-  return { distance: minDist, targetBall };
+  if (minDist === null) {
+    return { point: null, targetBall: null, targetDirection: null };
+  }
+
+  const point = {
+    x: cueBall.x + Math.cos(angle) * minDist,
+    y: cueBall.y + Math.sin(angle) * minDist,
+  };
+
+  // Calculate target ball direction after collision
+  let targetDirection = null;
+  if (targetBall) {
+    const dx = point.x - targetBall.x;
+    const dy = point.y - targetBall.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > 0) {
+      targetDirection = { x: -dx / dist, y: -dy / dist };
+    }
+  }
+
+  return { point, targetBall, targetDirection };
 }
 
-export function AimOverlay({ balls, aimAngle, power, isAiming, isBreakShot }: AimOverlayProps) {
+export function AimOverlay({
+  balls,
+  aimAngle,
+  power,
+  isAiming,
+}: AimOverlayProps) {
   const cueBall = balls[0];
   if (!cueBall || cueBall.inPocket || !isAiming) return null;
 
-  const MAX_LINE = 250;
   const collision = findFirstCollision(cueBall, balls, aimAngle);
 
-  const lineLength = collision.distance !== null ? Math.min(MAX_LINE, collision.distance) : MAX_LINE;
-  const endX = cueBall.x + Math.cos(aimAngle) * lineLength;
-  const endY = cueBall.y + Math.sin(aimAngle) * lineLength;
+  // Ghost ball position at collision point
+  const ghostPos = collision.point;
+  const ghostX = ghostPos ? ghostPos.x : null;
+  const ghostY = ghostPos ? ghostPos.y : null;
 
-  // Ghost ball position (where cue ball would be at collision)
-  const ghostX = collision.distance !== null
-    ? cueBall.x + Math.cos(aimAngle) * collision.distance
-    : null;
-  const ghostY = collision.distance !== null
-    ? cueBall.y + Math.sin(aimAngle) * collision.distance
-    : null;
+  // Calculate aim line end point (from cue ball through ghost ball)
+  const aimLineLength = 300;
+  const endX = cueBall.x + Math.cos(aimAngle) * aimLineLength;
+  const endY = cueBall.y + Math.sin(aimAngle) * aimLineLength;
 
-  // Bounce preview (simple wall reflection)
-  const wallBounce = () => {
-    let bx = endX;
-    let by = endY;
-    let bAngle = aimAngle;
-    let remaining = MAX_LINE - lineLength;
+  // Cue stick position (behind cue ball)
+  const cueDistance = 60 + (power * 0.3); // Cue pulls back when charging
+  const cueX = cueBall.x - Math.cos(aimAngle) * cueDistance;
+  const cueY = cueBall.y - Math.sin(aimAngle) * cueDistance;
+  const cueRotation = (aimAngle * 180) / Math.PI;
 
-    if (remaining <= 0) return null;
-
-    // Simple wall check for preview
-    if (bx < 30 || bx > 770) {
-      bAngle = Math.PI - bAngle;
-      bx = bx < 30 ? 30 : 770;
-    }
-    if (by < 30 || by > 370) {
-      bAngle = -bAngle;
-      by = by < 30 ? 30 : 370;
-    }
-
-    const bounceEndX = bx + Math.cos(bAngle) * remaining * 0.6;
-    const bounceEndY = by + Math.sin(bAngle) * remaining * 0.6;
-    return { x1: bx, y1: by, x2: bounceEndX, y2: bounceEndY };
+  // Get cue colors based on equipped cue (placeholder - can be passed as prop later)
+  const getCueColors = () => {
+    return { shaft: '#d4a574', butt: '#8B4513', accent: '#8B4513' };
   };
 
-  const bounce = wallBounce();
-
-  // Ângulo de saída da bola alvo após colisão
-  // A bola alvo é empurrada NA DIREÇÃO da ghost ball (de targetBall para ghostBall)
-  const targetExitAngle = collision.targetBall && ghostX !== null && ghostY !== null
-    ? Math.atan2(ghostY - collision.targetBall.y, ghostX - collision.targetBall.x)
-    : null;
-
-  // Taco mais curto e proporcional
-  const cueLength = 85;
-  const cuePullback = Math.min(power * 1.0, 65);
-  const cueStartX = cueBall.x - Math.cos(aimAngle) * (cueBall.radius + 6 + cuePullback);
-  const cueStartY = cueBall.y - Math.sin(aimAngle) * (cueBall.radius + 6 + cuePullback);
-  const cueEndX = cueStartX - Math.cos(aimAngle) * cueLength;
-  const cueEndY = cueStartY - Math.sin(aimAngle) * cueLength;
-
-  // Posições do anel e ponta do taco
-  const ringStartX = cueStartX - Math.cos(aimAngle) * 2;
-  const ringStartY = cueStartY - Math.sin(aimAngle) * 2;
-  const ringEndX = cueStartX - Math.cos(aimAngle) * 10;
-  const ringEndY = cueStartY - Math.sin(aimAngle) * 10;
-  const tipEndX = ringEndX - Math.cos(aimAngle) * 5;
-  const tipEndY = ringEndY - Math.sin(aimAngle) * 5;
-
-  const powerColor =
-    power < 33
-      ? 'text-green-400 border-green-500/50 bg-green-500/20'
-      : power < 66
-        ? 'text-yellow-400 border-yellow-500/50 bg-yellow-500/20'
-        : 'text-red-400 border-red-500/50 bg-red-500/20';
+  const cueColors = getCueColors();
 
   return (
     <svg
-      className="absolute inset-0 w-full h-full pointer-events-none"
+      className={cn(
+        "absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-200",
+        isAiming ? "opacity-100" : "opacity-0"
+      )}
       viewBox="0 0 800 400"
       preserveAspectRatio="none"
+      style={{ zIndex: 10 }}
     >
+      {/* DEFS - Gradients and filters */}
       <defs>
-        <linearGradient id="cueBody" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#6b4c1e" />
-          <stop offset="25%" stopColor="#c9a84c" />
-          <stop offset="50%" stopColor="#e8c868" />
-          <stop offset="75%" stopColor="#b8933a" />
-          <stop offset="100%" stopColor="#7a5a22" />
+        {/* Aim line gradient */}
+        <linearGradient id="aimLineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
+          <stop offset="50%" stopColor="rgba(180,230,255,0.8)" />
+          <stop offset="100%" stopColor="rgba(100,200,255,0.0)" />
+        </linearGradient>
+
+        {/* Cue gradient */}
+        <linearGradient id="cueShaftGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={cueColors.shaft} stopOpacity="0.9" />
+          <stop offset="50%" stopColor={cueColors.shaft} stopOpacity="1" />
+          <stop offset="100%" stopColor={cueColors.shaft} stopOpacity="0.8" />
+        </linearGradient>
+
+        <linearGradient id="cueButtGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={cueColors.butt} />
+          <stop offset="50%" stopColor={cueColors.accent} />
+          <stop offset="100%" stopColor={cueColors.butt} />
         </linearGradient>
       </defs>
 
-      {/* Head string line during break shot */}
-      {isBreakShot && (
-        <line
-          x1={200}
-          y1={30}
-          x2={200}
-          y2={370}
-          stroke="rgba(251, 191, 36, 0.5)"
-          strokeWidth="1.5"
-          strokeDasharray="8,4"
-        />
+      {/* Ghost Ball at collision point */}
+      {ghostX !== null && ghostY !== null && (
+        <g>
+          {/* Main ghost ball */}
+          <circle
+            cx={ghostX}
+            cy={ghostY}
+            r={cueBall.radius}
+            fill="rgba(255, 255, 255, 0.25)"
+            stroke="rgba(255, 255, 255, 0.9)"
+            strokeWidth="2"
+          />
+          
+          {/* Inner shine */}
+          <circle
+            cx={ghostX - cueBall.radius * 0.3}
+            cy={ghostY - cueBall.radius * 0.3}
+            r={cueBall.radius * 0.3}
+            fill="rgba(255,255,255,0.4)"
+          />
+
+          {/* Target ball collision indicator */}
+          {collision.targetBall && (
+            <>
+              {/* Line from ghost ball to target ball */}
+              <line
+                x1={ghostX}
+                y1={ghostY}
+                x2={collision.targetBall.x}
+                y2={collision.targetBall.y}
+                stroke="rgba(255, 200, 100, 0.6)"
+                strokeWidth="1.5"
+                strokeDasharray="4,3"
+              />
+              
+              {/* Target ball direction after collision */}
+              {collision.targetDirection && (
+                <line
+                  x1={collision.targetBall.x}
+                  y1={collision.targetBall.y}
+                  x2={
+                    collision.targetBall.x +
+                    collision.targetDirection.x * 100
+                  }
+                  y2={
+                    collision.targetBall.y +
+                    collision.targetDirection.y * 100
+                  }
+                  stroke="rgba(255, 200, 100, 0.8)"
+                  strokeWidth="2"
+                  strokeDasharray="6,4"
+                />
+              )}
+            </>
+          )}
+
+          {/* Cue ball exit trajectory after collision */}
+          {collision.targetBall && (() => {
+            const collisionAngle = Math.atan2(
+              ghostY - collision.targetBall.y,
+              ghostX - collision.targetBall.x
+            );
+            const deflectAngle = aimAngle + (Math.PI / 2) * (
+              Math.sin(collisionAngle - aimAngle) > 0 ? 1 : -1
+            );
+            const deflectLength = 80;
+            const dEx = ghostX + Math.cos(deflectAngle) * deflectLength;
+            const dEy = ghostY + Math.sin(deflectAngle) * deflectLength;
+            return (
+              <line
+                x1={ghostX}
+                y1={ghostY}
+                x2={dEx}
+                y2={dEy}
+                stroke="rgba(200, 240, 255, 0.6)"
+                strokeWidth="2"
+                strokeDasharray="8,5"
+                strokeLinecap="round"
+              />
+            );
+          })()}
+        </g>
       )}
 
-      {/* Linha de mira principal (estilo 8 Ball Pool: tracejado branco/ciano) */}
+      {/* Main Aim Line (from cue ball through ghost ball) */}
       <line
         x1={cueBall.x}
         y1={cueBall.y}
         x2={endX}
         y2={endY}
-        stroke="rgba(200, 240, 255, 0.85)"
-        strokeWidth="2"
-        strokeDasharray="10,5"
+        stroke="url(#aimLineGrad)"
+        strokeWidth="2.5"
+        strokeDasharray="12,6"
         strokeLinecap="round"
       />
 
-      {/* Linha de ricochete (após colisão com parede) */}
-      {bounce && (
-        <line
-          x1={bounce.x1}
-          y1={bounce.y1}
-          x2={bounce.x2}
-          y2={bounce.y2}
-          stroke="rgba(255, 255, 255, 0.35)"
-          strokeWidth="1"
-          strokeDasharray="6,4"
-        />
-      )}
-
-      {/* Círculo de precisão na ponta (apenas quando não há colisão direta) */}
-      {collision.distance === null && (
-        <>
-          <circle cx={endX} cy={endY} r="5" fill="rgba(59, 130, 246, 0.5)" className="animate-pulse" />
-          <circle
-            cx={endX}
-            cy={endY}
-            r="10"
-            fill="none"
-            stroke="rgba(59, 130, 246, 0.2)"
-            strokeWidth="1"
-            strokeDasharray="3,3"
-          />
-        </>
-      )}
-
-      {/* Ghost ball na posição de colisão */}
-      {ghostX !== null && ghostY !== null && (
-        <>
-          <circle
-            cx={ghostX}
-            cy={ghostY}
-            r={cueBall.radius}
-            fill="rgba(255, 255, 255, 0.15)"
-            stroke="rgba(255, 255, 255, 0.4)"
-            strokeWidth="1"
-            strokeDasharray="3,2"
-          />
-          {/* Linha de saída da BOLA ALVO após colisão (ghost ball line) */}
-          {collision.targetBall && targetExitAngle !== null && (
-            <>
-              <line
-                x1={collision.targetBall.x}
-                y1={collision.targetBall.y}
-                x2={collision.targetBall.x + Math.cos(targetExitAngle) * 120}
-                y2={collision.targetBall.y + Math.sin(targetExitAngle) * 120}
-                stroke="rgba(255, 200, 80, 0.75)"
-                strokeWidth="2"
-                strokeDasharray="6,4"
-                strokeLinecap="round"
-              />
-              <circle
-                cx={collision.targetBall.x + Math.cos(targetExitAngle) * 120}
-                cy={collision.targetBall.y + Math.sin(targetExitAngle) * 120}
-                r="4"
-                fill="rgba(255, 200, 80, 0.5)"
-              />
-            </>
-          )}
-        </>
-      )}
-
-      {/* Taco profissional */}
-      <g>
-        {/* Corpo do taco - madeira com gradiente */}
-        <line
-          x1={cueEndX}
-          y1={cueEndY}
-          x2={ringEndX}
-          y2={ringEndY}
-          stroke="url(#cueBody)"
-          strokeWidth="4.5"
-          strokeLinecap="round"
-        />
-        {/* Anel preto na ponta */}
-        <line
-          x1={ringEndX}
-          y1={ringEndY}
-          x2={ringStartX}
-          y2={ringStartY}
-          stroke="#111111"
-          strokeWidth="5.5"
-          strokeLinecap="butt"
-        />
-        {/* Ponta branca (giz) */}
-        <line
-          x1={ringStartX}
-          y1={ringStartY}
-          x2={tipEndX}
-          y2={tipEndY}
-          stroke="#f0f0f0"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-      </g>
-
-      {/* Indicador de potência discreto */}
-      <g>
+      {/* Cue Stick */}
+      <g
+        transform={`translate(${cueX}, ${cueY}) rotate(${cueRotation})`}
+      >
+        {/* Cue shadow */}
         <rect
-          x={cueBall.x - 22}
-          y={cueBall.y - 28}
-          width="44"
-          height="18"
-          rx="9"
-          className={cn('stroke-current', powerColor)}
-          fill="rgba(15, 23, 42, 0.85)"
-          strokeWidth="1"
+          x={-80}
+          y={-3}
+          width={160}
+          height={6}
+          rx={3}
+          fill="rgba(0,0,0,0.3)"
+          transform="translate(2, 2)"
         />
-        <text
-          x={cueBall.x}
-          y={cueBall.y - 16}
-          textAnchor="middle"
-          fontSize="10"
-          fontWeight="bold"
-          fill="currentColor"
-          className={cn('', powerColor)}
-        >
-          {Math.round(power)}%
-        </text>
+        
+        {/* Cue tip */}
+        <rect x={-82} y={-2.5} width={4} height={5} rx={1} fill="#2a2a2a" />
+        <rect x={-80} y={-2} width={2} height={4} rx={0.5} fill="#4a4a4a" />
+        
+        {/* Cue shaft */}
+        <rect
+          x={-78}
+          y={-2.5}
+          width={100}
+          height={5}
+          fill="url(#cueShaftGrad)"
+        />
+        
+        {/* Joint ring */}
+        <rect x={22} y={-3} width={4} height={6} rx={1} fill="#FFD700" />
+        <rect x={26} y={-2.5} width={2} height={5} rx={0.5} fill="#C0C0C0" />
+        
+        {/* Cue butt */}
+        <rect
+          x={28}
+          y={-4}
+          width={52}
+          height={8}
+          rx={2}
+          fill="url(#cueButtGrad)"
+        />
+        
+        {/* Decorative rings on butt */}
+        <rect x={35} y={-4} width={2} height={8} fill="rgba(255,255,255,0.3)" />
+        <rect x={50} y={-4} width={3} height={8} fill="#FFD700" opacity="0.8" />
+        
+        {/* Power indicator on cue */}
+        {power > 0 && (
+          <rect
+            x={28}
+            y={-4}
+            width={(power / 100) * 52}
+            height={8}
+            rx={2}
+            fill="rgba(255, 100, 100, 0.6)"
+            style={{ mixBlendMode: 'overlay' }}
+          />
+        )}
       </g>
+
+      {/* Power indicator near cue ball */}
+      {power > 0 && (
+        <g>
+          <circle
+            cx={cueBall.x}
+            cy={cueBall.y}
+            r={cueBall.radius + 8}
+            fill="none"
+            stroke="rgba(255, 100, 100, 0.6)"
+            strokeWidth="2"
+            strokeDasharray={`${(power / 100) * 50} 100`}
+            transform={`rotate(-90 ${cueBall.x} ${cueBall.y})`}
+          />
+        </g>
+      )}
     </svg>
   );
 }
