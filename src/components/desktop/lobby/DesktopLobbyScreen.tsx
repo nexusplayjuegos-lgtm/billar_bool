@@ -11,7 +11,7 @@ import { useLocale } from '@/hooks';
 
 export function DesktopLobbyScreen() {
   const t = useTranslations();
-  const { user, removeCoins } = useUserStore();
+  const { profile, removeCoins } = useUserStore();
   const { startGame } = useGameStore();
   const router = useRouter();
   const { locale } = useLocale();
@@ -26,7 +26,7 @@ export function DesktopLobbyScreen() {
       >
         <div className="relative z-10">
           <h1 className="text-4xl font-black text-white mb-2">
-            Bem-vindo, {user.username}!
+            Bem-vindo, {profile.username}!
           </h1>
           <p className="text-white/80 text-lg mb-6">
             Escolha seu modo de jogo e domine a mesa
@@ -34,7 +34,7 @@ export function DesktopLobbyScreen() {
           <button
             onClick={() => {
               const mode = MOCK_GAME_MODES[0];
-              if (user.currencies.coins >= mode.entryFee.coins) {
+              if (profile.currencies.coins >= mode.entryFee.coins) {
                 removeCoins(mode.entryFee.coins);
                 startGame(mode.id, mode.type, mode.entryFee.coins, mode.reward.win);
                 router.push(`/${locale}/play/${mode.id}`);
@@ -54,10 +54,10 @@ export function DesktopLobbyScreen() {
       {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: 'Vitórias', value: user.stats.wins, icon: Star, color: 'text-amber-400' },
-          { label: 'Win Rate', value: `${user.stats.winRate}%`, icon: TrendingUp, color: 'text-green-400' },
-          { label: 'Moedas', value: formatNumber(user.currencies.coins), icon: () => <div className="w-5 h-5 rounded-full bg-amber-400" />, color: 'text-amber-400' },
-          { label: 'Amigos', value: user.social.friends, icon: Users, color: 'text-blue-400' },
+          { label: 'Vitórias', value: profile.stats.wins, icon: Star, color: 'text-amber-400' },
+          { label: 'Win Rate', value: `${profile.stats.winRate}%`, icon: TrendingUp, color: 'text-green-400' },
+          { label: 'Moedas', value: formatNumber(profile.currencies.coins), icon: () => <div className="w-5 h-5 rounded-full bg-amber-400" />, color: 'text-amber-400' },
+          { label: 'Amigos', value: profile.social.friends, icon: Users, color: 'text-blue-400' },
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
@@ -87,7 +87,7 @@ export function DesktopLobbyScreen() {
               transition={{ delay: i * 0.1 }}
               whileHover={{ scale: 1.02 }}
               onClick={() => {
-                if (user.currencies.coins >= mode.entryFee.coins) {
+                if (profile.currencies.coins >= mode.entryFee.coins) {
                   removeCoins(mode.entryFee.coins);
                   startGame(mode.id, mode.type, mode.entryFee.coins, mode.reward.win);
                   router.push(`/${locale}/play/${mode.id}`);

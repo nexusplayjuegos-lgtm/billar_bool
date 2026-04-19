@@ -42,7 +42,7 @@ export function GameScreen({
   const t = useTranslations('game');
   const { locale } = useLocale();
   const { endGame, potentialReward, entryFee } = useGameStore();
-  const { addCoins, removeCoins, addXP, updateStats } = useUserStore();
+  const { addCoins, removeCoins, addXP } = useUserStore();
 
   const [engineState, setEngineState] = useState<EngineState | null>(null);
   const [aimAngle, setAimAngle] = useState(0);
@@ -63,11 +63,9 @@ export function GameScreen({
         // Atualiza economia e stats
         if (won) {
           addCoins(reward);
-          updateStats('win', reward);
           addXP(100);
         } else {
           addCoins(reward);
-          updateStats('loss', 0);
           addXP(25);
         }
         if (won) {
@@ -81,7 +79,7 @@ export function GameScreen({
       unsubscribe();
       gameEngine.stop();
     };
-  }, [addCoins, addXP, potentialReward, updateStats, gameMode]);
+  }, [addCoins, addXP, potentialReward, gameMode]);
 
   useEffect(() => {
     if (!engineState || engineState.gameOver || engineState.ballsMoving) return;

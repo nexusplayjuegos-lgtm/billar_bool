@@ -14,7 +14,7 @@ import { useLocale } from '@/hooks';
 
 export function MobileLobbyScreen() {
   const t = useTranslations();
-  const { user, removeCoins } = useUserStore();
+  const { profile, removeCoins } = useUserStore();
   const { startGame } = useGameStore();
   const router = useRouter();
   const { locale } = useLocale();
@@ -29,7 +29,7 @@ export function MobileLobbyScreen() {
     e.preventDefault();
     e.stopPropagation();
     if (!selectedMode) return;
-    if (user.currencies.coins < selectedMode.entryFee.coins) return;
+    if (profile.currencies.coins < selectedMode.entryFee.coins) return;
     // Deduz entrada e inicia game store
     removeCoins(selectedMode.entryFee.coins);
     startGame(selectedMode.id, selectedMode.type, selectedMode.entryFee.coins, selectedMode.reward.win);
@@ -51,7 +51,7 @@ export function MobileLobbyScreen() {
         className="px-4 py-3 landscape:py-2"
       >
         <h1 className="text-xl landscape:text-base font-bold text-white mb-1 landscape:mb-0">
-          {t('lobby.welcome', { username: user.username })}
+          {t('lobby.welcome', { username: profile.username })}
         </h1>
         <div className="flex items-center gap-4 text-sm landscape:text-xs text-slate-400">
           <span className="flex items-center gap-1">
@@ -60,7 +60,7 @@ export function MobileLobbyScreen() {
           </span>
           <span className="flex items-center gap-1">
             <TrendingUp className="w-4 h-4" />
-            {user.rank}
+            {profile.rank}
           </span>
         </div>
       </motion.div>

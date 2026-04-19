@@ -119,5 +119,18 @@
     "playNow": "PLAY NOW",
     "topPlayers": "Top Players",
     "onlinePlayers": "{count} players online"
+  },
+  "auth": {
+      "loginTitle": "Entrar na sua conta",
+      "registerTitle": "Criar nova conta",
+      "username": "Nome de usuário",
+      "email": "E-mail",
+      "password": "Senha",
+      "loginButton": "Entrar",
+      "registerButton": "Criar conta",
+      "loading": "Carregando...",
+      "noAccount": "Não tem conta? Registre-se",
+      "hasAccount": "Já tem conta? Entre",
+      "continueAsGuest": "Continuar como convidado (dados locais)"
+    }
   }
-}

@@ -2,11 +2,11 @@
 
 import { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { Gamepad2, ShoppingCart, Users, Trophy, Settings } from 'lucide-react';
+import { Gamepad2, ShoppingCart, Users, Trophy, Settings, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useUserStore } from '@/lib/store';
+import { useUserStore } from '@/lib/store/userStore'; // ← CORRIGIDO
 import { formatNumber } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { useLocale } from '@/hooks';
@@ -25,9 +25,15 @@ interface DesktopLayoutProps {
 
 export function DesktopLayout({ children }: DesktopLayoutProps) {
   const t = useTranslations();
-  const { user } = useUserStore();
+  const { profile, signOut } = useUserStore(); // ← CORRIGIDO: usa profile e signOut
   const pathname = usePathname();
   const { locale } = useLocale();
+
+  // Fallback para convidado (não logado)
+  const username = profile?.username || 'Convidado';
+  const level = profile?.level || 1;
+  const coins = profile?.coins || 5000;
+  const cash = profile?.cash || 0;
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === `/${locale}` || pathname === `/${locale}/`;
@@ -61,28 +67,40 @@ export function DesktopLayout({ children }: DesktopLayoutProps) {
           <p className="text-xs text-slate-500 mt-1">PREMIERE EDITION</p>
         </div>
 
-        {/* User Card */}
+        {/* User Card - CORRIGIDO */}
         <div className="p-4 m-4 bg-slate-800/50 rounded-xl">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-900 font-bold">
-              {user.username.slice(0, 2).toUpperCase()}
+              {username.slice(0, 2).toUpperCase()}
             </div>
-            <div>
-              <p className="text-white font-semibold">{user.username}</p>
-              <p className="text-xs text-slate-400">{t('lobby.level', { level: user.level })}</p>
+            <div className="flex-1">
+              <p className="text-white font-semibold truncate">{username}</p>
+              <p className="text-xs text-slate-400">{t('lobby.level', { level })}</p>
             </div>
+            {/* Botão Logout (só aparece se logado) */}
+            {profile && (
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={signOut}
+                className="p-2 text-slate-400 hover:text-red-400 transition-colors"
+                title="Sair"
+              >
+                <LogOut className="w-4 h-4" />
+              </motion.button>
+            )}
           </div>
           <div className="flex gap-2">
             <div className="flex-1 bg-slate-900 rounded-lg p-2 flex items-center gap-1.5">
               <div className="w-4 h-4 rounded-full bg-amber-400" />
               <span className="text-amber-400 text-sm font-bold">
-                {formatNumber(user.currencies.coins)}
+                {formatNumber(coins)}
               </span>
             </div>
             <div className="flex-1 bg-slate-900 rounded-lg p-2 flex items-center gap-1.5">
               <div className="w-4 h-4 rounded-full bg-emerald-400" />
               <span className="text-emerald-400 text-sm font-bold">
-                {user.currencies.cash}
+                {cash}
               </span>
             </div>
           </div>

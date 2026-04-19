@@ -95,8 +95,9 @@ export function AimOverlay({ balls, aimAngle, power, isAiming, isBreakShot }: Ai
   const bounce = wallBounce();
 
   // Ângulo de saída da bola alvo após colisão
+  // A bola alvo é empurrada NA DIREÇÃO da ghost ball (de targetBall para ghostBall)
   const targetExitAngle = collision.targetBall && ghostX !== null && ghostY !== null
-    ? Math.atan2(collision.targetBall.y - ghostY, collision.targetBall.x - ghostX)
+    ? Math.atan2(ghostY - collision.targetBall.y, ghostX - collision.targetBall.x)
     : null;
 
   // Taco mais curto e proporcional
@@ -151,14 +152,16 @@ export function AimOverlay({ balls, aimAngle, power, isAiming, isBreakShot }: Ai
         />
       )}
 
-      {/* Linha de mira principal */}
+      {/* Linha de mira principal (estilo 8 Ball Pool: tracejado branco/ciano) */}
       <line
         x1={cueBall.x}
         y1={cueBall.y}
         x2={endX}
         y2={endY}
-        stroke="rgba(255, 255, 255, 0.9)"
-        strokeWidth="1.5"
+        stroke="rgba(200, 240, 255, 0.85)"
+        strokeWidth="2"
+        strokeDasharray="10,5"
+        strokeLinecap="round"
       />
 
       {/* Linha de ricochete (após colisão com parede) */}
@@ -174,17 +177,21 @@ export function AimOverlay({ balls, aimAngle, power, isAiming, isBreakShot }: Ai
         />
       )}
 
-      {/* Círculo de precisão na ponta */}
-      <circle cx={endX} cy={endY} r="5" fill="rgba(59, 130, 246, 0.5)" className="animate-pulse" />
-      <circle
-        cx={endX}
-        cy={endY}
-        r="10"
-        fill="none"
-        stroke="rgba(59, 130, 246, 0.2)"
-        strokeWidth="1"
-        strokeDasharray="3,3"
-      />
+      {/* Círculo de precisão na ponta (apenas quando não há colisão direta) */}
+      {collision.distance === null && (
+        <>
+          <circle cx={endX} cy={endY} r="5" fill="rgba(59, 130, 246, 0.5)" className="animate-pulse" />
+          <circle
+            cx={endX}
+            cy={endY}
+            r="10"
+            fill="none"
+            stroke="rgba(59, 130, 246, 0.2)"
+            strokeWidth="1"
+            strokeDasharray="3,3"
+          />
+        </>
+      )}
 
       {/* Ghost ball na posição de colisão */}
       {ghostX !== null && ghostY !== null && (
@@ -198,23 +205,24 @@ export function AimOverlay({ balls, aimAngle, power, isAiming, isBreakShot }: Ai
             strokeWidth="1"
             strokeDasharray="3,2"
           />
-          {/* Linha de saída da BOLA ALVO após colisão */}
+          {/* Linha de saída da BOLA ALVO após colisão (ghost ball line) */}
           {collision.targetBall && targetExitAngle !== null && (
             <>
               <line
                 x1={collision.targetBall.x}
                 y1={collision.targetBall.y}
-                x2={collision.targetBall.x + Math.cos(targetExitAngle) * 60}
-                y2={collision.targetBall.y + Math.sin(targetExitAngle) * 60}
-                stroke="rgba(255, 255, 255, 0.5)"
-                strokeWidth="1.5"
-                strokeDasharray="5,3"
+                x2={collision.targetBall.x + Math.cos(targetExitAngle) * 120}
+                y2={collision.targetBall.y + Math.sin(targetExitAngle) * 120}
+                stroke="rgba(255, 200, 80, 0.75)"
+                strokeWidth="2"
+                strokeDasharray="6,4"
+                strokeLinecap="round"
               />
               <circle
-                cx={collision.targetBall.x + Math.cos(targetExitAngle) * 60}
-                cy={collision.targetBall.y + Math.sin(targetExitAngle) * 60}
+                cx={collision.targetBall.x + Math.cos(targetExitAngle) * 120}
+                cy={collision.targetBall.y + Math.sin(targetExitAngle) * 120}
                 r="4"
-                fill="rgba(59, 130, 246, 0.4)"
+                fill="rgba(255, 200, 80, 0.5)"
               />
             </>
           )}

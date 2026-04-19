@@ -30,17 +30,17 @@ const rarityBorders = {
 
 export function CueCard({ cue, index, onPreview }: CueCardProps) {
   const t = useTranslations();
-  const { user, buyCue, equipCue } = useUserStore();
+  const { profile, buyCue, equipCue } = useUserStore() as any;
 
-  const isOwned = user.equipment.ownedCues.includes(cue.id);
-  const isEquipped = user.equipment.currentCue === cue.id;
-  const canAfford = user.currencies.coins >= cue.price.coins && 
-                    user.currencies.cash >= cue.price.cash;
-  const isLocked = Boolean(cue.levelRequired && user.level < cue.levelRequired);
+  const isOwned = profile.equipment.ownedCues.includes(cue.id);
+  const isEquipped = profile.equipment.currentCue === cue.id;
+  const canAfford = profile.currencies.coins >= cue.price.coins && 
+                    profile.currencies.cash >= cue.price.cash;
+  const isLocked = Boolean(cue.levelRequired && profile.level < cue.levelRequired);
 
   const handleBuy = () => {
     if (!isOwned && canAfford && !isLocked) {
-      buyCue(cue.id, cue.price);
+      buyCue(cue.id, cue.price.coins);
     }
   };
 

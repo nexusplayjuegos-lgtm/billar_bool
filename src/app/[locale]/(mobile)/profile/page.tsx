@@ -8,7 +8,7 @@ import { formatNumber } from '@/lib/utils';
 
 export default function ProfilePage() {
   const t = useTranslations();
-  const { user } = useUserStore();
+  const { profile } = useUserStore();
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4">
@@ -18,10 +18,10 @@ export default function ProfilePage() {
         className="text-center mb-6"
       >
         <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-900 font-bold text-3xl mb-3">
-          {user.username.slice(0, 2).toUpperCase()}
+          {profile.username.slice(0, 2).toUpperCase()}
         </div>
-        <h1 className="text-2xl font-bold text-white">{user.username}</h1>
-        <p className="text-slate-400">{user.rank}</p>
+        <h1 className="text-2xl font-bold text-white">{profile.username}</h1>
+        <p className="text-slate-400">{profile.rank}</p>
       </motion.div>
 
       {/* Stats */}
@@ -32,19 +32,19 @@ export default function ProfilePage() {
         className="grid grid-cols-2 gap-3 mb-6"
       >
         <div className="bg-slate-800/50 rounded-xl p-4 text-center">
-          <p className="text-3xl font-bold text-blue-400">{user.stats.wins}</p>
+          <p className="text-3xl font-bold text-blue-400">{profile.stats.wins}</p>
           <p className="text-xs text-slate-400">Vitórias</p>
         </div>
         <div className="bg-slate-800/50 rounded-xl p-4 text-center">
-          <p className="text-3xl font-bold text-red-400">{user.stats.losses}</p>
+          <p className="text-3xl font-bold text-red-400">{profile.stats.losses}</p>
           <p className="text-xs text-slate-400">Derrotas</p>
         </div>
         <div className="bg-slate-800/50 rounded-xl p-4 text-center">
-          <p className="text-3xl font-bold text-green-400">{user.stats.winRate}%</p>
+          <p className="text-3xl font-bold text-green-400">{profile.stats.winRate}%</p>
           <p className="text-xs text-slate-400">Win Rate</p>
         </div>
         <div className="bg-slate-800/50 rounded-xl p-4 text-center">
-          <p className="text-3xl font-bold text-amber-400">{user.stats.maxWinStreak}</p>
+          <p className="text-3xl font-bold text-amber-400">{profile.stats.maxWinStreak}</p>
           <p className="text-xs text-slate-400">Sequência Máx</p>
         </div>
       </motion.div>

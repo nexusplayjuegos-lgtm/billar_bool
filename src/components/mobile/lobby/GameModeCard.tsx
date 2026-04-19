@@ -16,10 +16,10 @@ interface GameModeCardProps {
 
 export function GameModeCard({ mode, index, isSelected, onSelect }: GameModeCardProps) {
   const t = useTranslations('modes');
-  const { user } = useUserStore();
+  const { profile } = useUserStore();
 
-  const isLocked = user.level < mode.minLevel;
-  const canAfford = user.currencies.coins >= mode.entryFee.coins;
+  const isLocked = profile.level < mode.minLevel;
+  const canAfford = profile.currencies.coins >= mode.entryFee.coins;
 
   const handleCardClick = () => {
     if (!isLocked) {

@@ -1,8 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Plus } from 'lucide-react';
-import { useUserStore } from '@/lib/store';
+import { Plus, LogOut } from 'lucide-react';
+import { useUserStore } from '@/lib/store/userStore';
 import { formatNumber } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 
@@ -11,7 +11,15 @@ interface MobileHeaderProps {
 }
 
 export function MobileHeader({ className }: MobileHeaderProps) {
-  const { user } = useUserStore();
+  const { profile, signOut } = useUserStore();
+
+  // Se não tiver profile (convidado), mostrar valores padrão
+  const username = profile?.username || 'Convidado';
+  const level = profile?.level || 1;
+  const coins = profile?.coins || 5000;
+  const cash = profile?.cash || 0;
+  const xp = profile?.xp || 0;
+  const xpToNext = profile?.xp_to_next || 1000;
 
   return (
     <motion.header
@@ -29,27 +37,27 @@ export function MobileHeader({ className }: MobileHeaderProps) {
       <div className="flex items-center gap-3">
         <div className="relative">
           <div className="w-8 h-8 landscape:w-7 landscape:h-7 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-900 font-bold text-xs">
-            {user.username.slice(0, 2).toUpperCase()}
+            {username.slice(0, 2).toUpperCase()}
           </div>
           <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-slate-800 flex items-center justify-center text-[8px] font-bold text-amber-400 border border-amber-400">
-            {user.level}
+            {level}
           </div>
         </div>
         <div className="flex flex-col">
           <span className="text-white text-sm landscape:text-xs font-semibold truncate max-w-[100px]">
-            {user.username}
+            {username}
           </span>
           <div className="w-16 h-1 bg-slate-700 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
-              animate={{ width: `${(user.currentXP / user.nextLevelXP) * 100}%` }}
+              animate={{ width: `${(xp / xpToNext) * 100}%` }}
               className="h-full bg-gradient-to-r from-green-400 to-green-500"
             />
           </div>
         </div>
       </div>
 
-      {/* Currencies */}
+      {/* Currencies + Logout */}
       <div className="flex items-center gap-2">
         {/* Coins */}
         <motion.div
@@ -60,7 +68,7 @@ export function MobileHeader({ className }: MobileHeaderProps) {
             <span className="text-[8px] font-bold text-amber-900">$</span>
           </div>
           <span className="text-amber-400 text-sm landscape:text-xs font-bold">
-            {formatNumber(user.currencies.coins)}
+            {formatNumber(coins)}
           </span>
           <button className="w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center hover:bg-amber-400 transition-colors">
             <Plus className="w-3 h-3 text-slate-900" />
@@ -76,12 +84,24 @@ export function MobileHeader({ className }: MobileHeaderProps) {
             <span className="text-[8px] font-bold text-white">C</span>
           </div>
           <span className="text-emerald-400 text-sm landscape:text-xs font-bold">
-            {user.currencies.cash}
+            {cash}
           </span>
           <button className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center hover:bg-emerald-400 transition-colors">
             <Plus className="w-3 h-3 text-slate-900" />
           </button>
         </motion.div>
+
+        {/* Logout Button (apenas se logado) */}
+        {profile && (
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={signOut}
+            className="p-1.5 text-slate-400 hover:text-red-400 transition-colors"
+            title="Sair"
+          >
+            <LogOut className="w-4 h-4" />
+          </motion.button>
+        )}
       </div>
     </motion.header>
   );
