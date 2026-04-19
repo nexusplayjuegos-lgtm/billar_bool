@@ -205,6 +205,8 @@ class GameEngine {
     this.running = false;
     if (this.rafId) cancelAnimationFrame(this.rafId);
     this.rafId = 0;
+    if (this.botTimeout) clearTimeout(this.botTimeout);
+    if (this.botSafetyTimeout) clearTimeout(this.botSafetyTimeout);
   }
 
   reset() {
@@ -637,11 +639,23 @@ class GameEngine {
 
   // ===== BOT PLAYER =====
   private botTimeout = 0;
+  private botSafetyTimeout = 0;
 
   private scheduleBotPlay() {
     if (this.botTimeout) clearTimeout(this.botTimeout);
+    if (this.botSafetyTimeout) clearTimeout(this.botSafetyTimeout);
     const delay = 1500 + Math.random() * 1500;
     this.botTimeout = window.setTimeout(() => this.botPlay(), delay);
+    // Safety timeout: force a shot if bot hasn't played in 8 seconds
+    this.botSafetyTimeout = window.setTimeout(() => {
+      if (!this.state.gameOver && this.state.currentPlayer === 2 && !this.state.ballsMoving) {
+        console.warn('Bot safety timeout triggered');
+        const cueBall = this.state.balls[0];
+        if (cueBall && !cueBall.inPocket) {
+          this.shoot(40, Math.random() * Math.PI * 2, { x: 0, y: 0 });
+        }
+      }
+    }, 8000);
   }
 
   private botPlay() {
@@ -661,10 +675,14 @@ class GameEngine {
             Math.max(WALL_LEFT + 10, Math.min(WALL_RIGHT - 10, redBall.x - 80 + offsetX)),
             Math.max(WALL_TOP + 10, Math.min(WALL_BOTTOM - 10, redBall.y + offsetY))
           );
+          // Schedule the actual shot after placing
+          this.scheduleBotPlay();
           return;
         }
       } else {
         this.placeCueBall(200 + Math.random() * 100, 150 + Math.random() * 100);
+        // Schedule the actual shot after placing
+        this.scheduleBotPlay();
         return;
       }
     }
