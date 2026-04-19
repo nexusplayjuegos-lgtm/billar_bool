@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { CueCard } from './CueCard';
+import { PaymentModal } from './PaymentModal';
 import { MOCK_CUES } from '@/mocks/data';
 import { Cue } from '@/types';
 import { cn } from '@/lib/utils';
@@ -20,6 +21,13 @@ export function MobileShopScreen() {
   const t = useTranslations();
   const [activeTab, setActiveTab] = useState('cues');
   const [previewCue, setPreviewCue] = useState<Cue | null>(null);
+  const [paymentPack, setPaymentPack] = useState<{
+    type: 'coins' | 'cash' | 'special';
+    amount: number;
+    bonus?: number;
+    price: number;
+    label: string;
+  } | null>(null);
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
@@ -130,7 +138,16 @@ export function MobileShopScreen() {
                         )}
                       </div>
                     </div>
-                    <button className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-lg">
+                    <button
+                      onClick={() => setPaymentPack({
+                        type: 'coins',
+                        amount: pack.amount,
+                        bonus: pack.bonus,
+                        price: pack.price,
+                        label: `${pack.amount.toLocaleString()} moedas`,
+                      })}
+                      className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-lg"
+                    >
                       R$ {pack.price}
                     </button>
                   </div>
@@ -171,7 +188,16 @@ export function MobileShopScreen() {
                         )}
                       </div>
                     </div>
-                    <button className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold rounded-lg">
+                    <button
+                      onClick={() => setPaymentPack({
+                        type: 'cash',
+                        amount: pack.amount,
+                        bonus: pack.bonus,
+                        price: pack.price,
+                        label: `${pack.amount} cash`,
+                      })}
+                      className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold rounded-lg"
+                    >
                       R$ {pack.price}
                     </button>
                   </div>
@@ -209,7 +235,15 @@ export function MobileShopScreen() {
                     <p>• 50 cash</p>
                   </div>
                 </div>
-                <button className="w-full py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold rounded-lg">
+                <button
+                  onClick={() => setPaymentPack({
+                    type: 'special',
+                    amount: 1,
+                    price: 9.99,
+                    label: 'Pacote Iniciante',
+                  })}
+                  className="w-full py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold rounded-lg"
+                >
                   R$ 9.99
                 </button>
               </div>
@@ -258,6 +292,13 @@ export function MobileShopScreen() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={!!paymentPack}
+        onClose={() => setPaymentPack(null)}
+        pack={paymentPack}
+      />
     </div>
   );
 }
