@@ -653,7 +653,6 @@ class GameEngine {
     // Ball-in-hand: posiciona a bola branca
     if (this.state.ballInHand) {
       if (this.mode === 'brazilian') {
-        // Posiciona perto da vermelha
         const redBall = this.state.balls.find((b) => b.id === 1);
         if (redBall && !redBall.inPocket) {
           const offsetX = (Math.random() - 0.5) * 100;
@@ -670,17 +669,23 @@ class GameEngine {
       }
     }
 
-    const decision = getBotDecision(
-      this.state.balls,
-      cueBall,
-      this.botDifficulty,
-      this.mode,
-      POCKETS,
-      this.state.player2Type,
-      this.groupsAssigned
-    );
-
-    this.shoot(decision.power, decision.angle, { x: 0, y: 0 });
+    try {
+      const decision = getBotDecision(
+        this.state.balls,
+        cueBall,
+        this.botDifficulty,
+        this.mode,
+        POCKETS,
+        this.state.player2Type,
+        this.groupsAssigned
+      );
+      this.shoot(decision.power, decision.angle, { x: 0, y: 0 });
+    } catch (error) {
+      console.error('Bot error:', error);
+      // Fallback: taca em direção aleatória
+      const randomAngle = Math.random() * Math.PI * 2;
+      this.shoot(40, randomAngle, { x: 0, y: 0 });
+    }
   }
 
   private switchTurn() {

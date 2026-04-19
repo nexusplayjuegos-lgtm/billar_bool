@@ -54,9 +54,13 @@ function getBestPocketShot(
   pockets: Pocket[]
 ): { target: Ball; angle: number; power: number } | null {
   let best: { target: Ball; angle: number; power: number; score: number } | null = null;
+  let checks = 0;
+  const MAX_CHECKS = 36; // 6 targets × 6 pockets max
 
-  for (const target of targets) {
+  for (const target of targets.slice(0, 6)) {
     for (const pocket of pockets) {
+      checks++;
+      if (checks > MAX_CHECKS) return best ? { target: best.target, angle: best.angle, power: best.power } : null;
       // Ângulo para a caçapa a partir da bola alvo
       const pocketAngle = Math.atan2(pocket.y - target.y, pocket.x - target.x);
       // Posição da ghost ball (bola branca na colisão)

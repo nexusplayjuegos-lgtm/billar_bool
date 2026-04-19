@@ -11,6 +11,7 @@ import { useGameStore } from '@/lib/store';
 import { GameScreen } from '@/components/game/GameScreen';
 import { MousePullBackInput } from '@/components/game/input/MousePullBackInput';
 import { DesktopCueControls } from './DesktopCueControls';
+import { DesktopGameHUD } from './DesktopGameHUD';
 
 interface DesktopGameScreenProps {
   modeId: string;
@@ -31,41 +32,20 @@ export function DesktopGameScreen({ modeId }: DesktopGameScreenProps) {
     <GameScreen
       onExit={handleExit}
       gameMode={modeType === 'brazilian' ? 'brazilian' : '8ball'}
-      header={(engineState, _timeLeft) => (
-        <header className="shrink-0 h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4">
-          <div className="flex items-center gap-4">
-            <Link href={`/${locale}`}>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="text-sm">{t('back')}</span>
-              </motion.button>
-            </Link>
-            <div className="h-6 w-px bg-slate-700" />
-            <div className="flex items-center gap-2">
-              <span className="text-slate-400 text-sm">{t('mode')}:</span>
-              <span className="text-white font-medium">{modeId}</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
+      header={(engineState, timeLeft) => (
+        <header className="shrink-0 h-14 bg-slate-900 border-b border-slate-800 flex items-center px-4">
+          <Link href={`/${locale}`}>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors shrink-0"
             >
-              <MessageSquare className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm">{t('back')}</span>
             </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-            >
-              <Settings className="w-5 h-5" />
-            </motion.button>
+          </Link>
+          <DesktopGameHUD timeLeft={timeLeft} engineState={engineState} />
+          <div className="flex items-center gap-2 shrink-0">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

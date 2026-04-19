@@ -206,9 +206,9 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
   ctx.fill();
 
+  // ===== Corpo da bola (SEM rotação) =====
   ctx.save();
   ctx.translate(ball.x, ball.y);
-  ctx.rotate(ball.rotation);
 
   // Corpo da bola
   ctx.beginPath();
@@ -233,21 +233,6 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   ctx.fillStyle = ballGradient;
   ctx.fill();
 
-  // Marca de rolagem — linha sutil que gira com a bola
-  if (ball.number !== undefined && ball.number >= 0) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(0, 0, ball.radius - 1, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(-ball.radius + 2, 0);
-    ctx.lineTo(ball.radius - 2, 0);
-    ctx.stroke();
-    ctx.restore();
-  }
-
   // Faixa branca para bolas listradas
   if (ball.isStriped && ball.number && ball.number > 8) {
     ctx.save();
@@ -262,7 +247,6 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   // Número da bola
   if (ball.number && ball.number > 0) {
     if (ball.number === 8) {
-      // Bola 8: círculo branco com 8 em preto
       ctx.beginPath();
       ctx.arc(0, 0, 6, 0, Math.PI * 2);
       ctx.fillStyle = 'white';
@@ -273,7 +257,6 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
       ctx.textBaseline = 'middle';
       ctx.fillText('8', 0, 0);
     } else {
-      // Outras bolas: círculo branco com número em preto
       ctx.beginPath();
       ctx.arc(0, 0, 6, 0, Math.PI * 2);
       ctx.fillStyle = 'white';
@@ -293,4 +276,21 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   ctx.fill();
 
   ctx.restore();
+
+  // ===== Marca de rolagem (COM rotação) =====
+  if (ball.number !== undefined && ball.number >= 0) {
+    ctx.save();
+    ctx.translate(ball.x, ball.y);
+    ctx.rotate(ball.rotation);
+    ctx.beginPath();
+    ctx.arc(0, 0, ball.radius - 1, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-ball.radius + 2, 0);
+    ctx.lineTo(ball.radius - 2, 0);
+    ctx.stroke();
+    ctx.restore();
+  }
 }
