@@ -29,11 +29,9 @@ export function PoolTable({ balls, className }: PoolTableProps) {
 
     const borderWidth = 18;
 
-    // Borda externa (madeira escura)
     ctx.fillStyle = '#1a1008';
     ctx.fillRect(0, 0, 800, 400);
 
-    // Borda com bevel 3D
     ctx.fillStyle = '#2d1f12';
     ctx.fillRect(4, 4, 800 - 8, 400 - 8);
     ctx.strokeStyle = '#4a3520';
@@ -42,7 +40,6 @@ export function PoolTable({ balls, className }: PoolTableProps) {
     ctx.strokeStyle = '#1a0f08';
     ctx.strokeRect(8, 8, 800 - 16, 400 - 16);
 
-    // Feltro azul-turquesa com gradiente
     const feltGradient = ctx.createRadialGradient(400, 200, 0, 400, 200, 350);
     feltGradient.addColorStop(0, '#0d8b9e');
     feltGradient.addColorStop(0.5, '#0a6b7a');
@@ -50,17 +47,14 @@ export function PoolTable({ balls, className }: PoolTableProps) {
     ctx.fillStyle = feltGradient;
     ctx.fillRect(borderWidth, borderWidth, 800 - borderWidth * 2, 400 - borderWidth * 2);
 
-    // Borda interna do feltro (borracha)
     ctx.strokeStyle = '#0d3d33';
     ctx.lineWidth = 3;
     ctx.strokeRect(borderWidth + 2, borderWidth + 2, 800 - borderWidth * 2 - 4, 400 - borderWidth * 2 - 4);
 
-    // Linha de borda (cushion line)
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
     ctx.lineWidth = 1;
     ctx.strokeRect(borderWidth + 8, borderWidth + 8, 800 - borderWidth * 2 - 16, 400 - borderWidth * 2 - 16);
 
-    // Diamantes nas bordas
     const diamonds = [150, 250, 350, 450, 550, 650];
     ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
     diamonds.forEach((x) => {
@@ -97,7 +91,6 @@ export function PoolTable({ balls, className }: PoolTableProps) {
       ctx.fill();
     });
 
-    // Caçapas com profundidade
     const pockets = [
       { x: borderWidth + 2, y: borderWidth + 2 },
       { x: 400, y: borderWidth + 2 },
@@ -131,7 +124,6 @@ export function PoolTable({ balls, className }: PoolTableProps) {
       ctx.fill();
     });
 
-    // Head string
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
     ctx.lineWidth = 1;
     ctx.setLineDash([6, 4]);
@@ -141,13 +133,11 @@ export function PoolTable({ balls, className }: PoolTableProps) {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Spot
     ctx.beginPath();
     ctx.arc(800 * 0.75, 400 / 2, 3, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
     ctx.fill();
 
-    // Reflexo sutil no feltro (DEPOIS da mesa, ANTES das bolas)
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.lineTo(800, 0);
@@ -174,6 +164,7 @@ export function PoolTable({ balls, className }: PoolTableProps) {
         ctx.globalAlpha = alpha;
         ctx.translate(ball.x, ball.y);
         ctx.scale(scale, scale);
+        ctx.translate(-ball.x, -ball.y);
         drawBall(ctx, ball);
         ctx.restore();
         return;
@@ -200,110 +191,136 @@ export function PoolTable({ balls, className }: PoolTableProps) {
 }
 
 function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
-  // Sombra da bola
+  const { x, y, radius, color, number, isStriped, vx, vy, rotation } = ball;
+
+  // ── Sombra ──────────────────────────────────────────────────────
   ctx.beginPath();
-  ctx.arc(ball.x + 2, ball.y + 3, ball.radius, 0, Math.PI * 2);
+  ctx.arc(x + 2, y + 3, radius, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
   ctx.fill();
 
+  // ── LAYER 1: Textura interna com scroll ─────────────────────────
+  // Técnica: clip em círculo + deslizar padrão na direcção do movimento
+  // Cria ilusão real de rolamento sem sprite sheet
+  const speed = Math.sqrt(vx * vx + vy * vy);
+  const isMoving = speed > 0.05;
+
+  // scrollX/scrollY: offset acumulado da textura interna
+  // rotation acumula distância percorrida no engine de física
+  let scrollX = 0;
+  let scrollY = 0;
+  if (isMoving) {
+    const dirX = vx / speed;
+    const dirY = vy / speed;
+    // Ciclo da textura = circunferência da bola (2πr)
+    const circumference = radius * Math.PI * 2;
+    const scrollDist = rotation % circumference;
+    scrollX = dirX * scrollDist;
+    scrollY = dirY * scrollDist;
+  }
+
   ctx.save();
-  ctx.translate(ball.x, ball.y);
+  ctx.translate(x, y);
 
-  // Corpo da bola
+  // Clip em círculo — mascara tudo o que sai da bola
   ctx.beginPath();
-  ctx.arc(0, 0, ball.radius, 0, Math.PI * 2);
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.clip();
 
-  const ballGradient = ctx.createRadialGradient(-3, -3, 0, 0, 0, ball.radius);
-
-  if (ball.number === 0) {
-    ballGradient.addColorStop(0, '#ffffff');
-    ballGradient.addColorStop(0.5, '#f0f0f0');
-    ballGradient.addColorStop(1, '#c8c8c8');
-  } else if (ball.number === 8) {
-    ballGradient.addColorStop(0, '#505050');
-    ballGradient.addColorStop(0.4, '#202020');
-    ballGradient.addColorStop(1, '#000000');
+  // ── Cor base ──
+  if (number === 0) {
+    // Bola branca
+    const g = ctx.createRadialGradient(
+      scrollX * 0.4 - radius * 0.2,
+      scrollY * 0.4 - radius * 0.2,
+      0,
+      0, 0, radius
+    );
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.6, '#eeeeee');
+    g.addColorStop(1, '#cccccc');
+    ctx.fillStyle = g;
+    ctx.fillRect(-radius, -radius, radius * 2, radius * 2);
+  } else if (number === 8) {
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(-radius, -radius, radius * 2, radius * 2);
   } else {
-    ballGradient.addColorStop(0, '#ffffff');
-    ballGradient.addColorStop(0.2, ball.color);
-    ballGradient.addColorStop(1, ball.color);
+    ctx.fillStyle = color;
+    ctx.fillRect(-radius, -radius, radius * 2, radius * 2);
   }
 
-  ctx.fillStyle = ballGradient;
-  ctx.fill();
+  // ── Faixa branca para bolas listradas (rola com o movimento) ──
+  if (isStriped && number && number > 8) {
+    const circumference = radius * Math.PI * 2;
+    // Offset cíclico da faixa na direcção do movimento
+    const stripeOffset = isMoving
+      ? (rotation % circumference) * (vy / (speed || 1))
+      : 0;
+    const stripeH = radius * 0.65;
 
-  // Faixa branca para bolas listradas
-  if (ball.isStriped && ball.number && ball.number > 8) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(0, 0, ball.radius, 0, Math.PI * 2);
-    ctx.clip();
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(-ball.radius, -3.5, ball.radius * 2, 7);
-    ctx.restore();
-  }
-
-  // Número da bola
-  if (ball.number && ball.number > 0) {
-    if (ball.number === 8) {
-      ctx.beginPath();
-      ctx.arc(0, 0, 6, 0, Math.PI * 2);
-      ctx.fillStyle = 'white';
-      ctx.fill();
-      ctx.fillStyle = 'black';
-      ctx.font = 'bold 8px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('8', 0, 0);
-    } else {
-      ctx.beginPath();
-      ctx.arc(0, 0, 6, 0, Math.PI * 2);
-      ctx.fillStyle = 'white';
-      ctx.fill();
-      ctx.fillStyle = 'black';
-      ctx.font = 'bold 8px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(ball.number.toString(), 0, 0);
+    // Faixa com wrap cíclico para não "saltar"
+    for (let i = -1; i <= 1; i++) {
+      const sy = stripeOffset + i * circumference;
+      ctx.fillRect(-radius, sy - stripeH / 2, radius * 2, stripeH);
     }
   }
 
-  // Brilho fixo (specular highlight estático — não gira)
-  ctx.beginPath();
-  ctx.arc(-3, -3, 3, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-  ctx.fill();
+  // ── Overlay de sombra esférica (FIXO — dá curvatura 3D) ──
+  const sphereShade = ctx.createRadialGradient(
+    radius * 0.1, radius * 0.1, radius * 0.05,
+    0, 0, radius
+  );
+  sphereShade.addColorStop(0, 'rgba(255,255,255,0.0)');
+  sphereShade.addColorStop(0.55, 'rgba(0,0,0,0.0)');
+  sphereShade.addColorStop(1, 'rgba(0,0,0,0.5)');
+  ctx.fillStyle = sphereShade;
+  ctx.fillRect(-radius, -radius, radius * 2, radius * 2);
+
+  ctx.restore(); // remove clip
+
+  // ── LAYER 2: Número da bola (fixo no centro) ────────────────────
+  ctx.save();
+  ctx.translate(x, y);
+
+  if (number && number > 0) {
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 0.5, 0, Math.PI * 2);
+    ctx.fillStyle = 'white';
+    ctx.fill();
+
+    ctx.fillStyle = '#111111';
+    ctx.font = `bold ${Math.round(radius * 0.7)}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(number.toString(), 0, 0);
+  }
 
   ctx.restore();
 
-  // =============================================
-  // BRILHO DE ROLAMENTO CORRIGIDO
-  // O brilho desliza na direcção do movimento
-  // em vez de orbitar em círculo (efeito roleta)
-  // =============================================
-  const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+  // ── LAYER 3: Highlight especular fixo (topo esquerdo) ───────────
+  // Não se move — ancora visualmente a bola como esfera sob luz
+  ctx.save();
+  ctx.translate(x, y);
 
-  if (speed > 0.1) {
-    // Direcção normalizada do movimento
-    const dirX = ball.vx / speed;
-    const dirY = ball.vy / speed;
+  const highlightGrad = ctx.createRadialGradient(
+    -radius * 0.38, -radius * 0.38, 0,
+    -radius * 0.15, -radius * 0.15, radius * 0.6
+  );
+  highlightGrad.addColorStop(0, 'rgba(255,255,255,0.8)');
+  highlightGrad.addColorStop(0.35, 'rgba(255,255,255,0.25)');
+  highlightGrad.addColorStop(1, 'rgba(255,255,255,0.0)');
 
-    // Ciclo de 0 a 1 baseado na distância percorrida (rotation acumulado no engine)
-    const shineCycle = 100;
-    const shinePhase = (Math.abs(ball.rotation) % shineCycle) / shineCycle;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.fillStyle = highlightGrad;
+  ctx.fill();
 
-    // O brilho desliza da frente para trás ao longo da direcção do movimento
-    // shinePhase 0.0 = frente da bola, shinePhase 1.0 = volta à frente
-    const shineOffset = (shinePhase - 0.5) * ball.radius * 1.4;
-    const shineX = ball.x + dirX * shineOffset;
-    const shineY = ball.y + dirY * shineOffset;
+  // Hotspot pequeno e brilhante
+  ctx.beginPath();
+  ctx.arc(-radius * 0.33, -radius * 0.33, radius * 0.16, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.fill();
 
-    // Opacidade proporcional à velocidade — desaparece quando para
-    const alpha = Math.min(0.55, speed * 0.08);
-
-    ctx.beginPath();
-    ctx.arc(shineX, shineY, ball.radius * 0.18, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-    ctx.fill();
-  }
+  ctx.restore();
 }
