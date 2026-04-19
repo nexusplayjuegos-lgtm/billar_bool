@@ -241,7 +241,7 @@ export function AimOverlay({
 
       {/* Cue Stick */}
       <g
-        transform={`translate(${cueX}, ${cueY}) rotate(${cueRotation})`}
+        transform={`translate(${cueX}, ${cueY}) rotate(${cueRotation}) scale(-1, 1)`}
       >
         {/* Cue shadow */}
         <rect
