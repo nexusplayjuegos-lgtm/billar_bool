@@ -16,7 +16,7 @@ const sidebarItems = [
   { id: 'shop', icon: ShoppingCart, href: '/shop', label: 'Shop' },
   { id: 'friends', icon: Users, href: '/friends', label: 'Friends' },
   { id: 'leaderboard', icon: Trophy, href: '/leaderboard', label: 'Ranking' },
-  { id: 'settings', icon: Settings, href: '/settings', label: 'Settings' },
+  { id: 'profile', icon: Settings, href: '/profile', label: 'Profile' },
 ];
 
 interface DesktopLayoutProps {
@@ -32,8 +32,8 @@ export function DesktopLayout({ children }: DesktopLayoutProps) {
   // Fallback para convidado (não logado)
   const username = profile?.username || 'Convidado';
   const level = profile?.level || 1;
-  const coins = profile?.coins || 5000;
-  const cash = profile?.cash || 0;
+  const coins = profile?.currencies?.coins || 5000;
+  const cash = profile?.currencies?.cash || 0;
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === `/${locale}` || pathname === `/${locale}/`;
