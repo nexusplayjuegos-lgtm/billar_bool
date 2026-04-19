@@ -277,20 +277,27 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
 
   ctx.restore();
 
-  // ===== Marca de rolagem (COM rotação) =====
+  // ===== Marca de rolagem realista (COM rotação) =====
+  // Simula um ponto na superfície da bola que rola na mesa.
+  // Com ball.rotation acumulando no sentido contrário ao movimento,
+  // o ponto parece girar ao redor da bola como um rolamento real.
   if (ball.number !== undefined && ball.number >= 0) {
     ctx.save();
     ctx.translate(ball.x, ball.y);
     ctx.rotate(ball.rotation);
+
+    // Ponto principal de marcação (mais visível)
     ctx.beginPath();
-    ctx.arc(0, 0, ball.radius - 1, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
-    ctx.lineWidth = 1;
+    ctx.arc(ball.radius * 0.65, 0, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.fill();
+
+    // Ponto oposto para simular duas marcas de rolamento
     ctx.beginPath();
-    ctx.moveTo(-ball.radius + 2, 0);
-    ctx.lineTo(ball.radius - 2, 0);
-    ctx.stroke();
+    ctx.arc(-ball.radius * 0.65, 0, 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+    ctx.fill();
+
     ctx.restore();
   }
 }

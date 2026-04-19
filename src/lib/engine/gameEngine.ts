@@ -312,9 +312,13 @@ class GameEngine {
       ball.vx *= FRICTION;
       ball.vy *= FRICTION;
 
-      const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-      if (speed > 0.01) {
-        ball.rotation += speed * 0.15;
+      // Rotação realista de rolamento: a bola gira uma volta (2π)
+      // para cada circunferência percorrida (2π × radius).
+      // A marca na superfície visível se move no sentido CONTRÁRIO
+      // ao movimento da bola (rolling without slipping).
+      const distance = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+      if (distance > 0.001) {
+        ball.rotation -= distance / ball.radius;
       }
 
       if (Math.abs(ball.vx) < STOP_THRESHOLD) ball.vx = 0;
