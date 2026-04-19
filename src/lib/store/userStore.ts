@@ -4,7 +4,6 @@ import { supabase, fetchProfile } from '../supabase/client';
 import { getCurrentUser } from '../supabase/auth';
 import { MOCK_USER } from '@/mocks/data';
 
-// Adapter: converte User do mock para formato que os componentes esperam
 const defaultProfile = {
   id: MOCK_USER.id,
   username: MOCK_USER.username,
@@ -28,19 +27,16 @@ const defaultProfile = {
 };
 
 interface UserState {
-  // Dados
   profile: any;
   session: any | null;
   isLoading: boolean;
   isOnline: boolean;
 
-  // Ações de Auth
   signUp: (email: string, password: string, username: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   loadSession: () => Promise<void>;
 
-  // Ações de Jogo (sync com nuvem)
   addCoins: (amount: number) => Promise<void>;
   removeCoins: (amount: number) => Promise<void>;
   addXP: (amount: number) => Promise<void>;
@@ -58,10 +54,6 @@ export const useUserStore = create<UserState>()(
       isLoading: false,
       isOnline: true,
 
-      // Dentro do create, adicione estas funções:
-
-      
-
       updateStats: async (result: 'win' | 'loss', coinsWon: number = 0) => {
         const { profile, session } = get();
         if (!profile) return;
@@ -75,20 +67,19 @@ export const useUserStore = create<UserState>()(
           currentWinStreak: 0,
           totalCoinsWon: 0,
         };
-        
+
         const newStats = {
           ...currentStats,
           totalGames: (profile.stats?.totalGames || 0) + 1,
-          wins: result === 'win' 
-            ? (profile.stats?.wins || 0) + 1 
+          wins: result === 'win'
+            ? (profile.stats?.wins || 0) + 1
             : (profile.stats?.wins || 0),
           losses: result === 'loss'
             ? (profile.stats?.losses || 0) + 1
             : (profile.stats?.losses || 0),
         };
         newStats.winRate = Math.round((newStats.wins / newStats.totalGames) * 100);
-        
-        // Atualizar streak
+
         if (result === 'win') {
           newStats.currentWinStreak = (profile.stats?.currentWinStreak || 0) + 1;
           newStats.maxWinStreak = Math.max(
@@ -98,14 +89,13 @@ export const useUserStore = create<UserState>()(
         } else {
           newStats.currentWinStreak = 0;
         }
-        
-        // Total coins won
+
         if (coinsWon > 0) {
           newStats.totalCoinsWon = (profile.stats?.totalCoinsWon || 0) + coinsWon;
         }
-        
+
         set({ profile: { ...profile, stats: newStats } });
-        
+
         if (session) {
           await supabase
             .from('profiles')
@@ -114,37 +104,33 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-           equipCue: async (cueId: string) => {
+      equipCue: async (cueId: string) => {
         const { profile, session } = get();
         if (!profile) return;
-        
-        // Verificar se possui o taco
+
         if (!profile.equipment?.ownedCues?.includes(cueId)) {
           console.error('User does not own this cue');
           return;
         }
-        
+
         const updatedProfile = {
           ...profile,
           equipment: { ...profile.equipment, currentCue: cueId },
         };
-        
+
         set({ profile: updatedProfile });
-        
-        // Sync com Supabase se logado
+
         if (session) {
           const { error } = await supabase
             .from('profiles')
             .update({ current_cue: cueId })
             .eq('id', session.user.id);
-            
+
           if (error) {
             console.error('Error equipping cue:', error);
           }
         }
       },
-
-      
 
       // ========== AUTH ==========
       signUp: async (email, password, username) => {
@@ -156,8 +142,6 @@ export const useUserStore = create<UserState>()(
             options: { data: { username } },
           });
           if (error) throw error;
-          
-          // Perfil é criado automaticamente pelo trigger no SQL
           set({ session: data.session });
         } finally {
           set({ isLoading: false });
@@ -172,9 +156,9 @@ export const useUserStore = create<UserState>()(
             password,
           });
           if (error) throw error;
-          
+
           const profile = await fetchProfile(data.user.id);
-          set({ 
+          set({
             session: data.session,
             profile: profile,
           });
@@ -183,9 +167,17 @@ export const useUserStore = create<UserState>()(
         }
       },
 
+      // ── FIX: repor defaultProfile em vez de null + redirecionar ──
       signOut: async () => {
         await supabase.auth.signOut();
-        set({ session: null, profile: null });
+        // Repor perfil de demonstração em vez de null
+        // Evita crashes em componentes que acedem a profile.username sem guard
+        set({ session: null, profile: defaultProfile });
+        // Redirecionar para home (funciona em qualquer locale)
+        if (typeof window !== 'undefined') {
+          const locale = window.location.pathname.split('/')[1] ?? 'es';
+          window.location.href = `/${locale}`;
+        }
       },
 
       loadSession: async () => {
@@ -196,15 +188,14 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      // ========== ECONOMIA (com sync) ==========
+      // ========== ECONOMIA ==========
       addCoins: async (amount) => {
         const { profile, session } = get();
         if (!profile) return;
-        
+
         const newCoins = profile.currencies.coins + amount;
         set({ profile: { ...profile, currencies: { ...profile.currencies, coins: newCoins } } });
-        
-        // Sync com nuvem se logado
+
         if (session) {
           await supabase
             .from('profiles')
@@ -216,10 +207,10 @@ export const useUserStore = create<UserState>()(
       removeCoins: async (amount) => {
         const { profile, session } = get();
         if (!profile) return;
-        
+
         const newCoins = Math.max(0, profile.currencies.coins - amount);
         set({ profile: { ...profile, currencies: { ...profile.currencies, coins: newCoins } } });
-        
+
         if (session) {
           await supabase
             .from('profiles')
@@ -231,35 +222,30 @@ export const useUserStore = create<UserState>()(
       addXP: async (amount) => {
         const { profile, session } = get();
         if (!profile) return;
-        
+
         let newXP = profile.xp + amount;
         let newLevel = profile.level;
         let newXPToNext = profile.xp_to_next;
-        
-        // Level up loop
+
         while (newXP >= newXPToNext) {
           newXP -= newXPToNext;
           newLevel += 1;
           newXPToNext = newLevel * 1000;
         }
-        
+
         const updatedProfile = {
           ...profile,
           xp: newXP,
           level: newLevel,
           xp_to_next: newXPToNext,
         };
-        
+
         set({ profile: updatedProfile });
-        
+
         if (session) {
           await supabase
             .from('profiles')
-            .update({
-              xp: newXP,
-              level: newLevel,
-              xp_to_next: newXPToNext,
-            })
+            .update({ xp: newXP, level: newLevel, xp_to_next: newXPToNext })
             .eq('id', session.user.id);
         }
       },
@@ -268,8 +254,7 @@ export const useUserStore = create<UserState>()(
       saveMatchResult: async (result) => {
         const { profile, session } = get();
         if (!session || !profile) return;
-        
-        // Salvar no histórico
+
         await supabase.from('matches').insert({
           player_id: session.user.id,
           mode: result.mode,
@@ -278,25 +263,24 @@ export const useUserStore = create<UserState>()(
           coins_won: result.coinsWon,
           xp_gained: result.xpGained,
         });
-        
-        // Atualizar stats no perfil
+
         const newStats = {
           ...profile.stats,
           totalGames: profile.stats.totalGames + 1,
-          wins: result.result === 'win' 
-            ? profile.stats.wins + 1 
+          wins: result.result === 'win'
+            ? profile.stats.wins + 1
             : profile.stats.wins,
           losses: result.result === 'loss'
             ? profile.stats.losses + 1
             : profile.stats.losses,
         };
         newStats.winRate = Math.round((newStats.wins / newStats.totalGames) * 100);
-        
+
         await supabase
           .from('profiles')
           .update({ stats: newStats })
           .eq('id', session.user.id);
-          
+
         set({ profile: { ...profile, stats: newStats } });
       },
 
@@ -304,10 +288,10 @@ export const useUserStore = create<UserState>()(
       buyCue: async (cueId, price) => {
         const { profile, session } = get();
         if (!profile || profile.currencies.coins < price) return;
-        
+
         const newCoins = profile.currencies.coins - price;
         const newOwnedCues = [...profile.equipment.ownedCues, cueId];
-        
+
         set({
           profile: {
             ...profile,
@@ -315,23 +299,19 @@ export const useUserStore = create<UserState>()(
             equipment: { ...profile.equipment, ownedCues: newOwnedCues },
           },
         });
-        
+
         if (session) {
           await supabase
             .from('profiles')
-            .update({
-              coins: newCoins,
-              owned_cues: newOwnedCues,
-            })
+            .update({ coins: newCoins, owned_cues: newOwnedCues })
             .eq('id', session.user.id);
         }
       },
     }),
     {
       name: 'bool-user-storage',
-      partialize: (state) => ({ 
+      partialize: (state) => ({
         profile: state.profile,
-        // Não persistir session (segurança - fica no cookie do Supabase)
       }),
     }
   )
