@@ -56,7 +56,11 @@
     "owned": "Owned",
     "popular": "BEST SELLER",
     "limited": "LIMITED EDITION",
-    "save": "SAVE {percent}%"
+    "save": "SAVE {percent}%",
+    "power": "Power",
+    "aim": "Aim",
+    "spin": "Spin",
+    "time": "Time"
   },
   "cues": {
     "beginner": { "name": "Beginner Cue", "desc": "The basic cue to start your journey" },

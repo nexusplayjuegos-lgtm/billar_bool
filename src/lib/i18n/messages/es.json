@@ -56,7 +56,11 @@
     "owned": "Adquirido",
     "popular": "MÁS VENDIDO",
     "limited": "EDICIÓN LIMITADA",
-    "save": "AHORRA {percent}%"
+    "save": "AHORRA {percent}%",
+    "power": "Potencia",
+    "aim": "Puntería",
+    "spin": "Efecto",
+    "time": "Tiempo"
   },
   "cues": {
     "beginner": { "name": "Taco Principiante", "desc": "El taco básico para comenzar tu viaje" },

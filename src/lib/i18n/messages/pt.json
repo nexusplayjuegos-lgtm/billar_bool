@@ -56,7 +56,11 @@
     "owned": "Adquirido",
     "popular": "MAIS VENDIDO",
     "limited": "EDIÇÃO LIMITADA",
-    "save": "ECONOMIZE {percent}%"
+    "save": "ECONOMIZE {percent}%",
+    "power": "Potência",
+    "aim": "Mira",
+    "spin": "Efeito",
+    "time": "Tempo"
   },
   "cues": {
     "beginner": { "name": "Taco Iniciante", "desc": "O taco básico para começar sua jornada" },
