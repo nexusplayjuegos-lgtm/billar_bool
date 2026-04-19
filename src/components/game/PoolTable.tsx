@@ -277,27 +277,29 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
 
   ctx.restore();
 
-  // ===== Marca de rolagem realista (COM rotação) =====
-  // Simula um ponto na superfície da bola que rola na mesa.
-  // Com ball.rotation acumulando no sentido contrário ao movimento,
-  // o ponto parece girar ao redor da bola como um rolamento real.
-  if (ball.number !== undefined && ball.number >= 0) {
-    ctx.save();
-    ctx.translate(ball.x, ball.y);
-    ctx.rotate(ball.rotation);
+  // ===== Brilho móvel — ilusão de rolamento =====
+  // Em 2D top-down, um círculo perfeito não mostra rotação.
+  // O brilho/specular que "caminha" pela superfície cria a ilusão de rolamento.
+  const rollDistance = ball.rotation; // acumulado no engine como distance/radius
+  const shineCycle = 100; // pixels de rollDistance para um ciclo completo
+  const shinePhase = (Math.abs(rollDistance) % shineCycle) / shineCycle;
+  const shineAngle = shinePhase * Math.PI * 2;
 
-    // Ponto principal de marcação (mais visível)
-    ctx.beginPath();
-    ctx.arc(ball.radius * 0.65, 0, 2.5, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-    ctx.fill();
+  // Brilho principal que se move pela superfície
+  const shineX = ball.x + Math.cos(shineAngle) * ball.radius * 0.35;
+  const shineY = ball.y + Math.sin(shineAngle) * ball.radius * 0.25;
 
-    // Ponto oposto para simular duas marcas de rolamento
-    ctx.beginPath();
-    ctx.arc(-ball.radius * 0.65, 0, 2, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-    ctx.fill();
+  ctx.beginPath();
+  ctx.arc(shineX, shineY, ball.radius * 0.18, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+  ctx.fill();
 
-    ctx.restore();
-  }
+  // Brilho secundário mais sutil (lado oposto)
+  const shine2X = ball.x + Math.cos(shineAngle + Math.PI) * ball.radius * 0.2;
+  const shine2Y = ball.y + Math.sin(shineAngle + Math.PI) * ball.radius * 0.15;
+
+  ctx.beginPath();
+  ctx.arc(shine2X, shine2Y, ball.radius * 0.1, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+  ctx.fill();
 }
