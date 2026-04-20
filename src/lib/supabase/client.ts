@@ -4,15 +4,23 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
-export async function fetchProfile(userId: string) {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
-    
-  if (error) throw error;
-  return data;
+export async function fetchProfile(userId: string): Promise<Tables['profiles'] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.error('[fetchProfile] erro:', error.message, error.code);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    console.error('[fetchProfile] excepção:', err);
+    return null;
+  }
 }
 
 // Tipos para autocompletar

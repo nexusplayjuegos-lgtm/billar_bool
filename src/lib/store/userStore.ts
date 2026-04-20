@@ -182,7 +182,7 @@ export const useUserStore = create<UserState>()(
           const profile = await fetchProfile(data.user.id);
           set({
             session: data.session,
-            profile: profile,
+            profile: profile ?? defaultProfile,
           });
           if (typeof window !== 'undefined') {
             document.cookie = 'bool_auth=1; path=/; max-age=604800; SameSite=Strict';
@@ -210,7 +210,7 @@ export const useUserStore = create<UserState>()(
         const user = await getCurrentUser();
         if (user) {
           const profile = await fetchProfile(user.id);
-          set({ profile });
+          if (profile) set({ profile });
         }
       },
 
