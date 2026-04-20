@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase, fetchProfile } from '../supabase/client';
-import { getCurrentUser } from '../supabase/auth';
 import { MOCK_USER } from '@/mocks/data';
 
 const defaultProfile = {
@@ -254,11 +253,17 @@ export const useUserStore = create<UserState>()(
       },
 
       loadSession: async () => {
-        const user = await getCurrentUser();
-        if (user) {
-          const profile = await fetchProfile(user.id);
-          if (profile) set({ profile: adaptProfile(profile) });
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        set({ session, isGuest: false });
+
+        if (typeof window !== 'undefined') {
+          document.cookie = 'bool_auth=1; path=/; max-age=604800; SameSite=Strict';
         }
+
+        const profile = await fetchProfile(session.user.id);
+        if (profile) set({ profile: adaptProfile(profile) });
       },
 
       // ========== ECONOMIA ==========
