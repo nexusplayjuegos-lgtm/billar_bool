@@ -31,11 +31,13 @@ interface UserState {
   session: any | null;
   isLoading: boolean;
   isOnline: boolean;
+  isGuest: boolean;
 
   signUp: (email: string, password: string, username: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   loadSession: () => Promise<void>;
+  playAsGuest: () => void;
 
   addCoins: (amount: number) => Promise<void>;
   removeCoins: (amount: number) => Promise<void>;
@@ -53,6 +55,20 @@ export const useUserStore = create<UserState>()(
       session: null,
       isLoading: false,
       isOnline: true,
+      isGuest: false,
+
+      playAsGuest: () => {
+        const suffix = Math.floor(Math.random() * 9000 + 1000).toString();
+        set({
+          isGuest: true,
+          session: null,
+          profile: {
+            ...defaultProfile,
+            id: `guest_${suffix}`,
+            username: `Convidado_${suffix}`,
+          },
+        });
+      },
 
       updateStats: async (result: 'win' | 'loss', coinsWon: number = 0) => {
         const { profile, session } = get();
@@ -172,7 +188,7 @@ export const useUserStore = create<UserState>()(
         await supabase.auth.signOut();
         // Repor perfil de demonstração em vez de null
         // Evita crashes em componentes que acedem a profile.username sem guard
-        set({ session: null, profile: defaultProfile });
+        set({ session: null, profile: defaultProfile, isGuest: false });
         // Redirecionar para home (funciona em qualquer locale)
         if (typeof window !== 'undefined') {
           const locale = window.location.pathname.split('/')[1] ?? 'es';

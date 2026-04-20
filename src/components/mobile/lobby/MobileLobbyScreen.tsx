@@ -18,7 +18,7 @@ type MultiplayerView = 'menu' | 'create' | 'join' | 'waiting';
 
 export function MobileLobbyScreen() {
   const t = useTranslations();
-  const { profile, removeCoins } = useUserStore();
+  const { profile, removeCoins, isGuest } = useUserStore();
   const { startGame } = useGameStore();
   const router = useRouter();
   const { locale } = useLocale();
@@ -116,6 +116,18 @@ export function MobileLobbyScreen() {
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
       </div>
+
+      {isGuest && (
+        <div className="px-4 pt-2 flex items-center justify-between">
+          <span className="text-slate-400 text-xs">Cria conta para guardar o teu progresso</span>
+          <button
+            onPointerDown={() => router.push(`/${locale}/login`)}
+            className="text-amber-400 text-xs font-semibold"
+          >
+            Criar conta →
+          </button>
+        </div>
+      )}
 
       {/* Welcome Section */}
       <motion.div

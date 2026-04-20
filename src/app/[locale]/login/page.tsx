@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
 export default function LoginPage() {
   const t = useTranslations('auth');
   const router = useRouter();
-  const { signIn, signUp } = useUserStore();
+  const { signIn, signUp, playAsGuest } = useUserStore();
   
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -124,7 +124,7 @@ export default function LoginPage() {
 
         <div className="mt-8 pt-6 border-t border-slate-700 text-center">
           <button
-            onClick={() => router.push('/')}
+            onClick={() => { playAsGuest(); router.push('/'); }}
             className="text-slate-500 hover:text-slate-300 text-sm"
           >
             {t('continueAsGuest')}

@@ -16,7 +16,7 @@ type MultiplayerView = 'menu' | 'create' | 'join';
 
 export function DesktopLobbyScreen() {
   const t = useTranslations();
-  const { profile, removeCoins } = useUserStore();
+  const { profile, removeCoins, isGuest } = useUserStore();
   const { startGame } = useGameStore();
   const router = useRouter();
   const { locale } = useLocale();
@@ -74,6 +74,18 @@ export function DesktopLobbyScreen() {
 
   return (
     <div className="space-y-8">
+      {isGuest && (
+        <div className="flex items-center justify-between bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-2.5 text-sm">
+          <span className="text-slate-400">Cria conta para guardar o teu progresso</span>
+          <button
+            onClick={() => router.push(`/${locale}/login`)}
+            className="text-amber-400 hover:text-amber-300 font-semibold transition-colors"
+          >
+            Criar conta →
+          </button>
+        </div>
+      )}
+
       {/* Hero Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
