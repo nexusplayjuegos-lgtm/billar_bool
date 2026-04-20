@@ -121,7 +121,7 @@ export function useMultiplayer() {
         return null;
       }
     },
-    [],
+    [userId],
   );
 
   // ── Entrar em sala ────────────────────────────────────────────
