@@ -26,6 +26,53 @@ const defaultProfile = {
   settings: MOCK_USER.settings,
 };
 
+interface DbProfile {
+  id: string;
+  username: string;
+  level: number;
+  xp: number;
+  xp_to_next?: number;
+  coins: number;
+  cash: number;
+  stats?: {
+    totalGames: number;
+    wins: number;
+    losses: number;
+    winRate: number;
+    maxWinStreak: number;
+    currentWinStreak: number;
+    totalCoinsWon: number;
+  };
+  current_cue: string;
+  owned_cues?: string[];
+  current_table?: string;
+  owned_tables?: string[];
+  settings?: typeof defaultProfile.settings;
+}
+
+function adaptProfile(db: DbProfile) {
+  return {
+    ...defaultProfile,
+    id: db.id,
+    username: db.username,
+    level: db.level ?? 1,
+    xp: db.xp ?? 0,
+    xp_to_next: db.xp_to_next ?? 1000,
+    currencies: {
+      coins: db.coins ?? 5000,
+      cash: db.cash ?? 0,
+    },
+    stats: db.stats ?? defaultProfile.stats,
+    equipment: {
+      currentCue: db.current_cue ?? 'cue_beginner',
+      ownedCues: db.owned_cues ?? ['cue_beginner'],
+      currentTable: db.current_table ?? 'table_classic_green',
+      ownedTables: db.owned_tables ?? ['table_classic_green'],
+    },
+    settings: db.settings ?? defaultProfile.settings,
+  };
+}
+
 interface UserState {
   profile: any;
   session: any | null;
@@ -182,7 +229,7 @@ export const useUserStore = create<UserState>()(
           const profile = await fetchProfile(data.user.id);
           set({
             session: data.session,
-            profile: profile ?? defaultProfile,
+            profile: profile ? adaptProfile(profile) : defaultProfile,
           });
           if (typeof window !== 'undefined') {
             document.cookie = 'bool_auth=1; path=/; max-age=604800; SameSite=Strict';
@@ -210,7 +257,7 @@ export const useUserStore = create<UserState>()(
         const user = await getCurrentUser();
         if (user) {
           const profile = await fetchProfile(user.id);
-          if (profile) set({ profile });
+          if (profile) set({ profile: adaptProfile(profile) });
         }
       },
 
