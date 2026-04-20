@@ -1,6 +1,7 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
+import { SessionProvider } from '@/components/SessionProvider';
 
 export function generateStaticParams() {
   return [{ locale: 'en' }, { locale: 'es' }, { locale: 'pt' }];
@@ -22,6 +23,7 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
+      <SessionProvider />
       {children}
     </NextIntlClientProvider>
   );
