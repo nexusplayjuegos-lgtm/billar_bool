@@ -94,6 +94,13 @@ export function useMultiplayer() {
   // ── Criar sala ────────────────────────────────────────────────
   const createRoom = useCallback(
     async (gameMode: GameMode = '8ball', betCoins = 0): Promise<Room | null> => {
+      if (!userId) {
+        setState((prev) => ({
+          ...prev,
+          error: 'Precisas de criar conta para jogar online.',
+        }));
+        return null;
+      }
       const client = clientRef.current;
       if (!client) return null;
 

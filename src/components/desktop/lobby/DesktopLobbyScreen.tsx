@@ -263,15 +263,17 @@ export function DesktopLobbyScreen() {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <button
-                      onClick={() => void handleCreateRoom()}
-                      className="flex flex-col items-center gap-3 p-5 bg-blue-500/15 border border-blue-500/30 rounded-2xl hover:bg-blue-500/25 transition-colors"
+                      onClick={() => isGuest ? router.push(`/${locale}/login`) : void handleCreateRoom()}
+                      className={`flex flex-col items-center gap-3 p-5 bg-blue-500/15 border border-blue-500/30 rounded-2xl transition-colors ${isGuest ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-500/25'}`}
                     >
                       <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
                         <Plus className="w-6 h-6 text-blue-400" />
                       </div>
                       <div className="text-center">
                         <p className="text-sm font-semibold text-white">Criar Sala</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Convida um amigo</p>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {isGuest ? 'Cria uma conta para jogar' : 'Convida um amigo'}
+                        </p>
                       </div>
                     </button>
                     <button
@@ -288,7 +290,17 @@ export function DesktopLobbyScreen() {
                     </button>
                   </div>
                   {mpError && (
-                    <p className="mt-4 text-xs text-red-400 text-center">{mpError}</p>
+                    <div className="mt-4 text-center">
+                      <p className="text-xs text-red-400">{mpError}</p>
+                      {isGuest && (
+                        <button
+                          onClick={() => router.push(`/${locale}/login`)}
+                          className="text-xs text-amber-400 hover:text-amber-300 font-semibold mt-1 transition-colors"
+                        >
+                          Criar conta →
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
