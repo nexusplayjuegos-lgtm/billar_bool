@@ -362,6 +362,17 @@ export function MobileLobbyScreen() {
                         }
                       </button>
 
+                      <button
+                        onPointerDown={() => {
+                          const url = `${window.location.origin}/${locale}?join=${room.id}`;
+                          const text = encodeURIComponent(`Joga sinuca comigo! ${url}`);
+                          window.open(`https://wa.me/?text=${text}`, '_blank');
+                        }}
+                        className="flex items-center justify-center gap-2 w-full bg-green-600/20 border border-green-500/30 rounded-xl px-4 py-3 text-green-400 active:scale-95 transition-transform text-sm font-semibold"
+                      >
+                        💬 Convidar pelo WhatsApp
+                      </button>
+
                       <p className="text-xs text-slate-500">
                         A sala expira em 10 minutos
                       </p>
