@@ -96,18 +96,28 @@ export class MultiplayerClient {
 
     this.lastShotNumber += 1;
 
-    const { error: shotError } = await supabase.from('room_shots').insert({
-      room_id: this.roomId,
-      player_id: this.userId,
-      balls_state: ballsState,
-      aim_angle: aimAngle,
-      power,
-      spin_x: spinX,
-      spin_y: spinY,
-      shot_number: this.lastShotNumber,
-    });
+    interface ValidateShotResponse {
+      valid: boolean;
+      reason?: string;
+    }
 
-    if (shotError) throw new Error(`Erro ao enviar jogada: ${shotError.message}`);
+    const { data, error: fnError } = await supabase.functions.invoke<ValidateShotResponse>(
+      'validate-shot',
+      {
+        body: {
+          room_id: this.roomId,
+          balls_state: ballsState,
+          aim_angle: aimAngle,
+          power,
+          spin_x: spinX,
+          spin_y: spinY,
+          shot_number: this.lastShotNumber,
+        },
+      },
+    );
+
+    if (fnError) throw new Error(`Erro ao validar jogada: ${fnError.message}`);
+    if (!data?.valid) throw new Error(data?.reason ?? 'Jogada inválida.');
 
     // Passa o turno para o oponente
     const { error: turnError } = await supabase
