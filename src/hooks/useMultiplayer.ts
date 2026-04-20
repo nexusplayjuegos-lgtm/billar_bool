@@ -129,8 +129,18 @@ export function useMultiplayer() {
 
   // ── Entrar em sala ────────────────────────────────────────────
   const joinRoom = useCallback(async (roomId: string): Promise<Room | null> => {
+    if (!userId) {
+      setState((prev) => ({
+        ...prev,
+        error: 'Precisas de criar conta para jogar online.',
+      }));
+      return null;
+    }
     const client = clientRef.current;
-    if (!client) return null;
+    if (!client) {
+      setState((prev) => ({ ...prev, error: 'A ligar ao servidor. Tenta novamente.' }));
+      return null;
+    }
 
     try {
       setState((prev) => ({ ...prev, error: null }));
@@ -139,7 +149,7 @@ export function useMultiplayer() {
         ...prev,
         room,
         playerNumber: 2,
-        isMyTurn: false, // Jogador 2 espera
+        isMyTurn: false,
         isConnected: true,
       }));
       return room;
@@ -148,7 +158,7 @@ export function useMultiplayer() {
       setState((prev) => ({ ...prev, error: message }));
       return null;
     }
-  }, []);
+  }, [userId]);
 
   // ── Listar salas disponíveis ──────────────────────────────────
   const listRooms = useCallback(async (gameMode?: GameMode): Promise<Room[]> => {
