@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Share2 } from 'lucide-react';
 import { useLocale } from '@/hooks';
 import { gameEngine, EngineState } from '@/lib/engine/gameEngine';
@@ -52,6 +53,8 @@ export function GameScreen({
   const [timeLeft, setTimeLeft] = useState(30);
   const [showWinModal, setShowWinModal] = useState(false);
   const [showLoseModal, setShowLoseModal] = useState(false);
+  const [showGuestPopup, setShowGuestPopup] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     gameEngine.setMode(gameMode);
@@ -135,6 +138,13 @@ export function GameScreen({
   const handlePlaceCueBall = useCallback((x: number, y: number) => {
     gameEngine.placeCueBall(x, y);
   }, []);
+
+  useEffect(() => {
+    if (showWinModal && isGuest) {
+      const shown = localStorage.getItem('guest_win_popup_shown');
+      if (!shown) setShowGuestPopup(true);
+    }
+  }, [showWinModal, isGuest]);
 
   const handleShare = async () => {
     const text = 'Ganhei uma partida de sinuca! 🎱 Joga comigo em billar-bool.vercel.app';
@@ -358,6 +368,54 @@ export function GameScreen({
                     {t('lobby')}
                   </motion.button>
                 </Link>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Guest Progress Popup */}
+      <AnimatePresence>
+        {showGuestPopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="w-full max-w-sm bg-slate-900 rounded-2xl border border-slate-700 p-6 shadow-2xl text-center"
+            >
+              <div className="text-4xl mb-3">🏆</div>
+              <h2 className="text-xl font-black text-white mb-2">
+                Não percas o teu progresso!
+              </h2>
+              <p className="text-slate-400 text-sm mb-6">
+                Cria conta gratuita e guarda as tuas vitórias
+              </p>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    localStorage.setItem('guest_win_popup_shown', '1');
+                    setShowGuestPopup(false);
+                    router.push(`/${locale}/login`);
+                  }}
+                  className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-xl transition-all"
+                >
+                  Criar conta
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.setItem('guest_win_popup_shown', '1');
+                    setShowGuestPopup(false);
+                  }}
+                  className="w-full py-3 text-slate-400 hover:text-slate-300 text-sm transition-colors"
+                >
+                  Continuar como convidado
+                </button>
               </div>
             </motion.div>
           </motion.div>
