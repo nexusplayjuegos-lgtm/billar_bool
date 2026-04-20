@@ -68,6 +68,9 @@ export const useUserStore = create<UserState>()(
             username: `Convidado_${suffix}`,
           },
         });
+        if (typeof window !== 'undefined') {
+          document.cookie = 'bool_guest=1; path=/; max-age=86400; SameSite=Strict';
+        }
       },
 
       updateStats: async (result: 'win' | 'loss', coinsWon: number = 0) => {
@@ -159,6 +162,9 @@ export const useUserStore = create<UserState>()(
           });
           if (error) throw error;
           set({ session: data.session });
+          if (data.session && typeof window !== 'undefined') {
+            document.cookie = 'bool_auth=1; path=/; max-age=604800; SameSite=Strict';
+          }
         } finally {
           set({ isLoading: false });
         }
@@ -178,6 +184,9 @@ export const useUserStore = create<UserState>()(
             session: data.session,
             profile: profile,
           });
+          if (typeof window !== 'undefined') {
+            document.cookie = 'bool_auth=1; path=/; max-age=604800; SameSite=Strict';
+          }
         } finally {
           set({ isLoading: false });
         }
@@ -189,8 +198,9 @@ export const useUserStore = create<UserState>()(
         // Repor perfil de demonstração em vez de null
         // Evita crashes em componentes que acedem a profile.username sem guard
         set({ session: null, profile: defaultProfile, isGuest: false });
-        // Redirecionar para home (funciona em qualquer locale)
         if (typeof window !== 'undefined') {
+          document.cookie = 'bool_auth=; path=/; max-age=0; SameSite=Strict';
+          document.cookie = 'bool_guest=; path=/; max-age=0; SameSite=Strict';
           const locale = window.location.pathname.split('/')[1] ?? 'es';
           window.location.href = `/${locale}`;
         }
