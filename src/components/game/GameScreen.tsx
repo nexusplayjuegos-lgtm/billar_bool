@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { Share2 } from 'lucide-react';
 import { useLocale } from '@/hooks';
 import { gameEngine, EngineState } from '@/lib/engine/gameEngine';
 import { playTick } from '@/lib/audio/gameAudio';
@@ -42,7 +43,7 @@ export function GameScreen({
   const t = useTranslations('game');
   const { locale } = useLocale();
   const { endGame, potentialReward, entryFee } = useGameStore();
-  const { addCoins, removeCoins, addXP } = useUserStore();
+  const { addCoins, removeCoins, addXP, isGuest } = useUserStore();
 
   const [engineState, setEngineState] = useState<EngineState | null>(null);
   const [aimAngle, setAimAngle] = useState(0);
@@ -134,6 +135,15 @@ export function GameScreen({
   const handlePlaceCueBall = useCallback((x: number, y: number) => {
     gameEngine.placeCueBall(x, y);
   }, []);
+
+  const handleShare = async () => {
+    const text = 'Ganhei uma partida de sinuca! 🎱 Joga comigo em billar-bool.vercel.app';
+    if (navigator.share) {
+      await navigator.share({ text });
+    } else {
+      await navigator.clipboard.writeText(text);
+    }
+  };
 
   if (!engineState) {
     return (
@@ -272,6 +282,18 @@ export function GameScreen({
                     {t('lobby')}
                   </motion.button>
                 </Link>
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.9 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => void handleShare()}
+                  className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center gap-2"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Partilhar resultado
+                </motion.button>
               </div>
             </motion.div>
           </motion.div>
