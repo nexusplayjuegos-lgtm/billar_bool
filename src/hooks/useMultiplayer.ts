@@ -102,7 +102,10 @@ export function useMultiplayer() {
         return null;
       }
       const client = clientRef.current;
-      if (!client) return null;
+      if (!client) {
+        setState((prev) => ({ ...prev, error: 'A ligar ao servidor. Tenta novamente.' }));
+        return null;
+      }
 
       try {
         setState((prev) => ({ ...prev, error: null }));

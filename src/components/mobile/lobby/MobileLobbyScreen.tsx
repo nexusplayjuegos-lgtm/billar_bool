@@ -76,7 +76,8 @@ export function MobileLobbyScreen() {
 
   const handleCreateRoom = async () => {
     setMpView('create');
-    await createRoom('8ball', 0);
+    const result = await createRoom('8ball', 0);
+    if (!result) setMpView('menu');
   };
 
   const handleOpenJoin = async () => {
