@@ -17,6 +17,7 @@ export function JoinRoomClient({ roomId }: Props) {
   const { session, playAsGuest } = useUserStore();
   const { joinRoom, error } = useMultiplayer();
   const [joining, setJoining] = useState(false);
+  const [hasTried, setHasTried] = useState(false);
   const hasJoined = useRef(false);
 
   useEffect(() => {
@@ -29,6 +30,7 @@ export function JoinRoomClient({ roomId }: Props) {
       if (room) {
         router.replace(`/${locale}/play/multiplayer?room=${room.id}`);
       } else {
+        setHasTried(true);
         setJoining(false);
       }
     };
@@ -36,15 +38,11 @@ export function JoinRoomClient({ roomId }: Props) {
     void autoJoin();
   }, [session, roomId, joinRoom, router, locale]);
 
-  const handleGuestJoin = async () => {
+  const handleGuestJoin = () => {
+    setHasTried(true);
     playAsGuest();
-    setJoining(true);
-    const room = await joinRoom(roomId);
-    if (room) {
-      router.replace(`/${locale}/play/multiplayer?room=${room.id}`);
-    } else {
-      setJoining(false);
-    }
+    localStorage.setItem('bool_pending_room', roomId);
+    router.replace(`/${locale}/play/multiplayer?room=${roomId}&guest=true`);
   };
 
   if (session) {
@@ -86,7 +84,7 @@ export function JoinRoomClient({ roomId }: Props) {
           </div>
         )}
 
-        {error && <p className="text-red-400 text-sm mt-4">{error}</p>}
+        {hasTried && error && <p className="text-red-400 text-sm mt-4">{error}</p>}
       </div>
     </div>
   );
