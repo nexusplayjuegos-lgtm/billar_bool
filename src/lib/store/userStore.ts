@@ -83,7 +83,7 @@ interface UserState {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   loadSession: () => Promise<void>;
-  playAsGuest: () => Promise<void>;
+  playAsGuest: () => Promise<string | null>;
 
   addCoins: (amount: number) => Promise<void>;
   removeCoins: (amount: number) => Promise<void>;
@@ -115,13 +115,17 @@ export const useUserStore = create<UserState>()(
 
         if (!error && data.session) {
           set({ isGuest: true, session: data.session, profile: guestProfile });
-        } else {
-          set({ isGuest: true, session: null, profile: guestProfile });
+          if (typeof window !== 'undefined') {
+            document.cookie = 'bool_guest=1; path=/; max-age=86400; SameSite=Strict';
+          }
+          return data.session.user.id;
         }
 
+        set({ isGuest: true, session: null, profile: guestProfile });
         if (typeof window !== 'undefined') {
           document.cookie = 'bool_guest=1; path=/; max-age=86400; SameSite=Strict';
         }
+        return null;
       },
 
       updateStats: async (result: 'win' | 'loss', coinsWon: number = 0) => {

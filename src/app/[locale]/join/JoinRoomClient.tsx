@@ -58,17 +58,16 @@ export function JoinRoomClient({ roomId }: Props) {
   const handleGuestJoin = async () => {
     setJoining(true);
     setError(null);
-    await playAsGuest();
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user?.id) {
+    const userId = await playAsGuest();
+    if (!userId) {
       setError('Não foi possível criar sessão. Tenta novamente.');
       setJoining(false);
       return;
     }
 
     try {
-      const client = new MultiplayerClient(session.user.id, {
+      const client = new MultiplayerClient(userId, {
         onRoomUpdate: () => {},
         onOpponentShot: () => {},
         onMessage: () => {},
