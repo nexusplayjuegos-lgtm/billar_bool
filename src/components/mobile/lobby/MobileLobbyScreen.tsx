@@ -99,9 +99,24 @@ export function MobileLobbyScreen() {
 
   const handleCopyRoomId = () => {
     if (!room?.id) return;
-    void navigator.clipboard.writeText(room.id);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const text = room.id;
+    const tryClipboard = async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const input = document.createElement('input');
+        input.value = text;
+        input.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(input);
+        input.select();
+        input.setSelectionRange(0, text.length);
+        document.execCommand('copy');
+        document.body.removeChild(input);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    };
+    void tryClipboard();
   };
 
   const handleCloseMultiplayer = () => {
