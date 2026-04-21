@@ -741,5 +741,10 @@ class GameEngine {
   }
 }
 
-// Singleton para 8-ball (default)
+// Singleton legado para singleplayer (mantido para compatibilidade)
 export const gameEngine = new GameEngine('8ball');
+
+// Factory function — cria uma nova instância a cada partida (multiplayer)
+export function createGameEngine(mode: '8ball' | 'brazilian' = '8ball'): GameEngine {
+  return new GameEngine(mode);
+}

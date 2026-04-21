@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useLocale, useImmersiveMatch } from '@/hooks';
 import { useGameStore } from '@/lib/store';
 import { useMultiplayer } from '@/hooks/useMultiplayer';
-import { gameEngine } from '@/lib/engine/gameEngine';
+import { createGameEngine, gameEngine } from '@/lib/engine/gameEngine';
 import { supabase, fetchProfile } from '@/lib/supabase/client';
 import { GameScreen } from '@/components/game/GameScreen';
 import { TouchDragInput } from '@/components/game/input/TouchDragInput';
@@ -22,6 +22,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
   const { locale } = useLocale();
   const { endGame, modeType } = useGameStore();
   const { containerRef } = useImmersiveMatch();
+  const engineRef = useRef(createGameEngine(modeType === 'brazilian' ? 'brazilian' : '8ball'));
 
   const {
     room,
@@ -59,9 +60,10 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
 
   // Ativar modo multiplayer no engine
   useEffect(() => {
-    gameEngine.setMultiplayerMode(true);
+    const engine = engineRef.current;
+    engine.setMultiplayerMode(true);
     return () => {
-      gameEngine.setMultiplayerMode(false);
+      engine.setMultiplayerMode(false);
     };
   }, []);
 
@@ -92,7 +94,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
   // Aplicar jogada do oponente
   useEffect(() => {
     if (!opponentShot) return;
-    gameEngine.applyOpponentShot(opponentShot.aim_angle, opponentShot.power);
+    engineRef.current.applyOpponentShot(opponentShot.aim_angle, opponentShot.power);
     clearOpponentShot();
   }, [opponentShot, clearOpponentShot]);
 
@@ -105,11 +107,11 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
   const handleShoot = useCallback(
     (power: number, aimAngle: number) => {
       // 1. Disparar localmente
-      gameEngine.shoot(power, aimAngle, { x: 0, y: 0 });
+      engineRef.current.shoot(power, aimAngle, { x: 0, y: 0 });
 
       // 2. Enviar para o servidor
       if (room && isMyTurn) {
-        const ballsState = gameEngine.getState().balls.map((b) => ({
+        const ballsState = engineRef.current.getState().balls.map((b) => ({
           id: b.id,
           x: b.x,
           y: b.y,
@@ -155,6 +157,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
         onShoot={handleShoot}
         tableScale={0.92}
         gameMode={modeType === 'brazilian' ? 'brazilian' : '8ball'}
+        engine={engineRef.current}
         header={(engineState, timeLeft) => (
           <div className="shrink-0 h-12 px-3 flex items-center justify-between bg-slate-950/80 backdrop-blur-sm z-20 border-b border-slate-800/50">
             <div className="flex-1 min-w-0">

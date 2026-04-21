@@ -20,39 +20,26 @@ export function JoinRoomClient({ roomId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const hasJoined = useRef(false);
 
-  // Auto-join quando sessão estiver disponível (do SessionProvider ou getSession)
   useEffect(() => {
-    if (!roomId || hasJoined.current) return;
+    if (!roomId || hasJoined.current || !isSessionLoaded) return;
+
+    let cancelled = false;
 
     const attemptJoin = async () => {
-      // Se o SessionProvider ainda está carregando, aguarda
-      if (!isSessionLoaded) {
-        console.log('[JoinRoomClient] SessionProvider ainda carregando...');
-        return;
-      }
-
-      // Tenta obter sessão diretamente do Supabase (caso o Zustand ainda não tenha)
-      const { data: { session: directSession }, error: sessionError } = await supabase.auth.getSession();
-      
-      console.log('[JoinRoomClient] isSessionLoaded:', isSessionLoaded);
-      console.log('[JoinRoomClient] session do store:', session?.user?.id ?? 'null');
-      console.log('[JoinRoomClient] session do getSession():', directSession?.user?.id ?? 'null');
-      if (sessionError) console.log('[JoinRoomClient] getSession error:', sessionError);
-
-      const activeSession = session || directSession;
-
-      if (!activeSession?.user?.id) {
-        console.log('[JoinRoomClient] Sem sessão ativa — mostrando opções de login');
-        setJoining(false);
-        return;
-      }
-
-      console.log('[JoinRoomClient] Sessão encontrada, userId:', activeSession.user.id);
-      hasJoined.current = true;
-      setJoining(true);
-      setError(null);
-
       try {
+        const { data: { session: directSession } } = await supabase.auth.getSession();
+        const activeSession = session || directSession;
+
+        if (!activeSession?.user?.id) {
+          if (!cancelled) setJoining(false);
+          return;
+        }
+
+        if (!cancelled) {
+          setJoining(true);
+          setError(null);
+        }
+
         const client = new MultiplayerClient(activeSession.user.id, {
           onRoomUpdate: () => {},
           onOpponentShot: () => {},
@@ -60,20 +47,27 @@ export function JoinRoomClient({ roomId }: Props) {
           onOpponentJoined: () => {},
           onOpponentLeft: () => {},
         });
+
         await client.joinRoom(roomId);
-        console.log('[JoinRoomClient] Join bem-sucedido, redirecionando...');
-        router.replace(`/${locale}/game/multiplayer?room=${roomId}`);
+
+        if (!cancelled) {
+          hasJoined.current = true;
+          router.replace(`/${locale}/game/multiplayer?room=${roomId}`);
+        }
       } catch (err) {
-        hasJoined.current = false;
-        const msg = err instanceof Error ? err.message : 'Erro ao entrar na sala.';
-        console.error('[JoinRoomClient] Erro no join:', msg);
-        setError(msg);
-        setJoining(false);
+        if (!cancelled) {
+          hasJoined.current = false;
+          setError(err instanceof Error ? err.message : 'Erro ao entrar na sala');
+          setJoining(false);
+        }
       }
     };
 
     void attemptJoin();
-  }, [roomId, locale, router, session, isSessionLoaded]);
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId, isSessionLoaded]);
 
   const handleGuestJoin = async () => {
     setJoining(true);

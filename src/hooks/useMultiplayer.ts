@@ -186,7 +186,7 @@ export function useMultiplayer() {
       spinY = 0,
     ): Promise<void> => {
       const client = clientRef.current;
-      if (!client || !state.isMyTurn) return;
+      if (!client || !state.isMyTurn || !state.isConnected) return;
 
       try {
         await client.sendShot(ballsState, aimAngle, power, spinX, spinY);
@@ -196,6 +196,7 @@ export function useMultiplayer() {
         setState((prev) => ({ ...prev, error: message }));
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [state.isMyTurn],
   );
 

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const LOCALES = ['en', 'es', 'pt'] as const;
 
-const PROTECTED_SEGMENTS = ['/play', '/shop', '/friends', '/ranking', '/profile', '/settings'];
+const PROTECTED_SEGMENTS = ['/play', '/shop', '/friends', '/leaderboard', '/profile', '/join'];
 
 function isProtected(pathname: string): boolean {
   return PROTECTED_SEGMENTS.some((seg) =>

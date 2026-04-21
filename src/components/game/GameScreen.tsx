@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Share2 } from 'lucide-react';
 import { useLocale } from '@/hooks';
-import { gameEngine, EngineState } from '@/lib/engine/gameEngine';
+import { gameEngine, createGameEngine, EngineState } from '@/lib/engine/gameEngine';
 import { playTick } from '@/lib/audio/gameAudio';
 import { useGameStore, useUserStore } from '@/lib/store';
 import { MatchTable } from './MatchTable';
@@ -31,6 +31,7 @@ interface GameScreenProps {
   blockScroll?: boolean;
   tableScale?: number;
   gameMode?: '8ball' | 'brazilian';
+  engine?: typeof gameEngine;
 }
 
 export function GameScreen({
@@ -42,7 +43,9 @@ export function GameScreen({
   blockScroll = false,
   tableScale,
   gameMode = '8ball',
+  engine: customEngine,
 }: GameScreenProps) {
+  const engine = customEngine ?? gameEngine;
   const t = useTranslations('game');
   const { locale } = useLocale();
   const { endGame, potentialReward, entryFee } = useGameStore();
@@ -59,9 +62,9 @@ export function GameScreen({
   const router = useRouter();
 
   useEffect(() => {
-    gameEngine.setMode(gameMode);
-    gameEngine.start();
-    const unsubscribe = gameEngine.subscribe((state) => {
+    engine.setMode(gameMode);
+    engine.start();
+    const unsubscribe = engine.subscribe((state) => {
       setEngineState(state);
       if (state.gameOver && state.winner) {
         const won = state.winner === 1;
@@ -83,8 +86,9 @@ export function GameScreen({
     });
     return () => {
       unsubscribe();
-      gameEngine.stop();
+      engine.stop();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addCoins, addXP, potentialReward, gameMode]);
 
   useEffect(() => {
@@ -133,17 +137,17 @@ export function GameScreen({
       if (customOnShoot) {
         customOnShoot(power, aimAngle);
       } else {
-        gameEngine.shoot(power, aimAngle, { x: 0, y: 0 });
+        engine.shoot(power, aimAngle, { x: 0, y: 0 });
       }
       setPower(0);
       setTimeLeft(30);
     }
     setIsAiming(false);
-  }, [power, aimAngle, customOnShoot]);
+  }, [power, aimAngle, customOnShoot, engine]);
 
   const handlePlaceCueBall = useCallback((x: number, y: number) => {
-    gameEngine.placeCueBall(x, y);
-  }, []);
+    engine.placeCueBall(x, y);
+  }, [engine]);
 
   useEffect(() => {
     if (showWinModal && isGuest) {
