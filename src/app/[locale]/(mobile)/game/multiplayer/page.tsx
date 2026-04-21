@@ -14,15 +14,13 @@ function MultiplayerGamePageInner() {
 
   const roomId = searchParams.get('room');
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  // eslint-disable-next-line react-compiler/react-compiler
   useEffect(() => {
     if (!roomId) {
       router.replace(`/${locale}`);
       return;
     }
     startGame('multiplayer', '8ball', 0, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId, router, locale, startGame]);
 
   if (!roomId) {
