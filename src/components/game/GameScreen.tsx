@@ -27,6 +27,7 @@ interface GameScreenProps {
   overlay?: (state: EngineState, handlers: InputHandlers) => ReactNode;
   footer?: (state: EngineState, power: number, setPower: (p: number) => void, onShoot: () => void) => ReactNode;
   onExit: () => void;
+  onShoot?: (power: number, aimAngle: number) => void;
   blockScroll?: boolean;
   tableScale?: number;
   gameMode?: '8ball' | 'brazilian';
@@ -37,6 +38,7 @@ export function GameScreen({
   overlay,
   footer,
   onExit,
+  onShoot: customOnShoot,
   blockScroll = false,
   tableScale,
   gameMode = '8ball',
@@ -128,12 +130,16 @@ export function GameScreen({
 
   const handleShoot = useCallback(() => {
     if (power > 2) {
-      gameEngine.shoot(power, aimAngle, { x: 0, y: 0 });
+      if (customOnShoot) {
+        customOnShoot(power, aimAngle);
+      } else {
+        gameEngine.shoot(power, aimAngle, { x: 0, y: 0 });
+      }
       setPower(0);
       setTimeLeft(30);
     }
     setIsAiming(false);
-  }, [power, aimAngle]);
+  }, [power, aimAngle, customOnShoot]);
 
   const handlePlaceCueBall = useCallback((x: number, y: number) => {
     gameEngine.placeCueBall(x, y);
