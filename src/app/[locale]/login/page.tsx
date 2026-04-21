@@ -1,16 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useUserStore } from '@/lib/store/userStore';
+import { useLocale } from '@/hooks';
 import { motion } from 'framer-motion';
 
 export default function LoginPage() {
   const t = useTranslations('auth');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { locale } = useLocale();
   const { signIn, signUp, playAsGuest } = useUserStore();
-  
+
+  const redirectTo = searchParams.get('redirect') ?? `/${locale}`;
+
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,9 +35,9 @@ export default function LoginPage() {
         if (!username) throw new Error('Username required');
         await signUp(email, password, username);
       }
-      router.push('/'); // Redireciona para lobby
-    } catch (err: any) {
-      setError(err.message || 'Authentication failed');
+      router.push(redirectTo);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Authentication failed');
     } finally {
       setLoading(false);
     }
@@ -124,7 +129,7 @@ export default function LoginPage() {
 
         <div className="mt-8 pt-6 border-t border-slate-700 text-center">
           <button
-            onClick={() => { playAsGuest(); router.push('/'); }}
+            onClick={async () => { await playAsGuest(); router.push(redirectTo); }}
             className="text-slate-500 hover:text-slate-300 text-sm"
           >
             {t('continueAsGuest')}
