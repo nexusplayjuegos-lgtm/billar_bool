@@ -10,6 +10,8 @@ interface MultiplayerClientCallbacks {
   onMessage: (message: RoomMessage) => void;
   onOpponentJoined: (room: Room) => void;
   onOpponentLeft: () => void;
+  onConnected?: () => void;
+  onDisconnected?: () => void;
 }
 
 export class MultiplayerClient {
@@ -18,6 +20,8 @@ export class MultiplayerClient {
   private userId: string;
   private callbacks: MultiplayerClientCallbacks;
   private lastShotNumber = 0;
+  private subscribedRoomId: string | null = null;
+  private isSubscribing = false;
 
   constructor(userId: string, callbacks: MultiplayerClientCallbacks) {
     this.userId = userId;
@@ -47,8 +51,8 @@ export class MultiplayerClient {
 
   // ── Entrar em sala existente ──────────────────────────────────
   async joinRoom(roomId: string): Promise<Room> {
-    // Se já estamos subscritos a esta sala, não faz nada
-    if (this.roomId === roomId && this.channel) {
+    // Se já estamos subscritos a esta sala, retorna sala atual
+    if (this.roomId === roomId && this.subscribedRoomId === roomId && this.channel) {
       const { data: existingRoom } = await supabase
         .from('rooms')
         .select('*')
@@ -149,7 +153,7 @@ export class MultiplayerClient {
     // Passa o turno para o oponente
     const { error: turnError } = await supabase
       .from('rooms')
-      .update({ current_turn: null }) // null = aguarda definição pelo próximo evento
+      .update({ current_turn: null })
       .eq('id', this.roomId);
 
     if (turnError) throw new Error(`Erro ao passar turno: ${turnError.message}`);
@@ -201,16 +205,37 @@ export class MultiplayerClient {
 
   // ── Subscrever Realtime ───────────────────────────────────────
   private subscribeToRoom(roomId: string): void {
-    // Desconecta canal anterior se existir
-    if (this.channel) {
-      supabase.removeChannel(this.channel);
-      this.channel = null;
+    // Proteção contra chamadas duplicadas ou concorrentes
+    if (this.isSubscribing) {
+      console.log('[Realtime] Subscrição já em andamento, ignorando...');
+      return;
     }
 
-    this.channel = supabase
-      .channel(`room:${roomId}`)
+    if (this.subscribedRoomId === roomId && this.channel) {
+      console.log('[Realtime] Já subscrito na sala:', roomId);
+      return;
+    }
 
-      // Alterações na sala (turno, status, jogador 2 entrou)
+    this.isSubscribing = true;
+
+    // Desconecta canal anterior completamente
+    if (this.channel) {
+      console.log('[Realtime] Removendo canal anterior...');
+      supabase.removeChannel(this.channel);
+      this.channel = null;
+      this.subscribedRoomId = null;
+    }
+
+    console.log('[Realtime] Criando novo canal para sala:', roomId);
+
+    // Cria o canal e encadeia TODOS os .on() ANTES do .subscribe()
+    this.channel = supabase
+      .channel(`room:${roomId}`, {
+        config: {
+          broadcast: { self: false },
+        },
+      })
+      // Listener 1: Alterações na sala (turno, status, jogador 2 entrou)
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
@@ -229,21 +254,18 @@ export class MultiplayerClient {
           }
         },
       )
-
-      // Nova jogada do oponente
+      // Listener 2: Nova jogada do oponente
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'room_shots', filter: `room_id=eq.${roomId}` },
         (payload) => {
           const shot = payload.new as RoomShot;
-          // Ignora as próprias jogadas
           if (shot.player_id !== this.userId) {
             this.callbacks.onOpponentShot(shot);
           }
         },
       )
-
-      // Mensagens de chat
+      // Listener 3: Mensagens de chat
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'room_messages', filter: `room_id=eq.${roomId}` },
@@ -251,8 +273,23 @@ export class MultiplayerClient {
           this.callbacks.onMessage(payload.new as RoomMessage);
         },
       )
+      // SÓ DEPOIS de todos os .on(), chama .subscribe() com callback de status
+      .subscribe((status) => {
+        this.isSubscribing = false;
+        console.log('[Realtime] Status do canal:', status);
 
-      .subscribe();
+        if (status === 'SUBSCRIBED') {
+          this.subscribedRoomId = roomId;
+          console.log('[Realtime] ✅ Conectado na sala:', roomId);
+          this.callbacks.onConnected?.();
+        }
+
+        if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.warn('[Realtime] ❌ Canal fechado/erro:', status);
+          this.callbacks.onDisconnected?.();
+          this.subscribedRoomId = null;
+        }
+      });
   }
 
   // ── Desconectar ───────────────────────────────────────────────
@@ -262,6 +299,8 @@ export class MultiplayerClient {
       this.channel = null;
     }
     this.roomId = null;
+    this.subscribedRoomId = null;
+    this.isSubscribing = false;
   }
 
   get currentRoomId(): string | null {
