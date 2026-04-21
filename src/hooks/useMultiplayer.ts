@@ -27,13 +27,17 @@ export function useMultiplayer() {
   const [userId, setUserId] = useState<string | null>(null);
   const clientRef = useRef<MultiplayerClient | null>(null);
 
-  // ── Obter userId da sessão ────────────────────────────────────
+  // ── Obter userId e reagir a mudanças de auth ─────────────────
   useEffect(() => {
-    const getUser = async (): Promise<void> => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) setUserId(user.id);
-    };
-    void getUser();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) setUserId(session.user.id);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   // ── Inicializar cliente quando userId estiver disponível ──────
