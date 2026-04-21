@@ -38,11 +38,16 @@ export function JoinRoomClient({ roomId }: Props) {
     void autoJoin();
   }, [session, roomId, joinRoom, router, locale]);
 
-  const handleGuestJoin = () => {
+  const handleGuestJoin = async () => {
     setHasTried(true);
-    playAsGuest();
-    localStorage.setItem('bool_pending_room', roomId);
-    router.replace(`/${locale}/play/multiplayer?room=${roomId}&guest=true`);
+    setJoining(true);
+    await playAsGuest();
+    const room = await joinRoom(roomId);
+    if (room) {
+      router.replace(`/${locale}/play/multiplayer?room=${room.id}`);
+    } else {
+      setJoining(false);
+    }
   };
 
   if (session) {
