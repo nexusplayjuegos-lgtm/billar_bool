@@ -23,12 +23,17 @@ export function JoinRoomClient({ roomId }: Props) {
   useEffect(() => {
     if (!roomId || hasJoined.current) return;
 
+    setJoining(true);
+
     const autoJoin = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return;
+
+      if (!session?.user?.id) {
+        setJoining(false);
+        return;
+      }
 
       hasJoined.current = true;
-      setJoining(true);
 
       try {
         const client = new MultiplayerClient(session.user.id, {
@@ -41,6 +46,7 @@ export function JoinRoomClient({ roomId }: Props) {
         await client.joinRoom(roomId);
         router.replace(`/${locale}/play/multiplayer?room=${roomId}`);
       } catch (err) {
+        hasJoined.current = false;
         setError(err instanceof Error ? err.message : 'Erro ao entrar na sala.');
         setJoining(false);
       }
