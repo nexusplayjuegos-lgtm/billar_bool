@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useImmersiveMatch } from '@/hooks';
 import { useGameStore } from '@/lib/store';
@@ -39,12 +39,14 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
   const [myProfile, setMyProfile] = useState<Tables['profiles'] | null>(null);
   const [opponentProfile, setOpponentProfile] = useState<Tables['profiles'] | null>(null);
   const [joining, setJoining] = useState(true);
+  const hasJoinedRef = useRef(false);
 
-  // Entrar na sala ao montar
+  // Entrar na sala ao montar (apenas uma vez)
   useEffect(() => {
     let mounted = true;
     async function enter() {
-      if (!mounted) return;
+      if (!mounted || hasJoinedRef.current) return;
+      hasJoinedRef.current = true;
       setJoining(true);
       await joinRoom(roomId);
       if (mounted) setJoining(false);

@@ -47,6 +47,16 @@ export class MultiplayerClient {
 
   // ── Entrar em sala existente ──────────────────────────────────
   async joinRoom(roomId: string): Promise<Room> {
+    // Se já estamos subscritos a esta sala, não faz nada
+    if (this.roomId === roomId && this.channel) {
+      const { data: existingRoom } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('id', roomId)
+        .single();
+      if (existingRoom) return existingRoom as Room;
+    }
+
     const { data: existingRoom } = await supabase
       .from('rooms')
       .select('*')
@@ -191,6 +201,12 @@ export class MultiplayerClient {
 
   // ── Subscrever Realtime ───────────────────────────────────────
   private subscribeToRoom(roomId: string): void {
+    // Desconecta canal anterior se existir
+    if (this.channel) {
+      supabase.removeChannel(this.channel);
+      this.channel = null;
+    }
+
     this.channel = supabase
       .channel(`room:${roomId}`)
 
