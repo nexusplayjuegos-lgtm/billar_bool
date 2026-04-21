@@ -83,7 +83,7 @@ interface UserState {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   loadSession: () => Promise<void>;
-  playAsGuest: () => void;
+  playAsGuest: () => Promise<void>;
 
   addCoins: (amount: number) => Promise<void>;
   removeCoins: (amount: number) => Promise<void>;
@@ -103,17 +103,22 @@ export const useUserStore = create<UserState>()(
       isOnline: true,
       isGuest: false,
 
-      playAsGuest: () => {
+      playAsGuest: async () => {
         const suffix = Math.floor(Math.random() * 9000 + 1000).toString();
-        set({
-          isGuest: true,
-          session: null,
-          profile: {
-            ...defaultProfile,
-            id: `guest_${suffix}`,
-            username: `Convidado_${suffix}`,
-          },
-        });
+        const guestProfile = {
+          ...defaultProfile,
+          id: `guest_${suffix}`,
+          username: `Convidado_${suffix}`,
+        };
+
+        const { data, error } = await supabase.auth.signInAnonymously();
+
+        if (!error && data.session) {
+          set({ isGuest: true, session: data.session, profile: guestProfile });
+        } else {
+          set({ isGuest: true, session: null, profile: guestProfile });
+        }
+
         if (typeof window !== 'undefined') {
           document.cookie = 'bool_guest=1; path=/; max-age=86400; SameSite=Strict';
         }
