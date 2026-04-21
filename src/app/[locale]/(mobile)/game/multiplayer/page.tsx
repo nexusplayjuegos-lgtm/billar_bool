@@ -1,15 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useLocale } from '@/hooks';
 import { MultiplayerGameScreen } from '@/components/mobile';
 import { useGameStore } from '@/lib/store';
 
-// Força renderização dinâmica — esta página depende de searchParams (roomId)
-export const dynamic = 'force-dynamic';
-
-export default function MultiplayerGamePage() {
+function MultiplayerGamePageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { locale } = useLocale();
@@ -17,12 +14,14 @@ export default function MultiplayerGamePage() {
 
   const roomId = searchParams.get('room');
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-compiler/react-compiler
   useEffect(() => {
     if (!roomId) {
       router.replace(`/${locale}`);
       return;
     }
-    // Inicializa game store com modo multiplayer genérico
     startGame('multiplayer', '8ball', 0, 0);
   }, [roomId, router, locale, startGame]);
 
@@ -31,4 +30,19 @@ export default function MultiplayerGamePage() {
   }
 
   return <MultiplayerGameScreen roomId={roomId} />;
+}
+
+export default function MultiplayerGamePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="h-dvh h-screen flex flex-col items-center justify-center bg-slate-950 gap-4">
+          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-slate-400 text-sm">A carregar...</span>
+        </div>
+      }
+    >
+      <MultiplayerGamePageInner />
+    </Suspense>
+  );
 }
