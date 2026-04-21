@@ -47,18 +47,35 @@ export class MultiplayerClient {
 
   // ── Entrar em sala existente ──────────────────────────────────
   async joinRoom(roomId: string): Promise<Room> {
+    const { data: existingRoom } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', roomId)
+      .single();
+
+    if (!existingRoom) throw new Error('Sala não encontrada.');
+
+    if (
+      existingRoom.player_1_id === this.userId ||
+      existingRoom.player_2_id === this.userId
+    ) {
+      this.roomId = roomId;
+      this.subscribeToRoom(roomId);
+      return existingRoom as Room;
+    }
+
+    if (existingRoom.player_2_id && existingRoom.player_2_id !== this.userId) {
+      throw new Error('Sala cheia.');
+    }
+
     const { data, error } = await supabase
       .from('rooms')
-      .update({
-        player_2_id: this.userId,
-        status: 'playing',
-      })
+      .update({ player_2_id: this.userId, status: 'playing' })
       .eq('id', roomId)
-      .eq('status', 'waiting')
       .select()
       .single();
 
-    if (error || !data) throw new Error('Sala cheia ou não encontrada.');
+    if (error || !data) throw new Error('Erro ao entrar na sala.');
 
     this.roomId = roomId;
     this.subscribeToRoom(roomId);
