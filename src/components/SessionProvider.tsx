@@ -5,6 +5,11 @@ import { useUserStore } from '@/lib/store/userStore';
 
 export function SessionProvider() {
   const { loadSession } = useUserStore();
-  useEffect(() => { void loadSession(); }, [loadSession]);
+  useEffect(() => { 
+    console.log('[SessionProvider] Iniciando loadSession...');
+    void loadSession().then(() => {
+      console.log('[SessionProvider] loadSession concluído');
+    });
+  }, [loadSession]);
   return null;
 }

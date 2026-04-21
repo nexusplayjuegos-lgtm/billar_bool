@@ -26,18 +26,28 @@ export function JoinRoomClient({ roomId }: Props) {
 
     const attemptJoin = async () => {
       // Se o SessionProvider ainda está carregando, aguarda
-      if (!isSessionLoaded) return;
+      if (!isSessionLoaded) {
+        console.log('[JoinRoomClient] SessionProvider ainda carregando...');
+        return;
+      }
 
       // Tenta obter sessão diretamente do Supabase (caso o Zustand ainda não tenha)
-      const { data: { session: directSession } } = await supabase.auth.getSession();
+      const { data: { session: directSession }, error: sessionError } = await supabase.auth.getSession();
+      
+      console.log('[JoinRoomClient] isSessionLoaded:', isSessionLoaded);
+      console.log('[JoinRoomClient] session do store:', session?.user?.id ?? 'null');
+      console.log('[JoinRoomClient] session do getSession():', directSession?.user?.id ?? 'null');
+      if (sessionError) console.log('[JoinRoomClient] getSession error:', sessionError);
+
       const activeSession = session || directSession;
 
       if (!activeSession?.user?.id) {
-        // Sem sessão — mostra opções de login/convidado
+        console.log('[JoinRoomClient] Sem sessão ativa — mostrando opções de login');
         setJoining(false);
         return;
       }
 
+      console.log('[JoinRoomClient] Sessão encontrada, userId:', activeSession.user.id);
       hasJoined.current = true;
       setJoining(true);
       setError(null);
@@ -51,10 +61,13 @@ export function JoinRoomClient({ roomId }: Props) {
           onOpponentLeft: () => {},
         });
         await client.joinRoom(roomId);
+        console.log('[JoinRoomClient] Join bem-sucedido, redirecionando...');
         router.replace(`/${locale}/game/multiplayer?room=${roomId}`);
       } catch (err) {
         hasJoined.current = false;
-        setError(err instanceof Error ? err.message : 'Erro ao entrar na sala.');
+        const msg = err instanceof Error ? err.message : 'Erro ao entrar na sala.';
+        console.error('[JoinRoomClient] Erro no join:', msg);
+        setError(msg);
         setJoining(false);
       }
     };

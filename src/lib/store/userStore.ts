@@ -264,14 +264,19 @@ export const useUserStore = create<UserState>()(
       },
 
       loadSession: async () => {
+        console.log('[userStore] loadSession iniciando...');
         set({ isSessionLoaded: false });
         try {
-          const { data: { session } } = await supabase.auth.getSession();
+          const { data: { session }, error } = await supabase.auth.getSession();
+          console.log('[userStore] getSession result:', { hasSession: !!session, error: error?.message });
+          
           if (!session) {
+            console.log('[userStore] Sem sessão no Supabase');
             set({ isSessionLoaded: true });
             return;
           }
 
+          console.log('[userStore] Sessão encontrada, userId:', session.user.id);
           set({ session, isGuest: false });
 
           if (typeof window !== 'undefined') {
@@ -279,9 +284,13 @@ export const useUserStore = create<UserState>()(
           }
 
           const profile = await fetchProfile(session.user.id);
+          console.log('[userStore] Profile do banco:', profile ? 'encontrado' : 'não encontrado');
           if (profile) set({ profile: adaptProfile(profile) });
+        } catch (err) {
+          console.error('[userStore] Erro em loadSession:', err);
         } finally {
           set({ isSessionLoaded: true });
+          console.log('[userStore] loadSession concluído, isSessionLoaded=true');
         }
       },
 
