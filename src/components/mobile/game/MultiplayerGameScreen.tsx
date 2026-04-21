@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useImmersiveMatch } from '@/hooks';
 import { useGameStore } from '@/lib/store';
+import { useUserStore } from '@/lib/store/userStore';
 import { useMultiplayer } from '@/hooks/useMultiplayer';
-import { createGameEngine, gameEngine } from '@/lib/engine/gameEngine';
-import { supabase, fetchProfile } from '@/lib/supabase/client';
+import { createGameEngine } from '@/lib/engine/gameEngine';
+import { fetchProfile } from '@/lib/supabase/client';
 import { GameScreen } from '@/components/game/GameScreen';
 import { TouchDragInput } from '@/components/game/input/TouchDragInput';
 import { GameExitButton } from './GameExitButton';
@@ -37,26 +38,33 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     clearOpponentShot,
   } = useMultiplayer();
 
+  const { session, isSessionLoaded } = useUserStore();
   const [myProfile, setMyProfile] = useState<Tables['profiles'] | null>(null);
   const [opponentProfile, setOpponentProfile] = useState<Tables['profiles'] | null>(null);
   const [joining, setJoining] = useState(true);
   const hasJoinedRef = useRef(false);
 
-  // Entrar na sala ao montar (apenas uma vez)
+  // Entrar na sala ao montar (apenas uma vez) — aguarda sessão carregar primeiro
   useEffect(() => {
+    console.log('[MultiplayerGameScreen] Effect triggered:', { isSessionLoaded, hasUserId: !!session?.user?.id, roomId });
     let mounted = true;
     async function enter() {
-      if (!mounted || hasJoinedRef.current) return;
+      if (!mounted || hasJoinedRef.current || !isSessionLoaded) {
+        console.log('[MultiplayerGameScreen] Skipping join:', { mounted, hasJoined: hasJoinedRef.current, isSessionLoaded });
+        return;
+      }
       hasJoinedRef.current = true;
       setJoining(true);
-      await joinRoom(roomId);
+      console.log('[MultiplayerGameScreen] Calling joinRoom...');
+      const result = await joinRoom(roomId);
+      console.log('[MultiplayerGameScreen] joinRoom result:', result ? 'success' : 'failed');
       if (mounted) setJoining(false);
     }
     enter();
     return () => {
       mounted = false;
     };
-  }, [roomId, joinRoom]);
+  }, [roomId, joinRoom, isSessionLoaded, session]);
 
   // Ativar modo multiplayer no engine
   useEffect(() => {
@@ -73,7 +81,6 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
 
     async function loadProfiles(currentRoom: typeof room) {
       if (!currentRoom) return;
-      const { data: { session } } = await supabase.auth.getSession();
       const myId = session?.user?.id;
       if (!myId) return;
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MultiplayerClient } from '@/lib/multiplayer/client';
-import { supabase } from '@/lib/supabase/client';
+import { useUserStore } from '@/lib/store/userStore';
 import type {
   BallState,
   GameMode,
@@ -24,25 +24,18 @@ const INITIAL_STATE: MultiplayerState = {
 
 export function useMultiplayer() {
   const [state, setState] = useState<MultiplayerState>(INITIAL_STATE);
-  const [userId, setUserId] = useState<string | null>(null);
   const clientRef = useRef<MultiplayerClient | null>(null);
+  
+  // Usar o userStore em vez de gerenciar sessão localmente
+  const { session, isSessionLoaded } = useUserStore();
+  const userId = session?.user?.id ?? null;
 
-  // ── Obter userId e reagir a mudanças de auth ─────────────────
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) setUserId(session.user.id);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserId(session?.user?.id ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  console.log('[useMultiplayer] Render:', { userId: userId?.slice(0, 8), isSessionLoaded });
 
   // ── Inicializar cliente quando userId estiver disponível ──────
   useEffect(() => {
-    if (!userId) return;
+    console.log('[useMultiplayer] Client init effect:', { userId: userId?.slice(0, 8), isSessionLoaded });
+    if (!userId || !isSessionLoaded) return;
 
     const client = new MultiplayerClient(userId, {
       onRoomUpdate: (room: Room) => {
@@ -93,12 +86,13 @@ export function useMultiplayer() {
       client.disconnect();
       clientRef.current = null;
     };
-  }, [userId]);
+  }, [userId, isSessionLoaded]);
 
   // ── Criar sala ────────────────────────────────────────────────
   const createRoom = useCallback(
     async (gameMode: GameMode = '8ball', betCoins = 0): Promise<Room | null> => {
-      if (!userId) {
+      console.log('[useMultiplayer] createRoom:', { userId: userId?.slice(0, 8), isSessionLoaded });
+      if (!userId || !isSessionLoaded) {
         setState((prev) => ({
           ...prev,
           error: 'Precisas de criar conta para jogar online.',
@@ -128,12 +122,13 @@ export function useMultiplayer() {
         return null;
       }
     },
-    [userId],
+    [userId, isSessionLoaded],
   );
 
   // ── Entrar em sala ────────────────────────────────────────────
   const joinRoom = useCallback(async (roomId: string): Promise<Room | null> => {
-    if (!userId) {
+    console.log('[useMultiplayer] joinRoom:', { roomId, userId: userId?.slice(0, 8), isSessionLoaded });
+    if (!userId || !isSessionLoaded) {
       setState((prev) => ({
         ...prev,
         error: 'Precisas de criar conta para jogar online.',
