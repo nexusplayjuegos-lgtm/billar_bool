@@ -6,6 +6,9 @@ import { useLocale } from '@/hooks';
 import { MultiplayerGameScreen } from '@/components/mobile';
 import { useGameStore } from '@/lib/store';
 
+// Força renderização dinâmica — esta página depende de searchParams (roomId)
+export const dynamic = 'force-dynamic';
+
 export default function MultiplayerGamePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
