@@ -76,6 +76,7 @@ interface UserState {
   profile: any;
   session: any | null;
   isLoading: boolean;
+  isSessionLoaded: boolean;
   isOnline: boolean;
   isGuest: boolean;
 
@@ -100,6 +101,7 @@ export const useUserStore = create<UserState>()(
       profile: defaultProfile,
       session: null,
       isLoading: false,
+      isSessionLoaded: false,
       isOnline: true,
       isGuest: false,
 
@@ -262,17 +264,25 @@ export const useUserStore = create<UserState>()(
       },
 
       loadSession: async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
+        set({ isSessionLoaded: false });
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            set({ isSessionLoaded: true });
+            return;
+          }
 
-        set({ session, isGuest: false });
+          set({ session, isGuest: false });
 
-        if (typeof window !== 'undefined') {
-          document.cookie = 'bool_auth=1; path=/; max-age=604800; SameSite=Strict';
+          if (typeof window !== 'undefined') {
+            document.cookie = 'bool_auth=1; path=/; max-age=604800; SameSite=Strict';
+          }
+
+          const profile = await fetchProfile(session.user.id);
+          if (profile) set({ profile: adaptProfile(profile) });
+        } finally {
+          set({ isSessionLoaded: true });
         }
-
-        const profile = await fetchProfile(session.user.id);
-        if (profile) set({ profile: adaptProfile(profile) });
       },
 
       // ========== ECONOMIA ==========

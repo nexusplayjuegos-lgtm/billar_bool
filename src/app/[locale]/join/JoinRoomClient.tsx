@@ -15,28 +15,35 @@ interface Props {
 export function JoinRoomClient({ roomId }: Props) {
   const router = useRouter();
   const { locale } = useLocale();
-  const { playAsGuest } = useUserStore();
+  const { playAsGuest, session, isSessionLoaded } = useUserStore();
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hasJoined = useRef(false);
 
+  // Auto-join quando sessão estiver disponível (do SessionProvider ou getSession)
   useEffect(() => {
     if (!roomId || hasJoined.current) return;
 
-    setJoining(true);
+    const attemptJoin = async () => {
+      // Se o SessionProvider ainda está carregando, aguarda
+      if (!isSessionLoaded) return;
 
-    const autoJoin = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Tenta obter sessão diretamente do Supabase (caso o Zustand ainda não tenha)
+      const { data: { session: directSession } } = await supabase.auth.getSession();
+      const activeSession = session || directSession;
 
-      if (!session?.user?.id) {
+      if (!activeSession?.user?.id) {
+        // Sem sessão — mostra opções de login/convidado
         setJoining(false);
         return;
       }
 
       hasJoined.current = true;
+      setJoining(true);
+      setError(null);
 
       try {
-        const client = new MultiplayerClient(session.user.id, {
+        const client = new MultiplayerClient(activeSession.user.id, {
           onRoomUpdate: () => {},
           onOpponentShot: () => {},
           onMessage: () => {},
@@ -44,7 +51,7 @@ export function JoinRoomClient({ roomId }: Props) {
           onOpponentLeft: () => {},
         });
         await client.joinRoom(roomId);
-        router.replace(`/${locale}/play/multiplayer?room=${roomId}`);
+        router.replace(`/${locale}/game/multiplayer?room=${roomId}`);
       } catch (err) {
         hasJoined.current = false;
         setError(err instanceof Error ? err.message : 'Erro ao entrar na sala.');
@@ -52,8 +59,8 @@ export function JoinRoomClient({ roomId }: Props) {
       }
     };
 
-    void autoJoin();
-  }, [roomId, locale, router]);
+    void attemptJoin();
+  }, [roomId, locale, router, session, isSessionLoaded]);
 
   const handleGuestJoin = async () => {
     setJoining(true);
@@ -75,7 +82,7 @@ export function JoinRoomClient({ roomId }: Props) {
         onOpponentLeft: () => {},
       });
       await client.joinRoom(roomId);
-      router.replace(`/${locale}/play/multiplayer?room=${roomId}`);
+      router.replace(`/${locale}/game/multiplayer?room=${roomId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao entrar na sala.');
       setJoining(false);
