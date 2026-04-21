@@ -391,7 +391,7 @@ export function MobileLobbyScreen() {
                       </button>
 
                       <a
-                        href={`https://wa.me/?text=${encodeURIComponent(`Joga sinuca comigo! ${window.location.origin}/${locale}?join=${room.id}`)}`}
+                        href={`https://wa.me/?text=${encodeURIComponent(`Joga sinuca comigo! ${window.location.origin}/${locale}/join?room=${room.id}`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-2 w-full bg-green-600/20 border border-green-500/30 rounded-xl px-4 py-3 text-green-400 active:scale-95 transition-transform text-sm font-semibold"
