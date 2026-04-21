@@ -155,6 +155,7 @@ class GameEngine {
   private redBallPocketed = false;   // vermelha caiu na caçapa
   private mode: '8ball' | 'brazilian' = '8ball';
   private botDifficulty: BotDifficulty = 'medium';
+  private multiplayerMode = false;
 
   constructor(mode: '8ball' | 'brazilian' = '8ball') {
     this.mode = mode;
@@ -191,6 +192,15 @@ class GameEngine {
 
   setBotDifficulty(difficulty: BotDifficulty) {
     this.botDifficulty = difficulty;
+  }
+
+  setMultiplayerMode(enabled: boolean) {
+    this.multiplayerMode = enabled;
+  }
+
+  applyOpponentShot(angle: number, power: number) {
+    // Dispara a tacada do oponente diretamente, sem verificar currentPlayer
+    this.shoot(power, angle, { x: 0, y: 0 });
   }
 
   start() {
@@ -268,6 +278,13 @@ class GameEngine {
     this.state.foul = true;
     this.state.ballInHand = true;
     this.switchTurn();
+  }
+
+  getState(): EngineState {
+    return {
+      ...this.state,
+      balls: this.state.balls.map((b) => ({ ...b })),
+    };
   }
 
   subscribe(listener: EngineListener) {
@@ -646,6 +663,7 @@ class GameEngine {
   private botSafetyTimeout = 0;
 
   private scheduleBotPlay() {
+    if (this.multiplayerMode) return;
     if (this.botTimeout) clearTimeout(this.botTimeout);
     if (this.botSafetyTimeout) clearTimeout(this.botSafetyTimeout);
     const delay = 1500 + Math.random() * 1500;
@@ -663,6 +681,7 @@ class GameEngine {
   }
 
   private botPlay() {
+    if (this.multiplayerMode) return;
     if (this.state.gameOver || this.state.ballsMoving || this.state.currentPlayer !== 2) return;
 
     const cueBall = this.state.balls[0];
