@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useUserStore } from '@/lib/store/userStore';
-import { useMultiplayer } from '@/hooks/useMultiplayer';
 import { useLocale } from '@/hooks';
 import { supabase } from '@/lib/supabase/client';
+import { MultiplayerClient } from '@/lib/multiplayer/client';
 
 interface Props {
   roomId: string;
@@ -16,8 +16,8 @@ export function JoinRoomClient({ roomId }: Props) {
   const router = useRouter();
   const { locale } = useLocale();
   const { playAsGuest } = useUserStore();
-  const { joinRoom, error } = useMultiplayer();
   const [joining, setJoining] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const hasJoined = useRef(false);
 
   useEffect(() => {
@@ -29,24 +29,50 @@ export function JoinRoomClient({ roomId }: Props) {
 
       hasJoined.current = true;
       setJoining(true);
-      const room = await joinRoom(roomId);
-      if (room) {
-        router.replace(`/${locale}/play/multiplayer?room=${room.id}`);
-      } else {
+
+      try {
+        const client = new MultiplayerClient(session.user.id, {
+          onRoomUpdate: () => {},
+          onOpponentShot: () => {},
+          onMessage: () => {},
+          onOpponentJoined: () => {},
+          onOpponentLeft: () => {},
+        });
+        await client.joinRoom(roomId);
+        router.replace(`/${locale}/play/multiplayer?room=${roomId}`);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erro ao entrar na sala.');
         setJoining(false);
       }
     };
 
     void autoJoin();
-  }, [roomId, joinRoom, router, locale]);
+  }, [roomId, locale, router]);
 
   const handleGuestJoin = async () => {
     setJoining(true);
+    setError(null);
     await playAsGuest();
-    const room = await joinRoom(roomId);
-    if (room) {
-      router.replace(`/${locale}/play/multiplayer?room=${room.id}`);
-    } else {
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) {
+      setError('Não foi possível criar sessão. Tenta novamente.');
+      setJoining(false);
+      return;
+    }
+
+    try {
+      const client = new MultiplayerClient(session.user.id, {
+        onRoomUpdate: () => {},
+        onOpponentShot: () => {},
+        onMessage: () => {},
+        onOpponentJoined: () => {},
+        onOpponentLeft: () => {},
+      });
+      await client.joinRoom(roomId);
+      router.replace(`/${locale}/play/multiplayer?room=${roomId}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao entrar na sala.');
       setJoining(false);
     }
   };
