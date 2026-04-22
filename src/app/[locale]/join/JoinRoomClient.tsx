@@ -19,23 +19,34 @@ export function JoinRoomClient({ roomId }: Props) {
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hasJoined = useRef(false);
+  const hasAttempted = useRef(false);
 
+  // Efeito principal: executa APENAS UMA VEZ quando sessão termina de carregar
   useEffect(() => {
-    if (!roomId || hasJoined.current || !isSessionLoaded) return;
+    // Bloqueios: sem roomId, já tentou, já entrou, ou sessão ainda carregando
+    if (!roomId || hasAttempted.current || hasJoined.current || !isSessionLoaded) {
+      return;
+    }
+
+    // MARCA IMEDIATAMENTE que já tentou (evita loop se isSessionLoaded flutuar)
+    hasAttempted.current = true;
 
     let cancelled = false;
+    let client: MultiplayerClient | null = null;
 
     const attemptJoin = async () => {
-      let client: MultiplayerClient | null = null;
       try {
+        // Verifica sessão ativa
         const { data: { session: directSession } } = await supabase.auth.getSession();
         const activeSession = session || directSession;
 
+        // Se não está logado, mostra UI de convidado/login e PARA
         if (!activeSession?.user?.id) {
           if (!cancelled) setJoining(false);
           return;
         }
 
+        // Está logado: tenta entrar na sala
         if (!cancelled) {
           setJoining(true);
           setError(null);
@@ -53,12 +64,15 @@ export function JoinRoomClient({ roomId }: Props) {
 
         if (!cancelled) {
           hasJoined.current = true;
-          client.disconnect();
+          client.disconnect(); // Limpa canal antes de sair
           client = null;
           router.replace(`/${locale}/play/multiplayer?room=${roomId}`);
         }
       } catch (err) {
-        if (client) client.disconnect();
+        if (client) {
+          client.disconnect();
+          client = null;
+        }
         if (!cancelled) {
           hasJoined.current = false;
           setError(err instanceof Error ? err.message : 'Erro ao entrar na sala');
@@ -69,23 +83,30 @@ export function JoinRoomClient({ roomId }: Props) {
 
     void attemptJoin();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      if (client) {
+        client.disconnect();
+      }
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomId, isSessionLoaded]);
+  }, [roomId, isSessionLoaded]); // Dependências mínimas
 
   const handleGuestJoin = async () => {
+    if (hasJoined.current) return;
+    
     setJoining(true);
     setError(null);
     let client: MultiplayerClient | null = null;
 
-    const userId = await playAsGuest();
-    if (!userId) {
-      setError('Não foi possível criar sessão. Tenta novamente.');
-      setJoining(false);
-      return;
-    }
-
     try {
+      const userId = await playAsGuest();
+      if (!userId) {
+        setError('Não foi possível criar sessão. Tenta novamente.');
+        setJoining(false);
+        return;
+      }
+
       client = new MultiplayerClient(userId, {
         onRoomUpdate: () => {},
         onOpponentShot: () => {},
@@ -93,9 +114,10 @@ export function JoinRoomClient({ roomId }: Props) {
         onOpponentJoined: () => {},
         onOpponentLeft: () => {},
       });
+      
       await client.joinRoom(roomId);
+      hasJoined.current = true;
       client.disconnect();
-      client = null;
       router.replace(`/${locale}/play/multiplayer?room=${roomId}`);
     } catch (err) {
       if (client) client.disconnect();
