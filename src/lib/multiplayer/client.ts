@@ -204,7 +204,7 @@ export class MultiplayerClient {
   }
 
   // ── Subscrever Realtime ───────────────────────────────────────
-  private subscribeToRoom(roomId: string): void {
+  private async subscribeToRoom(roomId: string): Promise<void> {
     // Proteção contra chamadas duplicadas ou concorrentes
     if (this.isSubscribing) {
       console.log('[Realtime] Subscrição já em andamento, ignorando...');
@@ -221,6 +221,7 @@ export class MultiplayerClient {
     // Desconecta canal anterior completamente
     if (this.channel) {
       console.log('[Realtime] Removendo canal anterior...');
+      await this.channel?.unsubscribe();
       supabase.removeChannel(this.channel);
       this.channel = null;
       this.subscribedRoomId = null;

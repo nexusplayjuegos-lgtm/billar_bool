@@ -26,6 +26,7 @@ export function JoinRoomClient({ roomId }: Props) {
     let cancelled = false;
 
     const attemptJoin = async () => {
+      let client: MultiplayerClient | null = null;
       try {
         const { data: { session: directSession } } = await supabase.auth.getSession();
         const activeSession = session || directSession;
@@ -40,7 +41,7 @@ export function JoinRoomClient({ roomId }: Props) {
           setError(null);
         }
 
-        const client = new MultiplayerClient(activeSession.user.id, {
+        client = new MultiplayerClient(activeSession.user.id, {
           onRoomUpdate: () => {},
           onOpponentShot: () => {},
           onMessage: () => {},
@@ -52,9 +53,12 @@ export function JoinRoomClient({ roomId }: Props) {
 
         if (!cancelled) {
           hasJoined.current = true;
-          router.replace(`/${locale}/game/multiplayer?room=${roomId}`);
+          client.disconnect();
+          client = null;
+          router.replace(`/${locale}/play/multiplayer?room=${roomId}`);
         }
       } catch (err) {
+        if (client) client.disconnect();
         if (!cancelled) {
           hasJoined.current = false;
           setError(err instanceof Error ? err.message : 'Erro ao entrar na sala');
@@ -72,6 +76,7 @@ export function JoinRoomClient({ roomId }: Props) {
   const handleGuestJoin = async () => {
     setJoining(true);
     setError(null);
+    let client: MultiplayerClient | null = null;
 
     const userId = await playAsGuest();
     if (!userId) {
@@ -81,7 +86,7 @@ export function JoinRoomClient({ roomId }: Props) {
     }
 
     try {
-      const client = new MultiplayerClient(userId, {
+      client = new MultiplayerClient(userId, {
         onRoomUpdate: () => {},
         onOpponentShot: () => {},
         onMessage: () => {},
@@ -89,8 +94,11 @@ export function JoinRoomClient({ roomId }: Props) {
         onOpponentLeft: () => {},
       });
       await client.joinRoom(roomId);
-      router.replace(`/${locale}/game/multiplayer?room=${roomId}`);
+      client.disconnect();
+      client = null;
+      router.replace(`/${locale}/play/multiplayer?room=${roomId}`);
     } catch (err) {
+      if (client) client.disconnect();
       setError(err instanceof Error ? err.message : 'Erro ao entrar na sala.');
       setJoining(false);
     }
