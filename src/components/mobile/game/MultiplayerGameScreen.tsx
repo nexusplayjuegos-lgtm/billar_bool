@@ -75,6 +75,17 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     };
   }, []);
 
+  useEffect(() => {
+    const handlePageHide = () => {
+      void leaveRoom();
+    };
+
+    window.addEventListener('pagehide', handlePageHide);
+    return () => {
+      window.removeEventListener('pagehide', handlePageHide);
+    };
+  }, [leaveRoom]);
+
   // Buscar perfis dos jogadores
   useEffect(() => {
     if (!room) return;
@@ -113,24 +124,24 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
 
   const handleShoot = useCallback(
     (power: number, aimAngle: number) => {
+      if (!room || !isMyTurn || !isConnected) return;
+
       // 1. Disparar localmente
       engineRef.current.shoot(power, aimAngle, { x: 0, y: 0 });
 
       // 2. Enviar para o servidor
-      if (room && isMyTurn) {
-        const ballsState = engineRef.current.getState().balls.map((b) => ({
-          id: b.id,
-          x: b.x,
-          y: b.y,
-          vx: b.vx,
-          vy: b.vy,
-          inPocket: b.inPocket,
-          rotation: b.rotation,
-        }));
-        void sendShot(ballsState, aimAngle, power);
-      }
+      const ballsState = engineRef.current.getState().balls.map((b) => ({
+        id: b.id,
+        x: b.x,
+        y: b.y,
+        vx: b.vx,
+        vy: b.vy,
+        inPocket: b.inPocket,
+        rotation: b.rotation,
+      }));
+      void sendShot(ballsState, aimAngle, power);
     },
-    [isMyTurn, room, sendShot]
+    [isConnected, isMyTurn, room, sendShot]
   );
 
   if (joining) {
@@ -156,6 +167,23 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     );
   }
 
+  const roomReady =
+    room?.id === roomId &&
+    room.status === 'playing' &&
+    !!room.player_1_id &&
+    !!room.player_2_id &&
+    !!playerNumber &&
+    isConnected;
+
+  if (!roomReady) {
+    return (
+      <div className="h-dvh h-screen flex flex-col items-center justify-center bg-slate-950 gap-4 px-6">
+        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <span className="text-slate-300 text-sm text-center">Aguardando os dois jogadores entrarem na mesma sala...</span>
+      </div>
+    );
+  }
+
   return (
     <div ref={containerRef} className="h-dvh h-screen w-full">
       <GameScreen
@@ -165,6 +193,8 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
         tableScale={0.92}
         gameMode={modeType === 'brazilian' ? 'brazilian' : '8ball'}
         engine={engineRef.current}
+        enableLocalTurnTimer={false}
+        showBotThinking={false}
         header={(engineState, timeLeft) => (
           <div className="shrink-0 h-12 px-3 flex items-center justify-between bg-slate-950/80 backdrop-blur-sm z-20 border-b border-slate-800/50">
             <div className="flex-1 min-w-0">

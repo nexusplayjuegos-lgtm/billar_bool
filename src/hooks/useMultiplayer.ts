@@ -42,6 +42,7 @@ export function useMultiplayer() {
         setState((prev) => ({
           ...prev,
           room,
+          isConnected: room.status === 'playing' && !!room.player_1_id && !!room.player_2_id,
           isMyTurn: room.current_turn === userId,
         }));
       },

@@ -32,6 +32,8 @@ interface GameScreenProps {
   tableScale?: number;
   gameMode?: '8ball' | 'brazilian';
   engine?: typeof gameEngine;
+  enableLocalTurnTimer?: boolean;
+  showBotThinking?: boolean;
 }
 
 export function GameScreen({
@@ -44,6 +46,8 @@ export function GameScreen({
   tableScale,
   gameMode = '8ball',
   engine: customEngine,
+  enableLocalTurnTimer = true,
+  showBotThinking = true,
 }: GameScreenProps) {
   const engine = customEngine ?? gameEngine;
   const t = useTranslations('game');
@@ -96,7 +100,9 @@ export function GameScreen({
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          gameEngine.timeoutTurn();
+          if (enableLocalTurnTimer) {
+            engine.timeoutTurn();
+          }
           return 30;
         }
         if (prev <= 11) {
@@ -106,7 +112,7 @@ export function GameScreen({
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [engineState]);
+  }, [engineState, engine, enableLocalTurnTimer]);
 
   useEffect(() => {
     if (!blockScroll) return;
@@ -217,7 +223,7 @@ export function GameScreen({
       )}
 
       {/* Indicador de vez do bot */}
-      {engineState.currentPlayer === 2 && !engineState.ballsMoving && !engineState.gameOver && (
+      {showBotThinking && engineState.currentPlayer === 2 && !engineState.ballsMoving && !engineState.gameOver && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30">
           <div className="px-4 py-2 bg-slate-900/90 backdrop-blur-sm rounded-full border border-slate-700/50 flex items-center gap-2">
             <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
