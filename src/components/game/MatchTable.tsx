@@ -4,6 +4,7 @@ import { useRef, useLayoutEffect, useState, ReactNode } from 'react';
 import { Ball } from '@/types';
 import { PoolTable } from './PoolTable';
 import { AimOverlay } from './AimOverlay';
+import { PocketedBallRack } from './PocketedBallRack';
 
 interface MatchTableProps {
   balls: Ball[];
@@ -11,11 +12,21 @@ interface MatchTableProps {
   power: number;
   isAiming: boolean;
   isBreakShot?: boolean;
+  pocketedBallIds?: number[];
   children: ReactNode;
   scale?: number;
 }
 
-export function MatchTable({ balls, aimAngle, power, isAiming, isBreakShot, children, scale = 1 }: MatchTableProps) {
+export function MatchTable({
+  balls,
+  aimAngle,
+  power,
+  isAiming,
+  isBreakShot,
+  pocketedBallIds = [],
+  children,
+  scale = 1,
+}: MatchTableProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 800, height: 400 });
 
@@ -47,6 +58,7 @@ export function MatchTable({ balls, aimAngle, power, isAiming, isBreakShot, chil
     <div ref={containerRef} className="w-full h-full flex items-center justify-center">
       <div className="relative" style={{ width: size.width, height: size.height }}>
         <PoolTable balls={balls} className="w-full h-full" />
+        <PocketedBallRack balls={balls} pocketedBallIds={pocketedBallIds} />
         <AimOverlay balls={balls} aimAngle={aimAngle} power={power} isAiming={isAiming} isBreakShot={isBreakShot} />
         {children}
       </div>

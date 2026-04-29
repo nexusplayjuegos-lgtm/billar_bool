@@ -197,6 +197,7 @@ export function GameScreen({
           power={power}
           isAiming={isAiming}
           isBreakShot={engineState.isBreakShot}
+          pocketedBallIds={engineState.pocketedBalls}
           scale={tableScale}
         >
           {overlay && overlay(engineState, inputHandlers)}
