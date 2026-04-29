@@ -18,6 +18,14 @@ interface CollisionInfo {
   targetDirection: { x: number; y: number } | null;
 }
 
+const WALL_LEFT = 28;
+const WALL_RIGHT = 772;
+const WALL_TOP = 28;
+const WALL_BOTTOM = 372;
+const FRICTION = 0.985;
+const SHOT_SPEED = 0.3;
+const MAX_PREDICTION_STEPS = 180;
+
 function getCollisionDistance(
   cueBall: Ball,
   targetBall: Ball,
@@ -76,6 +84,81 @@ function findFirstCollision(cueBall: Ball, balls: Ball[], angle: number): Collis
   return { point, targetBall, targetDirection };
 }
 
+function predictEngineCollision(
+  cueBall: Ball,
+  balls: Ball[],
+  angle: number,
+  power: number
+): CollisionInfo {
+  let x = cueBall.x;
+  let y = cueBall.y;
+  let vx = Math.cos(angle) * power * SHOT_SPEED;
+  let vy = Math.sin(angle) * power * SHOT_SPEED;
+
+  for (let step = 0; step < MAX_PREDICTION_STEPS; step++) {
+    x += vx;
+    y += vy;
+
+    if (x < WALL_LEFT) {
+      x = WALL_LEFT;
+      vx = -vx;
+    } else if (x > WALL_RIGHT) {
+      x = WALL_RIGHT;
+      vx = -vx;
+    }
+
+    if (y < WALL_TOP) {
+      y = WALL_TOP;
+      vy = -vy;
+    } else if (y > WALL_BOTTOM) {
+      y = WALL_BOTTOM;
+      vy = -vy;
+    }
+
+    for (const ball of balls) {
+      if (ball.id === cueBall.id || ball.inPocket) continue;
+
+      const dx = ball.x - x;
+      const dy = ball.y - y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const minDist = cueBall.radius + ball.radius;
+
+      if (dist < minDist && dist > 0) {
+        return {
+          point: { x, y },
+          targetBall: ball,
+          targetDirection: { x: dx / dist, y: dy / dist },
+        };
+      }
+    }
+
+    vx *= FRICTION;
+    vy *= FRICTION;
+
+    if (Math.abs(vx) < 0.05 && Math.abs(vy) < 0.05) break;
+  }
+
+  return findFirstCollision(cueBall, balls, angle);
+}
+
+function getRailPoint(from: { x: number; y: number }, angle: number) {
+  const dx = Math.cos(angle);
+  const dy = Math.sin(angle);
+  const candidates: { x: number; y: number; t: number }[] = [];
+
+  if (dx > 0) candidates.push({ x: WALL_RIGHT, y: from.y + ((WALL_RIGHT - from.x) / dx) * dy, t: (WALL_RIGHT - from.x) / dx });
+  if (dx < 0) candidates.push({ x: WALL_LEFT, y: from.y + ((WALL_LEFT - from.x) / dx) * dy, t: (WALL_LEFT - from.x) / dx });
+  if (dy > 0) candidates.push({ x: from.x + ((WALL_BOTTOM - from.y) / dy) * dx, y: WALL_BOTTOM, t: (WALL_BOTTOM - from.y) / dy });
+  if (dy < 0) candidates.push({ x: from.x + ((WALL_TOP - from.y) / dy) * dx, y: WALL_TOP, t: (WALL_TOP - from.y) / dy });
+
+  return candidates
+    .filter((p) => p.t > 0 && p.x >= WALL_LEFT && p.x <= WALL_RIGHT && p.y >= WALL_TOP && p.y <= WALL_BOTTOM)
+    .sort((a, b) => a.t - b.t)[0] ?? {
+      x: from.x + dx * 300,
+      y: from.y + dy * 300,
+    };
+}
+
 export function AimOverlay({
   balls,
   aimAngle,
@@ -85,17 +168,21 @@ export function AimOverlay({
   const cueBall = balls[0];
   if (!cueBall || cueBall.inPocket || !isAiming) return null;
 
-  const collision = findFirstCollision(cueBall, balls, aimAngle);
+  const collision = predictEngineCollision(cueBall, balls, aimAngle, power);
 
   // Ghost ball position at collision point
   const ghostPos = collision.point;
   const ghostX = ghostPos ? ghostPos.x : null;
   const ghostY = ghostPos ? ghostPos.y : null;
 
-  // Calculate aim line end point (from cue ball through ghost ball)
-  const aimLineLength = 300;
-  const endX = cueBall.x + Math.cos(aimAngle) * aimLineLength;
-  const endY = cueBall.y + Math.sin(aimAngle) * aimLineLength;
+  const cuePathEnd = ghostPos ?? getRailPoint(cueBall, aimAngle);
+  const targetPathEnd =
+    collision.targetBall && collision.targetDirection
+      ? getRailPoint(
+          collision.targetBall,
+          Math.atan2(collision.targetDirection.y, collision.targetDirection.x)
+        )
+      : null;
 
   // Cue stick position (behind cue ball)
   const cueDistance = 60 + (power * 0.3); // Cue pulls back when charging
@@ -164,75 +251,28 @@ export function AimOverlay({
             fill="rgba(255,255,255,0.4)"
           />
 
-          {/* Target ball collision indicator */}
-          {collision.targetBall && (
-            <>
-              {/* Line from ghost ball to target ball */}
-              <line
-                x1={ghostX}
-                y1={ghostY}
-                x2={collision.targetBall.x}
-                y2={collision.targetBall.y}
-                stroke="rgba(255, 200, 100, 0.6)"
-                strokeWidth="1.5"
-                strokeDasharray="4,3"
-              />
-              
-              {/* Target ball direction after collision */}
-              {collision.targetDirection && (
-                <line
-                  x1={collision.targetBall.x}
-                  y1={collision.targetBall.y}
-                  x2={
-                    collision.targetBall.x +
-                    collision.targetDirection.x * 100
-                  }
-                  y2={
-                    collision.targetBall.y +
-                    collision.targetDirection.y * 100
-                  }
-                  stroke="rgba(255, 200, 100, 0.8)"
-                  strokeWidth="2"
-                  strokeDasharray="6,4"
-                />
-              )}
-            </>
+          {/* Target ball path: pure post-contact direction, no pocket snapping */}
+          {collision.targetBall && collision.targetDirection && targetPathEnd && (
+            <line
+              x1={collision.targetBall.x + collision.targetDirection.x * collision.targetBall.radius}
+              y1={collision.targetBall.y + collision.targetDirection.y * collision.targetBall.radius}
+              x2={targetPathEnd.x}
+              y2={targetPathEnd.y}
+              stroke="rgba(255, 196, 45, 0.9)"
+              strokeWidth="2.5"
+              strokeDasharray="9,6"
+              strokeLinecap="round"
+            />
           )}
-
-          {/* Cue ball exit trajectory after collision */}
-          {collision.targetBall && (() => {
-            const collisionAngle = Math.atan2(
-              ghostY - collision.targetBall.y,
-              ghostX - collision.targetBall.x
-            );
-            const deflectAngle = aimAngle + (Math.PI / 2) * (
-              Math.sin(collisionAngle - aimAngle) > 0 ? 1 : -1
-            );
-            const deflectLength = 80;
-            const dEx = ghostX + Math.cos(deflectAngle) * deflectLength;
-            const dEy = ghostY + Math.sin(deflectAngle) * deflectLength;
-            return (
-              <line
-                x1={ghostX}
-                y1={ghostY}
-                x2={dEx}
-                y2={dEy}
-                stroke="rgba(200, 240, 255, 0.6)"
-                strokeWidth="2"
-                strokeDasharray="8,5"
-                strokeLinecap="round"
-              />
-            );
-          })()}
         </g>
       )}
 
-      {/* Main Aim Line (from cue ball through ghost ball) */}
+      {/* Cue ball path: where the cue is sending the white ball */}
       <line
         x1={cueBall.x}
         y1={cueBall.y}
-        x2={endX}
-        y2={endY}
+        x2={cuePathEnd.x}
+        y2={cuePathEnd.y}
         stroke="url(#aimLineGrad)"
         strokeWidth="2.5"
         strokeDasharray="12,6"
