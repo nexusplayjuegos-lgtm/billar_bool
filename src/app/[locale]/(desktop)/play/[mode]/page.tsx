@@ -18,7 +18,7 @@ export default function DesktopGamePage({ params }: { params: { mode: string } }
       // Desktop multiplayer: redireciona para a versão mobile funcional
       const roomId = searchParams.get('room');
       if (roomId) {
-        router.replace(`/${locale}/join?room=${roomId}`);
+        router.replace(`/${locale}/game/multiplayer?room=${roomId}`);
       } else {
         router.replace(`/${locale}`);
       }

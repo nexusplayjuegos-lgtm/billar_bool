@@ -49,7 +49,7 @@ export function MobileLobbyScreen() {
   useEffect(() => {
     if (isConnected && room?.status === 'playing') {
       setShowMultiplayer(false);
-      router.push(`/${locale}/play/multiplayer?room=${room.id}`);
+      router.push(`/${locale}/game/multiplayer?room=${room.id}`);
     }
   }, [isConnected, room, locale, router]);
 

@@ -66,7 +66,7 @@ export function JoinRoomClient({ roomId }: Props) {
           hasJoined.current = true;
           client.disconnect(); // Limpa canal antes de sair
           client = null;
-          router.replace(`/${locale}/play/multiplayer?room=${roomId}`);
+          router.replace(`/${locale}/game/multiplayer?room=${roomId}`);
         }
       } catch (err) {
         if (client) {
@@ -118,7 +118,7 @@ export function JoinRoomClient({ roomId }: Props) {
       await client.joinRoom(roomId);
       hasJoined.current = true;
       client.disconnect();
-      router.replace(`/${locale}/play/multiplayer?room=${roomId}`);
+      router.replace(`/${locale}/game/multiplayer?room=${roomId}`);
     } catch (err) {
       if (client) client.disconnect();
       setError(err instanceof Error ? err.message : 'Erro ao entrar na sala.');

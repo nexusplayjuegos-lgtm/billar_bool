@@ -128,5 +128,19 @@ serve(async (req: Request) => {
     return json({ valid: false, reason: `Erro ao gravar jogada: ${insertError.message}` }, 500);
   }
 
+  const nextPlayerId = room.player_1_id === user.id ? room.player_2_id : room.player_1_id;
+  if (!nextPlayerId) {
+    return json({ valid: false, reason: 'Oponente nÃ£o encontrado.' }, 400);
+  }
+
+  const { error: turnError } = await serviceClient
+    .from('rooms')
+    .update({ current_turn: nextPlayerId })
+    .eq('id', room_id);
+
+  if (turnError) {
+    return json({ valid: false, reason: `Erro ao passar turno: ${turnError.message}` }, 500);
+  }
+
   return json({ valid: true });
 });

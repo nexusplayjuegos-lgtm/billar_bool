@@ -150,13 +150,7 @@ export class MultiplayerClient {
     if (fnError) throw new Error(`Erro ao validar jogada: ${fnError.message}`);
     if (!data?.valid) throw new Error(data?.reason ?? 'Jogada inválida.');
 
-    // Passa o turno para o oponente
-    const { error: turnError } = await supabase
-      .from('rooms')
-      .update({ current_turn: null })
-      .eq('id', this.roomId);
-
-    if (turnError) throw new Error(`Erro ao passar turno: ${turnError.message}`);
+    // A Edge Function valida a jogada, grava o shot e passa o turno.
   }
 
   // ── Definir vencedor ──────────────────────────────────────────

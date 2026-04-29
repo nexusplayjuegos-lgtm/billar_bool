@@ -144,12 +144,13 @@ export function useMultiplayer() {
     try {
       setState((prev) => ({ ...prev, error: null }));
       const room = await client.joinRoom(roomId);
+      const playerNumber = room.player_1_id === userId ? 1 : 2;
       setState((prev) => ({
         ...prev,
         room,
-        playerNumber: 2,
-        isMyTurn: false,
-        isConnected: true,
+        playerNumber,
+        isMyTurn: room.current_turn === userId,
+        isConnected: room.status === 'playing',
       }));
       return room;
     } catch (err) {
@@ -157,7 +158,7 @@ export function useMultiplayer() {
       setState((prev) => ({ ...prev, error: message }));
       return null;
     }
-  }, [userId]);
+  }, [userId, isSessionLoaded]);
 
   // ── Listar salas disponíveis ──────────────────────────────────
   const listRooms = useCallback(async (gameMode?: GameMode): Promise<Room[]> => {

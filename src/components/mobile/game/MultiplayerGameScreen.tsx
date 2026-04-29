@@ -64,7 +64,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     return () => {
       mounted = false;
     };
-  }, [roomId, joinRoom, isSessionLoaded, session]);
+  }, [roomId, joinRoom, isSessionLoaded, session?.user?.id]);
 
   // Ativar modo multiplayer no engine
   useEffect(() => {
@@ -96,7 +96,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     }
 
     loadProfiles(room);
-  }, [room]);
+  }, [room, session?.user?.id]);
 
   // Aplicar jogada do oponente
   useEffect(() => {
