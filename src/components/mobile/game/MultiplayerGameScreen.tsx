@@ -37,17 +37,21 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     isMyTurn,
     playerNumber,
     opponentShot,
+    opponentShotStart,
     error,
     joinRoom,
+    sendShotStart,
     sendShot,
     leaveRoom,
     clearOpponentShot,
+    clearOpponentShotStart,
   } = useMultiplayer();
 
   const { session, isSessionLoaded } = useUserStore();
   const [myProfile, setMyProfile] = useState<Tables['profiles'] | null>(null);
   const [opponentProfile, setOpponentProfile] = useState<Tables['profiles'] | null>(null);
   const [joining, setJoining] = useState(true);
+  const [syncedTimeLeft, setSyncedTimeLeft] = useState(30);
   const hasJoinedRef = useRef(false);
   const pendingShotRef = useRef<PendingShot | null>(null);
 
@@ -110,11 +114,28 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     if (!opponentShot) return;
     if (opponentShot.game_state) {
       engineRef.current.applyRemoteState(opponentShot.game_state as Partial<EngineState>);
-    } else {
-      engineRef.current.applyOpponentShot(opponentShot.aim_angle, opponentShot.power);
     }
     clearOpponentShot();
   }, [opponentShot, clearOpponentShot]);
+
+  useEffect(() => {
+    if (!opponentShotStart) return;
+    engineRef.current.applyOpponentShot(opponentShotStart.aim_angle, opponentShotStart.power);
+    clearOpponentShotStart();
+  }, [opponentShotStart, clearOpponentShotStart]);
+
+  useEffect(() => {
+    if (!room?.updated_at) return;
+
+    const updateTimer = () => {
+      const elapsed = Math.floor((Date.now() - new Date(room.updated_at).getTime()) / 1000);
+      setSyncedTimeLeft(Math.max(0, 30 - elapsed));
+    };
+
+    updateTimer();
+    const timer = window.setInterval(updateTimer, 1000);
+    return () => window.clearInterval(timer);
+  }, [room?.current_turn, room?.updated_at]);
 
   useEffect(() => {
     const engine = engineRef.current;
@@ -162,9 +183,10 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
         hasMoved: false,
       };
 
+      void sendShotStart(aimAngle, power);
       engineRef.current.shoot(power, aimAngle, { x: 0, y: 0 });
     },
-    [isConnected, isMyTurn, room]
+    [isConnected, isMyTurn, room, sendShotStart]
   );
 
   if (joining) {
@@ -218,6 +240,8 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
         engine={engineRef.current}
         enableLocalTurnTimer={false}
         showBotThinking={false}
+        externalTimeLeft={syncedTimeLeft}
+        localPlayerNumber={playerNumber ?? 1}
         header={(engineState, timeLeft) => (
           <div className="shrink-0 h-12 px-3 flex items-center justify-between bg-slate-950/80 backdrop-blur-sm z-20 border-b border-slate-800/50">
             <div className="flex-1 min-w-0">

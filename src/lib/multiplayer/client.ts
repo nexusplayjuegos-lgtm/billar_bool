@@ -2,12 +2,13 @@
 
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
-import type { Room, RoomShot, RoomMessage, BallState, GameMode } from './types';
+import type { Room, RoomShot, RoomMessage, BallState, GameMode, ShotStart } from './types';
 import type { EngineState } from '@/lib/engine/gameEngine';
 
 interface MultiplayerClientCallbacks {
   onRoomUpdate: (room: Room) => void;
   onOpponentShot: (shot: RoomShot) => void;
+  onOpponentShotStart: (shot: ShotStart) => void;
   onMessage: (message: RoomMessage) => void;
   onOpponentJoined: (room: Room) => void;
   onOpponentLeft: () => void;
@@ -169,6 +170,21 @@ export class MultiplayerClient {
   }
 
   // ── Definir vencedor ──────────────────────────────────────────
+  async sendShotStart(aimAngle: number, power: number): Promise<void> {
+    if (!this.channel || !this.roomId) return;
+
+    await this.channel.send({
+      type: 'broadcast',
+      event: 'shot_start',
+      payload: {
+        player_id: this.userId,
+        aim_angle: aimAngle,
+        power,
+        shot_id: crypto.randomUUID(),
+      } satisfies ShotStart,
+    });
+  }
+
   async setWinner(winnerId: string): Promise<void> {
     if (!this.roomId) return;
 
@@ -246,6 +262,12 @@ export class MultiplayerClient {
         },
       })
       // Listener 1: Alterações na sala (turno, status, jogador 2 entrou)
+      .on('broadcast', { event: 'shot_start' }, ({ payload }) => {
+        const shot = payload as ShotStart;
+        if (shot.player_id !== this.userId) {
+          this.callbacks.onOpponentShotStart(shot);
+        }
+      })
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },

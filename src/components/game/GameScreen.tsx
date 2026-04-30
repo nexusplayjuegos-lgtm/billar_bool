@@ -34,6 +34,8 @@ interface GameScreenProps {
   engine?: typeof gameEngine;
   enableLocalTurnTimer?: boolean;
   showBotThinking?: boolean;
+  externalTimeLeft?: number;
+  localPlayerNumber?: 1 | 2;
 }
 
 export function GameScreen({
@@ -48,6 +50,8 @@ export function GameScreen({
   engine: customEngine,
   enableLocalTurnTimer = true,
   showBotThinking = true,
+  externalTimeLeft,
+  localPlayerNumber = 1,
 }: GameScreenProps) {
   const engine = customEngine ?? gameEngine;
   const t = useTranslations('game');
@@ -96,6 +100,7 @@ export function GameScreen({
   }, [addCoins, addXP, potentialReward, gameMode]);
 
   useEffect(() => {
+    if (externalTimeLeft !== undefined) return;
     if (!engineState || engineState.gameOver || engineState.ballsMoving) return;
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -112,7 +117,7 @@ export function GameScreen({
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [engineState, engine, enableLocalTurnTimer]);
+  }, [engineState, engine, enableLocalTurnTimer, externalTimeLeft]);
 
   useEffect(() => {
     if (!blockScroll) return;
@@ -188,13 +193,13 @@ export function GameScreen({
     onPowerChange: handlePowerChange,
     onShoot: handleShoot,
     onPlaceCueBall: handlePlaceCueBall,
-    ballInHand: engineState.ballInHand && engineState.currentPlayer === 1,
+    ballInHand: engineState.ballInHand && engineState.currentPlayer === localPlayerNumber,
     isBreakShot: engineState.isBreakShot,
   };
 
   return (
     <div className="h-dvh h-screen w-full flex flex-col bg-slate-950 overflow-hidden relative select-none">
-      {header && header(engineState, timeLeft)}
+      {header && header(engineState, externalTimeLeft ?? timeLeft)}
 
       <div className="flex-1 min-h-0 relative overflow-hidden">
         <MatchTable
@@ -211,7 +216,7 @@ export function GameScreen({
       </div>
 
       {/* Indicador de ball-in-hand / break shot */}
-      {engineState.ballInHand && engineState.currentPlayer === 1 && !engineState.ballsMoving && !engineState.gameOver && (
+      {engineState.ballInHand && engineState.currentPlayer === localPlayerNumber && !engineState.ballsMoving && !engineState.gameOver && (
         <div className="absolute top-14 left-1/2 -translate-x-1/2 z-30">
           <div className="px-4 py-1.5 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-500/40 flex items-center gap-2">
             <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />

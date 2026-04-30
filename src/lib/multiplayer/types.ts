@@ -40,6 +40,13 @@ export interface RoomShot {
   shot_number: number;
 }
 
+export interface ShotStart {
+  player_id: string;
+  aim_angle: number;
+  power: number;
+  shot_id: string;
+}
+
 export interface RoomMessage {
   id: string;
   created_at: string;
@@ -55,6 +62,7 @@ export interface MultiplayerState {
   isMyTurn: boolean;
   playerNumber: 1 | 2 | null;
   opponentShot: RoomShot | null;
+  opponentShotStart: ShotStart | null;
   messages: RoomMessage[];
   error: string | null;
 }

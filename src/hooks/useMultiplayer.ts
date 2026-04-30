@@ -10,6 +10,7 @@ import type {
   Room,
   RoomMessage,
   RoomShot,
+  ShotStart,
 } from '@/lib/multiplayer/types';
 import type { EngineState } from '@/lib/engine/gameEngine';
 
@@ -19,6 +20,7 @@ const INITIAL_STATE: MultiplayerState = {
   isMyTurn: false,
   playerNumber: null,
   opponentShot: null,
+  opponentShotStart: null,
   messages: [],
   error: null,
 };
@@ -53,6 +55,13 @@ export function useMultiplayer() {
           ...prev,
           opponentShot: shot,
           isMyTurn: true, // Oponente jogou → agora é a nossa vez
+        }));
+      },
+
+      onOpponentShotStart: (shot: ShotStart) => {
+        setState((prev) => ({
+          ...prev,
+          opponentShotStart: shot,
         }));
       },
 
@@ -199,6 +208,15 @@ export function useMultiplayer() {
     [state.isMyTurn],
   );
 
+  const sendShotStart = useCallback(
+    async (aimAngle: number, power: number): Promise<void> => {
+      const client = clientRef.current;
+      if (!client || !state.isMyTurn || !state.isConnected) return;
+      await client.sendShotStart(aimAngle, power);
+    },
+    [state.isConnected, state.isMyTurn],
+  );
+
   // ── Passar turno ──────────────────────────────────────────────
   const passTurn = useCallback(async (nextPlayerId: string): Promise<void> => {
     const client = clientRef.current;
@@ -236,6 +254,10 @@ export function useMultiplayer() {
     setState((prev) => ({ ...prev, opponentShot: null }));
   }, []);
 
+  const clearOpponentShotStart = useCallback((): void => {
+    setState((prev) => ({ ...prev, opponentShotStart: null }));
+  }, []);
+
   return {
     // Estado
     room: state.room,
@@ -243,6 +265,7 @@ export function useMultiplayer() {
     isMyTurn: state.isMyTurn,
     playerNumber: state.playerNumber,
     opponentShot: state.opponentShot,
+    opponentShotStart: state.opponentShotStart,
     messages: state.messages,
     error: state.error,
     userId,
@@ -251,11 +274,13 @@ export function useMultiplayer() {
     createRoom,
     joinRoom,
     listRooms,
+    sendShotStart,
     sendShot,
     passTurn,
     setWinner,
     sendMessage,
     leaveRoom,
     clearOpponentShot,
+    clearOpponentShotStart,
   };
 }
