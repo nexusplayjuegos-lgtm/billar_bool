@@ -11,6 +11,7 @@ import type {
   RoomMessage,
   RoomShot,
   ShotStart,
+  TurnTimeout,
 } from '@/lib/multiplayer/types';
 import type { EngineState } from '@/lib/engine/gameEngine';
 
@@ -21,6 +22,7 @@ const INITIAL_STATE: MultiplayerState = {
   playerNumber: null,
   opponentShot: null,
   opponentShotStart: null,
+  turnTimeout: null,
   messages: [],
   error: null,
 };
@@ -62,6 +64,14 @@ export function useMultiplayer() {
         setState((prev) => ({
           ...prev,
           opponentShotStart: shot,
+        }));
+      },
+
+      onTurnTimeout: (timeout: TurnTimeout) => {
+        setState((prev) => ({
+          ...prev,
+          turnTimeout: timeout,
+          isMyTurn: timeout.next_player_id === userId,
         }));
       },
 
@@ -217,6 +227,15 @@ export function useMultiplayer() {
     [state.isConnected, state.isMyTurn],
   );
 
+  const sendTurnTimeout = useCallback(
+    async (nextPlayerId: string): Promise<void> => {
+      const client = clientRef.current;
+      if (!client || !state.isMyTurn || !state.isConnected) return;
+      await client.sendTurnTimeout(nextPlayerId);
+    },
+    [state.isConnected, state.isMyTurn],
+  );
+
   // ── Passar turno ──────────────────────────────────────────────
   const passTurn = useCallback(async (nextPlayerId: string): Promise<void> => {
     const client = clientRef.current;
@@ -258,6 +277,10 @@ export function useMultiplayer() {
     setState((prev) => ({ ...prev, opponentShotStart: null }));
   }, []);
 
+  const clearTurnTimeout = useCallback((): void => {
+    setState((prev) => ({ ...prev, turnTimeout: null }));
+  }, []);
+
   return {
     // Estado
     room: state.room,
@@ -266,6 +289,7 @@ export function useMultiplayer() {
     playerNumber: state.playerNumber,
     opponentShot: state.opponentShot,
     opponentShotStart: state.opponentShotStart,
+    turnTimeout: state.turnTimeout,
     messages: state.messages,
     error: state.error,
     userId,
@@ -275,6 +299,7 @@ export function useMultiplayer() {
     joinRoom,
     listRooms,
     sendShotStart,
+    sendTurnTimeout,
     sendShot,
     passTurn,
     setWinner,
@@ -282,5 +307,6 @@ export function useMultiplayer() {
     leaveRoom,
     clearOpponentShot,
     clearOpponentShotStart,
+    clearTurnTimeout,
   };
 }

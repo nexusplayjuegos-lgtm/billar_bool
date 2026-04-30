@@ -280,6 +280,32 @@ class GameEngine {
     this.switchTurn();
   }
 
+  setMultiplayerTurn(playerNumber: 1 | 2, options: { ballInHand?: boolean; foul?: boolean } = {}) {
+    if (this.state.gameOver || this.state.ballsMoving) return;
+
+    const changedPlayer = this.state.currentPlayer !== playerNumber;
+    this.state.currentPlayer = playerNumber;
+    if (changedPlayer) {
+      this.state.turn += 1;
+    }
+    if (options.ballInHand !== undefined) {
+      this.state.ballInHand = options.ballInHand;
+    }
+    if (options.foul !== undefined) {
+      this.state.foul = options.foul;
+    }
+
+    this.pocketedThisTurn = [];
+    this.firstContact = null;
+    this.redBallContact = false;
+    this.yellowBallContact = false;
+    this.redBallPocketed = false;
+    if (changedPlayer) {
+      playTurnChange();
+    }
+    this.emit();
+  }
+
   getState(): EngineState {
     return {
       ...this.state,

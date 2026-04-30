@@ -38,14 +38,17 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     playerNumber,
     opponentShot,
     opponentShotStart,
+    turnTimeout,
     error,
     joinRoom,
     sendShotStart,
+    sendTurnTimeout,
     sendShot,
     passTurn,
     leaveRoom,
     clearOpponentShot,
     clearOpponentShotStart,
+    clearTurnTimeout,
   } = useMultiplayer();
 
   const { session, isSessionLoaded } = useUserStore();
@@ -57,6 +60,16 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
   const hasJoinedRef = useRef(false);
   const pendingShotRef = useRef<PendingShot | null>(null);
   const timeoutHandledTurnRef = useRef<string | null>(null);
+
+  const getPlayerNumberForId = useCallback(
+    (playerId: string | null | undefined): 1 | 2 | null => {
+      if (!room || !playerId) return null;
+      if (playerId === room.player_1_id) return 1;
+      if (playerId === room.player_2_id) return 2;
+      return null;
+    },
+    [room],
+  );
 
   // Entrar na sala ao montar (apenas uma vez) — aguarda sessão carregar primeiro
   useEffect(() => {
@@ -128,6 +141,16 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
   }, [opponentShotStart, clearOpponentShotStart]);
 
   useEffect(() => {
+    if (!turnTimeout) return;
+    const nextPlayerNumber = getPlayerNumberForId(turnTimeout.next_player_id);
+    if (nextPlayerNumber) {
+      engineRef.current.setMultiplayerTurn(nextPlayerNumber, { ballInHand: true, foul: true });
+      setSyncedTimeLeft(30);
+    }
+    clearTurnTimeout();
+  }, [clearTurnTimeout, getPlayerNumberForId, turnTimeout]);
+
+  useEffect(() => {
     const turnStartedAt = room?.turn_started_at ?? room?.updated_at;
     if (!turnStartedAt) return;
     timeoutHandledTurnRef.current = null;
@@ -150,9 +173,18 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
       ) {
         const nextPlayerId = room.current_turn === room.player_1_id ? room.player_2_id : room.player_1_id;
         if (nextPlayerId) {
+          const nextPlayerNumber = getPlayerNumberForId(nextPlayerId);
           timeoutHandledTurnRef.current = room.current_turn;
-          engineRef.current.timeoutTurn();
-          void passTurn(nextPlayerId);
+          if (nextPlayerNumber) {
+            engineRef.current.setMultiplayerTurn(nextPlayerNumber, { ballInHand: true, foul: true });
+          }
+          setSyncedTimeLeft(30);
+          void sendTurnTimeout(nextPlayerId).catch((err) => {
+            console.warn('[Multiplayer] Falha ao transmitir timeout do turno:', err);
+          });
+          void passTurn(nextPlayerId).catch((err) => {
+            console.warn('[Multiplayer] Falha ao passar turno por timeout:', err);
+          });
         }
       }
     };
@@ -160,7 +192,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     updateTimer();
     const timer = window.setInterval(updateTimer, 1000);
     return () => window.clearInterval(timer);
-  }, [ballsMoving, isMyTurn, passTurn, room]);
+  }, [ballsMoving, getPlayerNumberForId, isMyTurn, passTurn, room, sendTurnTimeout]);
 
   useEffect(() => {
     const engine = engineRef.current;

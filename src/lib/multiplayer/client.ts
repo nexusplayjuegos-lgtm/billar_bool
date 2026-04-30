@@ -2,13 +2,14 @@
 
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
-import type { Room, RoomShot, RoomMessage, BallState, GameMode, ShotStart } from './types';
+import type { Room, RoomShot, RoomMessage, BallState, GameMode, ShotStart, TurnTimeout } from './types';
 import type { EngineState } from '@/lib/engine/gameEngine';
 
 interface MultiplayerClientCallbacks {
   onRoomUpdate: (room: Room) => void;
   onOpponentShot: (shot: RoomShot) => void;
   onOpponentShotStart: (shot: ShotStart) => void;
+  onTurnTimeout: (timeout: TurnTimeout) => void;
   onMessage: (message: RoomMessage) => void;
   onOpponentJoined: (room: Room) => void;
   onOpponentLeft: () => void;
@@ -190,6 +191,20 @@ export class MultiplayerClient {
     });
   }
 
+  async sendTurnTimeout(nextPlayerId: string): Promise<void> {
+    if (!this.channel || !this.roomId) return;
+
+    await this.channel.send({
+      type: 'broadcast',
+      event: 'turn_timeout',
+      payload: {
+        player_id: this.userId,
+        next_player_id: nextPlayerId,
+        timeout_id: crypto.randomUUID(),
+      } satisfies TurnTimeout,
+    });
+  }
+
   async setWinner(winnerId: string): Promise<void> {
     if (!this.roomId) return;
 
@@ -274,6 +289,12 @@ export class MultiplayerClient {
         const shot = payload as ShotStart;
         if (shot.player_id !== this.userId) {
           this.callbacks.onOpponentShotStart(shot);
+        }
+      })
+      .on('broadcast', { event: 'turn_timeout' }, ({ payload }) => {
+        const timeout = payload as TurnTimeout;
+        if (timeout.player_id !== this.userId) {
+          this.callbacks.onTurnTimeout(timeout);
         }
       })
       .on(

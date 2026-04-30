@@ -48,6 +48,12 @@ export interface ShotStart {
   shot_id: string;
 }
 
+export interface TurnTimeout {
+  player_id: string;
+  next_player_id: string;
+  timeout_id: string;
+}
+
 export interface RoomMessage {
   id: string;
   created_at: string;
@@ -64,6 +70,7 @@ export interface MultiplayerState {
   playerNumber: 1 | 2 | null;
   opponentShot: RoomShot | null;
   opponentShotStart: ShotStart | null;
+  turnTimeout: TurnTimeout | null;
   messages: RoomMessage[];
   error: string | null;
 }
