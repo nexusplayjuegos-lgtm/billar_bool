@@ -295,11 +295,17 @@ export class MultiplayerClient {
 
     console.log('[Realtime] Criando novo canal para sala:', roomId);
 
-    await new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve) => {
       let settled = false;
+      const subscriptionTimeout = window.setTimeout(() => {
+        console.warn('[Realtime] Subscricao demorou demais, seguindo com fallback...');
+        this.isSubscribing = false;
+        settle(resolve);
+      }, 5000);
       const settle = (fn: () => void) => {
         if (settled) return;
         settled = true;
+        window.clearTimeout(subscriptionTimeout);
         fn();
       };
 
@@ -376,7 +382,7 @@ export class MultiplayerClient {
           console.warn('[Realtime] ❌ Canal fechado/erro:', status);
           this.callbacks.onDisconnected?.();
           this.subscribedRoomId = null;
-          settle(() => reject(new Error(`Erro ao conectar realtime: ${status}`)));
+          settle(resolve);
         }
       });
     });
