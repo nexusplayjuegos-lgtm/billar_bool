@@ -205,7 +205,10 @@ export class MultiplayerClient {
 
     await supabase
       .from('rooms')
-      .update({ current_turn: nextPlayerId })
+      .update({
+        current_turn: nextPlayerId,
+        turn_started_at: new Date().toISOString(),
+      })
       .eq('id', this.roomId);
   }
 

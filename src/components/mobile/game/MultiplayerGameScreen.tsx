@@ -42,6 +42,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     joinRoom,
     sendShotStart,
     sendShot,
+    passTurn,
     leaveRoom,
     clearOpponentShot,
     clearOpponentShotStart,
@@ -52,8 +53,10 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
   const [opponentProfile, setOpponentProfile] = useState<Tables['profiles'] | null>(null);
   const [joining, setJoining] = useState(true);
   const [syncedTimeLeft, setSyncedTimeLeft] = useState(30);
+  const [ballsMoving, setBallsMoving] = useState(false);
   const hasJoinedRef = useRef(false);
   const pendingShotRef = useRef<PendingShot | null>(null);
+  const timeoutHandledTurnRef = useRef<string | null>(null);
 
   // Entrar na sala ao montar (apenas uma vez) — aguarda sessão carregar primeiro
   useEffect(() => {
@@ -127,20 +130,42 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
   useEffect(() => {
     const turnStartedAt = room?.turn_started_at ?? room?.updated_at;
     if (!turnStartedAt) return;
+    timeoutHandledTurnRef.current = null;
 
     const updateTimer = () => {
+      if (ballsMoving || pendingShotRef.current) {
+        setSyncedTimeLeft(30);
+        return;
+      }
+
       const elapsed = Math.floor((Date.now() - new Date(turnStartedAt).getTime()) / 1000);
-      setSyncedTimeLeft(Math.max(0, 30 - elapsed));
+      const nextTimeLeft = Math.max(0, 30 - elapsed);
+      setSyncedTimeLeft(nextTimeLeft);
+
+      if (
+        nextTimeLeft === 0 &&
+        isMyTurn &&
+        room?.current_turn &&
+        timeoutHandledTurnRef.current !== room.current_turn
+      ) {
+        const nextPlayerId = room.current_turn === room.player_1_id ? room.player_2_id : room.player_1_id;
+        if (nextPlayerId) {
+          timeoutHandledTurnRef.current = room.current_turn;
+          engineRef.current.timeoutTurn();
+          void passTurn(nextPlayerId);
+        }
+      }
     };
 
     updateTimer();
     const timer = window.setInterval(updateTimer, 1000);
     return () => window.clearInterval(timer);
-  }, [room?.current_turn, room?.turn_started_at, room?.updated_at]);
+  }, [ballsMoving, isMyTurn, passTurn, room]);
 
   useEffect(() => {
     const engine = engineRef.current;
     const unsubscribe = engine.subscribe((state) => {
+      setBallsMoving(state.ballsMoving);
       const pendingShot = pendingShotRef.current;
       if (!pendingShot) return;
 
@@ -151,6 +176,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
 
       if (!pendingShot.hasMoved) return;
       pendingShotRef.current = null;
+      setSyncedTimeLeft(30);
 
       const finalBallsState = state.balls.map((b) => ({
         id: b.id,
@@ -184,7 +210,10 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
         hasMoved: false,
       };
 
-      void sendShotStart(aimAngle, power);
+      setSyncedTimeLeft(30);
+      void sendShotStart(aimAngle, power).catch((err) => {
+        console.warn('[Multiplayer] Falha ao transmitir inicio da tacada:', err);
+      });
       engineRef.current.shoot(power, aimAngle, { x: 0, y: 0 });
     },
     [isConnected, isMyTurn, room, sendShotStart]
