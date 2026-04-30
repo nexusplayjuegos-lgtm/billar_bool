@@ -137,7 +137,10 @@ serve(async (req: Request) => {
 
   const { error: turnError } = await serviceClient
     .from('rooms')
-    .update({ current_turn: nextPlayerId })
+    .update({
+      current_turn: nextPlayerId,
+      turn_started_at: new Date().toISOString(),
+    })
     .eq('id', room_id);
 
   if (turnError) {

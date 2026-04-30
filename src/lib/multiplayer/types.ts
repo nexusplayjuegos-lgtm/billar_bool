@@ -7,6 +7,7 @@ export interface Room {
   id: string;
   created_at: string;
   updated_at: string;
+  turn_started_at: string | null;
   player_1_id: string;
   player_2_id: string | null;
   status: RoomStatus;

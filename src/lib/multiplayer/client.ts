@@ -46,6 +46,7 @@ export class MultiplayerClient {
         game_mode: gameMode,
         bet_coins: betCoins,
         current_turn: this.userId,
+        turn_started_at: new Date().toISOString(),
       })
       .select()
       .single();
@@ -96,7 +97,11 @@ export class MultiplayerClient {
 
     const { data, error } = await supabase
       .from('rooms')
-      .update({ player_2_id: this.userId, status: 'playing' })
+      .update({
+        player_2_id: this.userId,
+        status: 'playing',
+        turn_started_at: new Date().toISOString(),
+      })
       .eq('id', roomId)
       .select()
       .single();

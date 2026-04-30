@@ -125,17 +125,18 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
   }, [opponentShotStart, clearOpponentShotStart]);
 
   useEffect(() => {
-    if (!room?.updated_at) return;
+    const turnStartedAt = room?.turn_started_at ?? room?.updated_at;
+    if (!turnStartedAt) return;
 
     const updateTimer = () => {
-      const elapsed = Math.floor((Date.now() - new Date(room.updated_at).getTime()) / 1000);
+      const elapsed = Math.floor((Date.now() - new Date(turnStartedAt).getTime()) / 1000);
       setSyncedTimeLeft(Math.max(0, 30 - elapsed));
     };
 
     updateTimer();
     const timer = window.setInterval(updateTimer, 1000);
     return () => window.clearInterval(timer);
-  }, [room?.current_turn, room?.updated_at]);
+  }, [room?.current_turn, room?.turn_started_at, room?.updated_at]);
 
   useEffect(() => {
     const engine = engineRef.current;
