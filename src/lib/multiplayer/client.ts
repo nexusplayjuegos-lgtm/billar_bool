@@ -169,7 +169,19 @@ export class MultiplayerClient {
       },
     );
 
-    if (fnError) throw new Error(`Erro ao validar jogada: ${fnError.message}`);
+    if (fnError) {
+      let reason = fnError.message;
+      const context = (fnError as { context?: Response }).context;
+      if (context) {
+        try {
+          const body = await context.json() as { reason?: string };
+          reason = body.reason ?? reason;
+        } catch {
+          // Mantem a mensagem original quando a resposta nao traz JSON.
+        }
+      }
+      throw new Error(`Erro ao validar jogada: ${reason}`);
+    }
     if (!data?.valid) throw new Error(data?.reason ?? 'Jogada inválida.');
 
     // A Edge Function valida a jogada, grava o shot e passa o turno.
@@ -189,6 +201,19 @@ export class MultiplayerClient {
         shot_id: crypto.randomUUID(),
       } satisfies ShotStart,
     });
+  }
+
+  async refreshRoom(): Promise<Room | null> {
+    if (!this.roomId) return null;
+
+    const { data, error } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', this.roomId)
+      .single();
+
+    if (error) throw new Error(`Erro ao atualizar sala: ${error.message}`);
+    return data as Room;
   }
 
   async sendTurnTimeout(nextPlayerId: string): Promise<void> {

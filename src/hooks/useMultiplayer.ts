@@ -211,11 +211,25 @@ export function useMultiplayer() {
         setState((prev) => ({ ...prev, isMyTurn: false }));
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Erro ao enviar jogada.';
-        setState((prev) => ({ ...prev, error: message }));
+        console.warn('[Multiplayer] Jogada recusada; ressincronizando sala:', message);
+        try {
+          const room = await client.refreshRoom();
+          if (room) {
+            setState((prev) => ({
+              ...prev,
+              room,
+              error: null,
+              isConnected: room.status === 'playing' && !!room.player_1_id && !!room.player_2_id,
+              isMyTurn: room.current_turn === userId,
+            }));
+          }
+        } catch (refreshError) {
+          console.warn('[Multiplayer] Falha ao ressincronizar apos jogada recusada:', refreshError);
+        }
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.isMyTurn],
+    [state.isMyTurn, userId],
   );
 
   const sendShotStart = useCallback(
