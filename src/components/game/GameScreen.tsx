@@ -13,6 +13,8 @@ import { useGameStore, useUserStore } from '@/lib/store';
 import { MatchTable } from './MatchTable';
 import { Confetti } from './Confetti';
 
+const MIN_SHOOT_POWER = 8;
+
 export interface InputHandlers {
   onAimChange: (angle: number) => void;
   onPowerChange: (power: number) => void;
@@ -144,7 +146,7 @@ export function GameScreen({
   }, []);
 
   const handleShoot = useCallback(() => {
-    if (power > 2) {
+    if (power >= MIN_SHOOT_POWER) {
       if (customOnShoot) {
         customOnShoot(power, aimAngle);
       } else {

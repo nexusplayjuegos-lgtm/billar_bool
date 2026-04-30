@@ -18,6 +18,17 @@ const TABLE_LEFT = 28;
 const TABLE_RIGHT = 772;
 const TABLE_TOP = 28;
 const TABLE_BOTTOM = 372;
+const AIM_DEADZONE = 24;
+const POWER_SCALE = 0.34;
+
+function getShotFromPull(cueBall: Ball, pos: { x: number; y: number }) {
+  const dx = cueBall.x - pos.x;
+  const dy = cueBall.y - pos.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  const angle = Math.atan2(dy, dx);
+  const power = Math.min(Math.max((dist - AIM_DEADZONE) * POWER_SCALE, 0), 100);
+  return { angle, power };
+}
 
 export function TouchDragInput({
   balls,
@@ -90,11 +101,7 @@ export function TouchDragInput({
       const cueBall = balls[0];
       if (!cueBall || cueBall.inPocket) return;
       setIsDragging(true);
-      const dx = cueBall.x - pos.x;
-      const dy = cueBall.y - pos.y;
-      const angle = Math.atan2(dy, dx);
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const power = Math.min(Math.max(dist * 0.4, 0), 100);
+      const { angle, power } = getShotFromPull(cueBall, pos);
       onAimChange(angle);
       onPowerChange(power);
     },
@@ -120,11 +127,7 @@ export function TouchDragInput({
       if (!pos) return;
       const cueBall = balls[0];
       if (!cueBall) return;
-      const dx = cueBall.x - pos.x;
-      const dy = cueBall.y - pos.y;
-      const angle = Math.atan2(dy, dx);
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const power = Math.min(Math.max(dist * 0.4, 0), 100);
+      const { angle, power } = getShotFromPull(cueBall, pos);
       onAimChange(angle);
       onPowerChange(power);
     },
