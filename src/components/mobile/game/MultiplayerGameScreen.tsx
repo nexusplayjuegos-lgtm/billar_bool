@@ -43,8 +43,8 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     joinRoom,
     sendShotStart,
     sendTurnTimeout,
+    requestTurnTimeout,
     sendShot,
-    passTurn,
     leaveRoom,
     clearOpponentShot,
     clearOpponentShotStart,
@@ -167,22 +167,24 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
 
       if (
         nextTimeLeft === 0 &&
-        isMyTurn &&
         room?.current_turn &&
-        timeoutHandledTurnRef.current !== room.current_turn
+        timeoutHandledTurnRef.current !== `${room.current_turn}:${turnStartedAt}`
       ) {
         const nextPlayerId = room.current_turn === room.player_1_id ? room.player_2_id : room.player_1_id;
         if (nextPlayerId) {
           const nextPlayerNumber = getPlayerNumberForId(nextPlayerId);
-          timeoutHandledTurnRef.current = room.current_turn;
+          timeoutHandledTurnRef.current = `${room.current_turn}:${turnStartedAt}`;
           if (nextPlayerNumber) {
             engineRef.current.setMultiplayerTurn(nextPlayerNumber, { ballInHand: true, foul: true });
           }
           setSyncedTimeLeft(30);
-          void sendTurnTimeout(nextPlayerId).catch((err) => {
-            console.warn('[Multiplayer] Falha ao transmitir timeout do turno:', err);
-          });
-          void passTurn(nextPlayerId).catch((err) => {
+          void requestTurnTimeout(room.current_turn, nextPlayerId).then((updatedRoom) => {
+            if (updatedRoom) {
+              void sendTurnTimeout(nextPlayerId).catch((err) => {
+                console.warn('[Multiplayer] Falha ao transmitir timeout do turno:', err);
+              });
+            }
+          }).catch((err) => {
             console.warn('[Multiplayer] Falha ao passar turno por timeout:', err);
           });
         }
@@ -192,7 +194,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     updateTimer();
     const timer = window.setInterval(updateTimer, 1000);
     return () => window.clearInterval(timer);
-  }, [ballsMoving, getPlayerNumberForId, isMyTurn, passTurn, room, sendTurnTimeout]);
+  }, [ballsMoving, getPlayerNumberForId, requestTurnTimeout, room, sendTurnTimeout]);
 
   useEffect(() => {
     const engine = engineRef.current;

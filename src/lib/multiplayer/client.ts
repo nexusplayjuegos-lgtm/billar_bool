@@ -55,7 +55,7 @@ export class MultiplayerClient {
     if (error) throw new Error(`Erro ao criar sala: ${error.message}`);
 
     this.roomId = data.id;
-    this.subscribeToRoom(data.id);
+    await this.subscribeToRoom(data.id);
     return data as Room;
   }
 
@@ -88,7 +88,7 @@ export class MultiplayerClient {
       existingRoom.player_2_id === this.userId
     ) {
       this.roomId = roomId;
-      this.subscribeToRoom(roomId);
+      await this.subscribeToRoom(roomId);
       return existingRoom as Room;
     }
 
@@ -110,7 +110,7 @@ export class MultiplayerClient {
     if (error || !data) throw new Error('Erro ao entrar na sala.');
 
     this.roomId = roomId;
-    this.subscribeToRoom(roomId);
+    await this.subscribeToRoom(roomId);
     return data as Room;
   }
 
@@ -205,6 +205,24 @@ export class MultiplayerClient {
     });
   }
 
+  async requestTurnTimeout(timedOutPlayerId: string, nextPlayerId: string): Promise<Room | null> {
+    if (!this.roomId) return null;
+
+    const { data, error } = await supabase
+      .from('rooms')
+      .update({
+        current_turn: nextPlayerId,
+        turn_started_at: new Date().toISOString(),
+      })
+      .eq('id', this.roomId)
+      .eq('current_turn', timedOutPlayerId)
+      .select()
+      .maybeSingle();
+
+    if (error) throw new Error(`Erro ao passar turno por tempo: ${error.message}`);
+    return (data as Room | null) ?? null;
+  }
+
   async setWinner(winnerId: string): Promise<void> {
     if (!this.roomId) return;
 
@@ -277,8 +295,16 @@ export class MultiplayerClient {
 
     console.log('[Realtime] Criando novo canal para sala:', roomId);
 
-    // Cria o canal e encadeia TODOS os .on() ANTES do .subscribe()
-    this.channel = supabase
+    await new Promise<void>((resolve, reject) => {
+      let settled = false;
+      const settle = (fn: () => void) => {
+        if (settled) return;
+        settled = true;
+        fn();
+      };
+
+      // Cria o canal e encadeia TODOS os .on() ANTES do .subscribe()
+      this.channel = supabase
       .channel(`room:${roomId}`, {
         config: {
           broadcast: { self: false },
@@ -343,14 +369,17 @@ export class MultiplayerClient {
           this.subscribedRoomId = roomId;
           console.log('[Realtime] ✅ Conectado na sala:', roomId);
           this.callbacks.onConnected?.();
+          settle(resolve);
         }
 
         if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           console.warn('[Realtime] ❌ Canal fechado/erro:', status);
           this.callbacks.onDisconnected?.();
           this.subscribedRoomId = null;
+          settle(() => reject(new Error(`Erro ao conectar realtime: ${status}`)));
         }
       });
+    });
   }
 
   // ── Desconectar ───────────────────────────────────────────────

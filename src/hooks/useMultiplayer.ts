@@ -230,10 +230,27 @@ export function useMultiplayer() {
   const sendTurnTimeout = useCallback(
     async (nextPlayerId: string): Promise<void> => {
       const client = clientRef.current;
-      if (!client || !state.isMyTurn || !state.isConnected) return;
+      if (!client || !state.isConnected) return;
       await client.sendTurnTimeout(nextPlayerId);
     },
-    [state.isConnected, state.isMyTurn],
+    [state.isConnected],
+  );
+
+  const requestTurnTimeout = useCallback(
+    async (timedOutPlayerId: string, nextPlayerId: string): Promise<Room | null> => {
+      const client = clientRef.current;
+      if (!client || !state.isConnected) return null;
+      const room = await client.requestTurnTimeout(timedOutPlayerId, nextPlayerId);
+      if (room) {
+        setState((prev) => ({
+          ...prev,
+          room,
+          isMyTurn: room.current_turn === userId,
+        }));
+      }
+      return room;
+    },
+    [state.isConnected, userId],
   );
 
   // ── Passar turno ──────────────────────────────────────────────
@@ -300,6 +317,7 @@ export function useMultiplayer() {
     listRooms,
     sendShotStart,
     sendTurnTimeout,
+    requestTurnTimeout,
     sendShot,
     passTurn,
     setWinner,
