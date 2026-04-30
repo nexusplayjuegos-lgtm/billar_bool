@@ -4,13 +4,11 @@ import { Suspense, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useLocale } from '@/hooks';
 import { MultiplayerGameScreen } from '@/components/mobile';
-import { useGameStore } from '@/lib/store';
 
 function MultiplayerGamePageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { locale } = useLocale();
-  const { startGame } = useGameStore();
 
   const roomId = searchParams.get('room');
 
@@ -19,9 +17,8 @@ function MultiplayerGamePageInner() {
       router.replace(`/${locale}`);
       return;
     }
-    startGame('multiplayer', '8ball', 0, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomId, router, locale, startGame]);
+  }, [roomId, router, locale]);
 
   if (!roomId) {
     return null;

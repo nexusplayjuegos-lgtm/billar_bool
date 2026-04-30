@@ -69,6 +69,10 @@ export class MultiplayerClient {
 
     if (!existingRoom) throw new Error('Sala não encontrada.');
 
+    if (existingRoom.status === 'finished' || existingRoom.status === 'abandoned') {
+      throw new Error('Esta sala ja foi encerrada. Cria um novo convite.');
+    }
+
     if (
       existingRoom.player_1_id === this.userId ||
       existingRoom.player_2_id === this.userId

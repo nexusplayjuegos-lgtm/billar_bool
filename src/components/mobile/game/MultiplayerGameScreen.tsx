@@ -75,17 +75,6 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     };
   }, []);
 
-  useEffect(() => {
-    const handlePageHide = () => {
-      void leaveRoom();
-    };
-
-    window.addEventListener('pagehide', handlePageHide);
-    return () => {
-      window.removeEventListener('pagehide', handlePageHide);
-    };
-  }, [leaveRoom]);
-
   // Buscar perfis dos jogadores
   useEffect(() => {
     if (!room) return;

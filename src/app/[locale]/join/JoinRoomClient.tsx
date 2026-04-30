@@ -6,7 +6,6 @@ import { Loader2 } from 'lucide-react';
 import { useUserStore } from '@/lib/store/userStore';
 import { useLocale } from '@/hooks';
 import { supabase } from '@/lib/supabase/client';
-import { MultiplayerClient } from '@/lib/multiplayer/client';
 
 interface Props {
   roomId: string;
@@ -18,109 +17,61 @@ export function JoinRoomClient({ roomId }: Props) {
   const { playAsGuest, session, isSessionLoaded } = useUserStore();
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const hasJoined = useRef(false);
   const hasAttempted = useRef(false);
 
-  // Efeito principal: executa APENAS UMA VEZ quando sessão termina de carregar
+  // Keep joining centralized in MultiplayerGameScreen so the invited player
+  // cannot pre-join one state here and open another state on the game page.
   useEffect(() => {
-    // Bloqueios: sem roomId, já tentou, já entrou, ou sessão ainda carregando
-    if (!roomId || hasAttempted.current || hasJoined.current || !isSessionLoaded) {
-      return;
-    }
+    if (!roomId || hasAttempted.current || !isSessionLoaded) return;
 
-    // MARCA IMEDIATAMENTE que já tentou (evita loop se isSessionLoaded flutuar)
     hasAttempted.current = true;
-
     let cancelled = false;
-    let client: MultiplayerClient | null = null;
 
-    const attemptJoin = async () => {
+    const routeIfAuthenticated = async () => {
       try {
-        // Verifica sessão ativa
         const { data: { session: directSession } } = await supabase.auth.getSession();
         const activeSession = session || directSession;
 
-        // Se não está logado, mostra UI de convidado/login e PARA
         if (!activeSession?.user?.id) {
           if (!cancelled) setJoining(false);
           return;
         }
 
-        // Está logado: tenta entrar na sala
         if (!cancelled) {
           setJoining(true);
           setError(null);
-        }
-
-        client = new MultiplayerClient(activeSession.user.id, {
-          onRoomUpdate: () => {},
-          onOpponentShot: () => {},
-          onMessage: () => {},
-          onOpponentJoined: () => {},
-          onOpponentLeft: () => {},
-        });
-
-        await client.joinRoom(roomId);
-
-        if (!cancelled) {
-          hasJoined.current = true;
-          client.disconnect(); // Limpa canal antes de sair
-          client = null;
-          router.replace(`/${locale}/game/multiplayer?room=${roomId}`);
+          router.replace(`/${locale}/game/multiplayer?room=${encodeURIComponent(roomId)}`);
         }
       } catch (err) {
-        if (client) {
-          client.disconnect();
-          client = null;
-        }
         if (!cancelled) {
-          hasJoined.current = false;
-          setError(err instanceof Error ? err.message : 'Erro ao entrar na sala');
+          setError(err instanceof Error ? err.message : 'Erro ao abrir convite.');
           setJoining(false);
         }
       }
     };
 
-    void attemptJoin();
+    void routeIfAuthenticated();
 
     return () => {
       cancelled = true;
-      if (client) {
-        client.disconnect();
-      }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomId, isSessionLoaded]); // Dependências mínimas
+  }, [roomId, isSessionLoaded]);
 
   const handleGuestJoin = async () => {
-    if (hasJoined.current) return;
-    
     setJoining(true);
     setError(null);
-    let client: MultiplayerClient | null = null;
 
     try {
       const userId = await playAsGuest();
       if (!userId) {
-        setError('Não foi possível criar sessão. Tenta novamente.');
+        setError('Nao foi possivel criar sessao. Tenta novamente.');
         setJoining(false);
         return;
       }
 
-      client = new MultiplayerClient(userId, {
-        onRoomUpdate: () => {},
-        onOpponentShot: () => {},
-        onMessage: () => {},
-        onOpponentJoined: () => {},
-        onOpponentLeft: () => {},
-      });
-      
-      await client.joinRoom(roomId);
-      hasJoined.current = true;
-      client.disconnect();
-      router.replace(`/${locale}/game/multiplayer?room=${roomId}`);
+      router.replace(`/${locale}/game/multiplayer?room=${encodeURIComponent(roomId)}`);
     } catch (err) {
-      if (client) client.disconnect();
       setError(err instanceof Error ? err.message : 'Erro ao entrar na sala.');
       setJoining(false);
     }
@@ -129,7 +80,7 @@ export function JoinRoomClient({ roomId }: Props) {
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
       <div className="w-full max-w-sm text-center">
-        <div className="text-6xl mb-4">🎱</div>
+        <div className="text-6xl mb-4">8</div>
 
         {joining ? (
           <>
@@ -138,12 +89,13 @@ export function JoinRoomClient({ roomId }: Props) {
           </>
         ) : (
           <>
-            <h1 className="text-white text-xl font-bold mb-1">És convidado para uma partida!</h1>
-            <p className="text-slate-400 text-sm mb-8">Modo 8-Ball — Entra agora</p>
+            <h1 className="text-white text-xl font-bold mb-1">Es convidado para uma partida!</h1>
+            <p className="text-slate-400 text-sm mb-8">Modo 8-Ball - Entra agora</p>
             <div className="flex flex-col gap-3">
               <button
                 onClick={() => void handleGuestJoin()}
-                className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl text-base transition-colors"
+                disabled={!roomId}
+                className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-400 text-white font-bold rounded-2xl text-base transition-colors"
               >
                 Entrar como Convidado
               </button>
@@ -151,7 +103,7 @@ export function JoinRoomClient({ roomId }: Props) {
                 href={`/${locale}/login?redirect=${encodeURIComponent(`/${locale}/join?room=${roomId}`)}`}
                 className="text-sm text-slate-400 hover:text-slate-300 transition-colors"
               >
-                Tenho conta — fazer login
+                Tenho conta - fazer login
               </a>
             </div>
           </>
