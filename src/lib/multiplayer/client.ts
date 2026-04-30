@@ -220,7 +220,16 @@ export class MultiplayerClient {
       .maybeSingle();
 
     if (error) throw new Error(`Erro ao passar turno por tempo: ${error.message}`);
-    return (data as Room | null) ?? null;
+    if (data) return data as Room;
+
+    const { data: latestRoom, error: latestError } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', this.roomId)
+      .single();
+
+    if (latestError) throw new Error(`Erro ao atualizar sala: ${latestError.message}`);
+    return latestRoom as Room;
   }
 
   async setWinner(winnerId: string): Promise<void> {

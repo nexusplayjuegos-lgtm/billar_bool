@@ -176,19 +176,14 @@ export function TouchDragInput({
         onMouseUp={handleEnd}
         onMouseLeave={handleEnd}
         onTouchStart={(e) => {
-          e.preventDefault();
           const touch = e.touches[0];
           handleStart(touch.clientX, touch.clientY);
         }}
         onTouchMove={(e) => {
-          e.preventDefault();
           const touch = e.touches[0];
           handleMove(touch.clientX, touch.clientY);
         }}
-        onTouchEnd={(e) => {
-          e.preventDefault();
-          handleEnd();
-        }}
+        onTouchEnd={handleEnd}
       />
     </>
   );
