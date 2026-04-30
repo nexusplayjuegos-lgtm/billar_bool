@@ -6,7 +6,7 @@ import { useLocale, useImmersiveMatch } from '@/hooks';
 import { useGameStore } from '@/lib/store';
 import { useUserStore } from '@/lib/store/userStore';
 import { useMultiplayer } from '@/hooks/useMultiplayer';
-import { createGameEngine } from '@/lib/engine/gameEngine';
+import { createGameEngine, type EngineState } from '@/lib/engine/gameEngine';
 import { fetchProfile } from '@/lib/supabase/client';
 import { GameScreen } from '@/components/game/GameScreen';
 import { TouchDragInput } from '@/components/game/input/TouchDragInput';
@@ -16,6 +16,12 @@ import type { Tables } from '@/lib/supabase/client';
 
 interface MultiplayerGameScreenProps {
   roomId: string;
+}
+
+interface PendingShot {
+  aimAngle: number;
+  power: number;
+  hasMoved: boolean;
 }
 
 export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
@@ -43,6 +49,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
   const [opponentProfile, setOpponentProfile] = useState<Tables['profiles'] | null>(null);
   const [joining, setJoining] = useState(true);
   const hasJoinedRef = useRef(false);
+  const pendingShotRef = useRef<PendingShot | null>(null);
 
   // Entrar na sala ao montar (apenas uma vez) — aguarda sessão carregar primeiro
   useEffect(() => {
@@ -101,9 +108,43 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
   // Aplicar jogada do oponente
   useEffect(() => {
     if (!opponentShot) return;
-    engineRef.current.applyOpponentShot(opponentShot.aim_angle, opponentShot.power);
+    if (opponentShot.game_state) {
+      engineRef.current.applyRemoteState(opponentShot.game_state as Partial<EngineState>);
+    } else {
+      engineRef.current.applyOpponentShot(opponentShot.aim_angle, opponentShot.power);
+    }
     clearOpponentShot();
   }, [opponentShot, clearOpponentShot]);
+
+  useEffect(() => {
+    const engine = engineRef.current;
+    const unsubscribe = engine.subscribe((state) => {
+      const pendingShot = pendingShotRef.current;
+      if (!pendingShot) return;
+
+      if (state.ballsMoving) {
+        pendingShot.hasMoved = true;
+        return;
+      }
+
+      if (!pendingShot.hasMoved) return;
+      pendingShotRef.current = null;
+
+      const finalBallsState = state.balls.map((b) => ({
+        id: b.id,
+        x: b.x,
+        y: b.y,
+        vx: 0,
+        vy: 0,
+        inPocket: b.inPocket,
+        rotation: b.rotation,
+      }));
+
+      void sendShot(finalBallsState, pendingShot.aimAngle, pendingShot.power, state);
+    });
+
+    return unsubscribe;
+  }, [sendShot]);
 
   const handleExitGame = useCallback(() => {
     leaveRoom();
@@ -115,22 +156,15 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     (power: number, aimAngle: number) => {
       if (!room || !isMyTurn || !isConnected) return;
 
-      // 1. Disparar localmente
-      engineRef.current.shoot(power, aimAngle, { x: 0, y: 0 });
+      pendingShotRef.current = {
+        aimAngle,
+        power,
+        hasMoved: false,
+      };
 
-      // 2. Enviar para o servidor
-      const ballsState = engineRef.current.getState().balls.map((b) => ({
-        id: b.id,
-        x: b.x,
-        y: b.y,
-        vx: b.vx,
-        vy: b.vy,
-        inPocket: b.inPocket,
-        rotation: b.rotation,
-      }));
-      void sendShot(ballsState, aimAngle, power);
+      engineRef.current.shoot(power, aimAngle, { x: 0, y: 0 });
     },
-    [isConnected, isMyTurn, room, sendShot]
+    [isConnected, isMyTurn, room]
   );
 
   if (joining) {
@@ -194,6 +228,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
                 opponentProfile={opponentProfile}
                 isMyTurn={isMyTurn}
                 playerNumber={playerNumber}
+                roomId={roomId}
               />
             </div>
             <GameExitButton

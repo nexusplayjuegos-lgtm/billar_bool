@@ -15,6 +15,7 @@ interface MultiplayerGameHUDProps {
   opponentProfile: Tables['profiles'] | null;
   isMyTurn: boolean;
   playerNumber: 1 | 2 | null;
+  roomId?: string;
 }
 
 function EightBallHUD({
@@ -25,6 +26,7 @@ function EightBallHUD({
   myProfile,
   opponentProfile,
   playerNumber,
+  roomId,
   t,
 }: {
   engineState: EngineState;
@@ -34,6 +36,7 @@ function EightBallHUD({
   myProfile: Tables['profiles'] | null;
   opponentProfile: Tables['profiles'] | null;
   playerNumber: 1 | 2 | null;
+  roomId?: string;
   t: (key: string) => string;
 }) {
   const myType = playerNumber === 1 ? engineState.player1Type : engineState.player2Type;
@@ -110,6 +113,11 @@ function EightBallHUD({
           <Timer className="w-3 h-3" />
           <span className="text-xs tabular-nums">{timeLeft}s</span>
         </motion.div>
+        {roomId && (
+          <span className="text-[8px] text-slate-500 font-mono leading-none">
+            {roomId.slice(0, 8)}
+          </span>
+        )}
         {potentialReward > 0 && (
           <span className="text-amber-400 text-[10px] font-bold">
             🏆 {potentialReward.toLocaleString()}
@@ -164,6 +172,7 @@ function BrazilianHUD({
   myProfile,
   opponentProfile,
   playerNumber,
+  roomId,
   t,
 }: {
   engineState: EngineState;
@@ -173,6 +182,7 @@ function BrazilianHUD({
   myProfile: Tables['profiles'] | null;
   opponentProfile: Tables['profiles'] | null;
   playerNumber: 1 | 2 | null;
+  roomId?: string;
   t: (key: string) => string;
 }) {
   const myPoints = playerNumber === 1 ? engineState.player1Points : engineState.player2Points;
@@ -224,6 +234,11 @@ function BrazilianHUD({
           <Timer className="w-3 h-3" />
           <span className="text-xs tabular-nums">{timeLeft}s</span>
         </motion.div>
+        {roomId && (
+          <span className="text-[8px] text-slate-500 font-mono leading-none">
+            {roomId.slice(0, 8)}
+          </span>
+        )}
         {potentialReward > 0 && (
           <span className="text-amber-400 text-[10px] font-bold">
             🏆 {potentialReward.toLocaleString()}
@@ -270,6 +285,7 @@ export function MultiplayerGameHUD({
   opponentProfile,
   isMyTurn,
   playerNumber,
+  roomId,
 }: MultiplayerGameHUDProps) {
   const t = useTranslations('game');
   const { potentialReward } = useGameStore();
@@ -285,6 +301,7 @@ export function MultiplayerGameHUD({
           myProfile={myProfile}
           opponentProfile={opponentProfile}
           playerNumber={playerNumber}
+          roomId={roomId}
           t={t}
         />
       ) : (
@@ -296,6 +313,7 @@ export function MultiplayerGameHUD({
           myProfile={myProfile}
           opponentProfile={opponentProfile}
           playerNumber={playerNumber}
+          roomId={roomId}
           t={t}
         />
       )}

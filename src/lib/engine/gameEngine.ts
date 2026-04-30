@@ -287,6 +287,24 @@ class GameEngine {
     };
   }
 
+  applyRemoteState(remoteState: Partial<EngineState>) {
+    this.state = {
+      ...this.state,
+      ...remoteState,
+      balls: remoteState.balls
+        ? remoteState.balls.map((b) => ({ ...b, vx: 0, vy: 0 }))
+        : this.state.balls.map((b) => ({ ...b })),
+      ballsMoving: false,
+    };
+    this.groupsAssigned = !!this.state.player1Type && !!this.state.player2Type;
+    this.pocketedThisTurn = [];
+    this.firstContact = null;
+    this.redBallContact = false;
+    this.yellowBallContact = false;
+    this.redBallPocketed = false;
+    this.emit();
+  }
+
   subscribe(listener: EngineListener) {
     this.listeners.push(listener);
     listener({ ...this.state, balls: this.state.balls.map((b) => ({ ...b })) });

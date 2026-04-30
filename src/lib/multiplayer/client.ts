@@ -3,6 +3,7 @@
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
 import type { Room, RoomShot, RoomMessage, BallState, GameMode } from './types';
+import type { EngineState } from '@/lib/engine/gameEngine';
 
 interface MultiplayerClientCallbacks {
   onRoomUpdate: (room: Room) => void;
@@ -30,6 +31,12 @@ export class MultiplayerClient {
 
   // ── Criar sala ────────────────────────────────────────────────
   async createRoom(gameMode: GameMode = '8ball', betCoins = 0): Promise<Room> {
+    await supabase
+      .from('rooms')
+      .update({ status: 'abandoned' })
+      .eq('player_1_id', this.userId)
+      .in('status', ['waiting', 'playing']);
+
     const { data, error } = await supabase
       .from('rooms')
       .insert({
@@ -102,11 +109,13 @@ export class MultiplayerClient {
 
   // ── Listar salas disponíveis ──────────────────────────────────
   async listAvailableRooms(gameMode?: GameMode): Promise<Room[]> {
+    const recentCutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
     let query = supabase
       .from('rooms')
       .select('*')
       .eq('status', 'waiting')
       .neq('player_1_id', this.userId)
+      .gte('created_at', recentCutoff)
       .order('created_at', { ascending: false })
       .limit(20);
 
@@ -124,6 +133,7 @@ export class MultiplayerClient {
     ballsState: BallState[],
     aimAngle: number,
     power: number,
+    gameState?: EngineState,
     spinX = 0,
     spinY = 0,
   ): Promise<void> {
@@ -142,6 +152,7 @@ export class MultiplayerClient {
         body: {
           room_id: this.roomId,
           balls_state: ballsState,
+          game_state: gameState ?? null,
           aim_angle: aimAngle,
           power,
           spin_x: spinX,

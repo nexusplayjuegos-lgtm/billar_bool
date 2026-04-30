@@ -14,6 +14,7 @@ interface BallState {
 interface ShotBody {
   room_id: string;
   balls_state: BallState[];
+  game_state?: Record<string, unknown> | null;
   aim_angle: number;
   power: number;
   spin_x: number;
@@ -58,7 +59,7 @@ serve(async (req: Request) => {
   if (authError || !user) return json({ valid: false, reason: 'Não autenticado.' }, 401);
 
   const body = await req.json() as ShotBody;
-  const { room_id, balls_state, aim_angle, power, spin_x, spin_y, shot_number } = body;
+  const { room_id, balls_state, game_state, aim_angle, power, spin_x, spin_y, shot_number } = body;
 
   // ── Validar power ─────────────────────────────────────────────
   if (typeof power !== 'number' || power < 0 || power > 100) {
@@ -117,6 +118,7 @@ serve(async (req: Request) => {
     room_id,
     player_id: user.id,
     balls_state,
+    game_state: game_state ?? null,
     aim_angle,
     power,
     spin_x: spin_x ?? 0,

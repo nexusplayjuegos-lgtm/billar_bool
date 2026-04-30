@@ -32,6 +32,7 @@ export interface RoomShot {
   room_id: string;
   player_id: string;
   balls_state: BallState[];
+  game_state?: Record<string, unknown> | null;
   aim_angle: number;
   power: number;
   spin_x: number;

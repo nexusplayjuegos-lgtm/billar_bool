@@ -11,6 +11,7 @@ import type {
   RoomMessage,
   RoomShot,
 } from '@/lib/multiplayer/types';
+import type { EngineState } from '@/lib/engine/gameEngine';
 
 const INITIAL_STATE: MultiplayerState = {
   room: null,
@@ -179,6 +180,7 @@ export function useMultiplayer() {
       ballsState: BallState[],
       aimAngle: number,
       power: number,
+      gameState?: EngineState,
       spinX = 0,
       spinY = 0,
     ): Promise<void> => {
@@ -186,7 +188,7 @@ export function useMultiplayer() {
       if (!client || !state.isMyTurn || !state.isConnected) return;
 
       try {
-        await client.sendShot(ballsState, aimAngle, power, spinX, spinY);
+        await client.sendShot(ballsState, aimAngle, power, gameState, spinX, spinY);
         setState((prev) => ({ ...prev, isMyTurn: false }));
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Erro ao enviar jogada.';
