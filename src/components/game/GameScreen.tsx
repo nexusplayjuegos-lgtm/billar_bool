@@ -38,6 +38,8 @@ interface GameScreenProps {
   showBotThinking?: boolean;
   externalTimeLeft?: number;
   localPlayerNumber?: 1 | 2;
+  opponentAim?: { angle: number; power: number } | null;
+  onAimPreview?: (angle: number, power: number) => void;
 }
 
 export function GameScreen({
@@ -54,6 +56,8 @@ export function GameScreen({
   showBotThinking = true,
   externalTimeLeft,
   localPlayerNumber = 1,
+  opponentAim,
+  onAimPreview,
 }: GameScreenProps) {
   const engine = customEngine ?? gameEngine;
   const t = useTranslations('game');
@@ -139,11 +143,13 @@ export function GameScreen({
   const handleAimChange = useCallback((angle: number) => {
     setAimAngle(angle);
     setIsAiming(true);
-  }, []);
+    onAimPreview?.(angle, power);
+  }, [onAimPreview, power]);
 
   const handlePowerChange = useCallback((p: number) => {
     setPower(p);
-  }, []);
+    onAimPreview?.(aimAngle, p);
+  }, [aimAngle, onAimPreview]);
 
   const handleShoot = useCallback(() => {
     if (power >= MIN_SHOOT_POWER) {
@@ -211,6 +217,7 @@ export function GameScreen({
           isAiming={isAiming}
           isBreakShot={engineState.isBreakShot}
           pocketedBallIds={engineState.pocketedBalls}
+          opponentAim={opponentAim}
           scale={tableScale}
         >
           {overlay && overlay(engineState, inputHandlers)}

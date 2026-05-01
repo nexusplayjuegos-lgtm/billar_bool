@@ -20,6 +20,7 @@ const TABLE_TOP = 28;
 const TABLE_BOTTOM = 372;
 const AIM_DEADZONE = 24;
 const POWER_SCALE = 0.34;
+const AIM_SMOOTHING = 0.22;
 
 function getShotFromPull(cueBall: Ball, pos: { x: number; y: number }) {
   const dx = cueBall.x - pos.x;
@@ -28,6 +29,13 @@ function getShotFromPull(cueBall: Ball, pos: { x: number; y: number }) {
   const angle = Math.atan2(dy, dx);
   const power = Math.min(Math.max((dist - AIM_DEADZONE) * POWER_SCALE, 0), 100);
   return { angle, power };
+}
+
+function smoothAngle(previous: number, next: number) {
+  let delta = next - previous;
+  while (delta > Math.PI) delta -= Math.PI * 2;
+  while (delta < -Math.PI) delta += Math.PI * 2;
+  return previous + delta * AIM_SMOOTHING;
 }
 
 export function TouchDragInput({
@@ -44,6 +52,7 @@ export function TouchDragInput({
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingBall, setIsDraggingBall] = useState(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const lastAngleRef = useRef(0);
 
   const getLogicalPos = useCallback(
     (clientX: number, clientY: number) => {
@@ -102,7 +111,10 @@ export function TouchDragInput({
       if (!cueBall || cueBall.inPocket) return;
       setIsDragging(true);
       const { angle, power } = getShotFromPull(cueBall, pos);
-      onAimChange(angle);
+      if (power > 0) {
+        lastAngleRef.current = angle;
+        onAimChange(angle);
+      }
       onPowerChange(power);
     },
     [balls, disabled, getLogicalPos, clampToTable, onAimChange, onPowerChange, ballInHand, onPlaceCueBall, isBreakShot]
@@ -128,7 +140,11 @@ export function TouchDragInput({
       const cueBall = balls[0];
       if (!cueBall) return;
       const { angle, power } = getShotFromPull(cueBall, pos);
-      onAimChange(angle);
+      if (power > 0) {
+        const smoothedAngle = smoothAngle(lastAngleRef.current, angle);
+        lastAngleRef.current = smoothedAngle;
+        onAimChange(smoothedAngle);
+      }
       onPowerChange(power);
     },
     [isDraggingBall, isDragging, balls, getLogicalPos, clampToTable, onAimChange, onPowerChange, isBreakShot]

@@ -54,6 +54,13 @@ export interface TurnTimeout {
   timeout_id: string;
 }
 
+export interface AimPreview {
+  player_id: string;
+  aim_angle: number;
+  power: number;
+  preview_id: string;
+}
+
 export interface RoomMessage {
   id: string;
   created_at: string;
@@ -70,6 +77,7 @@ export interface MultiplayerState {
   playerNumber: 1 | 2 | null;
   opponentShot: RoomShot | null;
   opponentShotStart: ShotStart | null;
+  opponentAim: AimPreview | null;
   turnTimeout: TurnTimeout | null;
   messages: RoomMessage[];
   error: string | null;

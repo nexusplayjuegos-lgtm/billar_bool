@@ -10,29 +10,36 @@ interface AimOverlayProps {
   power: number;
   isAiming: boolean;
   isBreakShot?: boolean;
+  variant?: 'local' | 'opponent';
 }
 
 interface CollisionInfo {
   point: { x: number; y: number } | null;
   targetBall: Ball | null;
   targetDirection: { x: number; y: number } | null;
+  cueSegments: Segment[];
+}
+
+interface Segment {
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+  isBounce?: boolean;
 }
 
 const WALL_LEFT = 28;
 const WALL_RIGHT = 772;
 const WALL_TOP = 28;
 const WALL_BOTTOM = 372;
-const FRICTION = 0.985;
-const SHOT_SPEED = 0.3;
-const MAX_PREDICTION_STEPS = 180;
+const MAX_CUE_BOUNCES = 2;
+const MAX_TARGET_BOUNCES = 1;
 
 function getCollisionDistance(
-  cueBall: Ball,
+  from: { x: number; y: number; radius: number },
   targetBall: Ball,
   angle: number
 ): number | null {
-  const dx = targetBall.x - cueBall.x;
-  const dy = targetBall.y - cueBall.y;
+  const dx = targetBall.x - from.x;
+  const dy = targetBall.y - from.y;
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
 
@@ -40,7 +47,7 @@ function getCollisionDistance(
   if (proj <= 0) return null;
 
   const perp = Math.abs(dx * (-sin) + dy * cos);
-  const hitDist = cueBall.radius + targetBall.radius + 0.5;
+  const hitDist = from.radius + targetBall.radius + 0.5;
 
   if (perp > hitDist) return null;
 
@@ -48,13 +55,13 @@ function getCollisionDistance(
   return collisionDist;
 }
 
-function findFirstCollision(cueBall: Ball, balls: Ball[], angle: number): CollisionInfo {
+function findFirstCollision(from: Ball, balls: Ball[], angle: number): CollisionInfo {
   let minDist: number | null = null;
   let targetBall: Ball | null = null;
 
   for (const ball of balls) {
-    if (ball.id === cueBall.id || ball.inPocket) continue;
-    const dist = getCollisionDistance(cueBall, ball, angle);
+    if (ball.id === from.id || ball.inPocket) continue;
+    const dist = getCollisionDistance(from, ball, angle);
     if (dist !== null && (minDist === null || dist < minDist)) {
       minDist = dist;
       targetBall = ball;
@@ -62,12 +69,12 @@ function findFirstCollision(cueBall: Ball, balls: Ball[], angle: number): Collis
   }
 
   if (minDist === null) {
-    return { point: null, targetBall: null, targetDirection: null };
+    return { point: null, targetBall: null, targetDirection: null, cueSegments: [] };
   }
 
   const point = {
-    x: cueBall.x + Math.cos(angle) * minDist,
-    y: cueBall.y + Math.sin(angle) * minDist,
+    x: from.x + Math.cos(angle) * minDist,
+    y: from.y + Math.sin(angle) * minDist,
   };
 
   // Calculate target ball direction after collision
@@ -81,82 +88,118 @@ function findFirstCollision(cueBall: Ball, balls: Ball[], angle: number): Collis
     }
   }
 
-  return { point, targetBall, targetDirection };
+  return {
+    point,
+    targetBall,
+    targetDirection,
+    cueSegments: [{ from, to: point }],
+  };
 }
 
-function predictEngineCollision(
+function getRailHit(from: { x: number; y: number }, angle: number) {
+  const dx = Math.cos(angle);
+  const dy = Math.sin(angle);
+  const candidates: { x: number; y: number; t: number; rail: 'vertical' | 'horizontal' }[] = [];
+
+  if (dx > 0) candidates.push({ x: WALL_RIGHT, y: from.y + ((WALL_RIGHT - from.x) / dx) * dy, t: (WALL_RIGHT - from.x) / dx, rail: 'vertical' });
+  if (dx < 0) candidates.push({ x: WALL_LEFT, y: from.y + ((WALL_LEFT - from.x) / dx) * dy, t: (WALL_LEFT - from.x) / dx, rail: 'vertical' });
+  if (dy > 0) candidates.push({ x: from.x + ((WALL_BOTTOM - from.y) / dy) * dx, y: WALL_BOTTOM, t: (WALL_BOTTOM - from.y) / dy, rail: 'horizontal' });
+  if (dy < 0) candidates.push({ x: from.x + ((WALL_TOP - from.y) / dy) * dx, y: WALL_TOP, t: (WALL_TOP - from.y) / dy, rail: 'horizontal' });
+
+  return candidates
+    .filter((p) => p.t > 0.01 && p.x >= WALL_LEFT - 0.01 && p.x <= WALL_RIGHT + 0.01 && p.y >= WALL_TOP - 0.01 && p.y <= WALL_BOTTOM + 0.01)
+    .sort((a, b) => a.t - b.t)[0] ?? null;
+}
+
+function reflectAngle(angle: number, rail: 'vertical' | 'horizontal') {
+  return rail === 'vertical' ? Math.PI - angle : -angle;
+}
+
+function traceCueCollision(
   cueBall: Ball,
   balls: Ball[],
-  angle: number,
-  power: number
+  angle: number
 ): CollisionInfo {
-  let x = cueBall.x;
-  let y = cueBall.y;
-  let vx = Math.cos(angle) * power * SHOT_SPEED;
-  let vy = Math.sin(angle) * power * SHOT_SPEED;
+  let from = { x: cueBall.x, y: cueBall.y, radius: cueBall.radius };
+  let currentAngle = angle;
+  const cueSegments: Segment[] = [];
 
-  for (let step = 0; step < MAX_PREDICTION_STEPS; step++) {
-    x += vx;
-    y += vy;
-
-    if (x < WALL_LEFT) {
-      x = WALL_LEFT;
-      vx = -vx;
-    } else if (x > WALL_RIGHT) {
-      x = WALL_RIGHT;
-      vx = -vx;
-    }
-
-    if (y < WALL_TOP) {
-      y = WALL_TOP;
-      vy = -vy;
-    } else if (y > WALL_BOTTOM) {
-      y = WALL_BOTTOM;
-      vy = -vy;
-    }
+  for (let bounce = 0; bounce <= MAX_CUE_BOUNCES; bounce++) {
+    const railHit = getRailHit(from, currentAngle);
+    let nearestCollision: { ball: Ball; dist: number } | null = null;
 
     for (const ball of balls) {
       if (ball.id === cueBall.id || ball.inPocket) continue;
-
-      const dx = ball.x - x;
-      const dy = ball.y - y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const minDist = cueBall.radius + ball.radius;
-
-      if (dist < minDist && dist > 0) {
-        return {
-          point: { x, y },
-          targetBall: ball,
-          targetDirection: { x: dx / dist, y: dy / dist },
-        };
+      const dist = getCollisionDistance(from, ball, currentAngle);
+      if (dist !== null && (!nearestCollision || dist < nearestCollision.dist)) {
+        nearestCollision = { ball, dist };
       }
     }
 
-    vx *= FRICTION;
-    vy *= FRICTION;
+    if (nearestCollision && (!railHit || nearestCollision.dist < railHit.t)) {
+      const point = {
+        x: from.x + Math.cos(currentAngle) * nearestCollision.dist,
+        y: from.y + Math.sin(currentAngle) * nearestCollision.dist,
+      };
+      const dx = nearestCollision.ball.x - point.x;
+      const dy = nearestCollision.ball.y - point.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
 
-    if (Math.abs(vx) < 0.05 && Math.abs(vy) < 0.05) break;
+      cueSegments.push({ from, to: point, isBounce: bounce > 0 });
+
+      return {
+        point,
+        targetBall: nearestCollision.ball,
+        targetDirection: dist > 0 ? { x: dx / dist, y: dy / dist } : null,
+        cueSegments,
+      };
+    }
+
+    if (!railHit) break;
+    cueSegments.push({ from, to: railHit, isBounce: bounce > 0 });
+    currentAngle = reflectAngle(currentAngle, railHit.rail);
+    from = {
+      x: railHit.x + Math.cos(currentAngle) * 0.8,
+      y: railHit.y + Math.sin(currentAngle) * 0.8,
+      radius: cueBall.radius,
+    };
+  }
+
+  if (cueSegments.length > 0) {
+    return { point: null, targetBall: null, targetDirection: null, cueSegments };
   }
 
   return findFirstCollision(cueBall, balls, angle);
 }
 
-function getRailPoint(from: { x: number; y: number }, angle: number) {
-  const dx = Math.cos(angle);
-  const dy = Math.sin(angle);
-  const candidates: { x: number; y: number; t: number }[] = [];
+function traceRailSegments(from: { x: number; y: number }, angle: number, maxBounces: number): Segment[] {
+  let currentFrom = from;
+  let currentAngle = angle;
+  const segments: Segment[] = [];
 
-  if (dx > 0) candidates.push({ x: WALL_RIGHT, y: from.y + ((WALL_RIGHT - from.x) / dx) * dy, t: (WALL_RIGHT - from.x) / dx });
-  if (dx < 0) candidates.push({ x: WALL_LEFT, y: from.y + ((WALL_LEFT - from.x) / dx) * dy, t: (WALL_LEFT - from.x) / dx });
-  if (dy > 0) candidates.push({ x: from.x + ((WALL_BOTTOM - from.y) / dy) * dx, y: WALL_BOTTOM, t: (WALL_BOTTOM - from.y) / dy });
-  if (dy < 0) candidates.push({ x: from.x + ((WALL_TOP - from.y) / dy) * dx, y: WALL_TOP, t: (WALL_TOP - from.y) / dy });
+  for (let bounce = 0; bounce <= maxBounces; bounce++) {
+    const railHit = getRailHit(currentFrom, currentAngle);
+    if (!railHit) {
+      segments.push({
+        from: currentFrom,
+        to: {
+          x: currentFrom.x + Math.cos(currentAngle) * 260,
+          y: currentFrom.y + Math.sin(currentAngle) * 260,
+        },
+        isBounce: bounce > 0,
+      });
+      break;
+    }
 
-  return candidates
-    .filter((p) => p.t > 0 && p.x >= WALL_LEFT && p.x <= WALL_RIGHT && p.y >= WALL_TOP && p.y <= WALL_BOTTOM)
-    .sort((a, b) => a.t - b.t)[0] ?? {
-      x: from.x + dx * 300,
-      y: from.y + dy * 300,
+    segments.push({ from: currentFrom, to: railHit, isBounce: bounce > 0 });
+    currentAngle = reflectAngle(currentAngle, railHit.rail);
+    currentFrom = {
+      x: railHit.x + Math.cos(currentAngle) * 0.8,
+      y: railHit.y + Math.sin(currentAngle) * 0.8,
     };
+  }
+
+  return segments;
 }
 
 export function AimOverlay({
@@ -164,25 +207,26 @@ export function AimOverlay({
   aimAngle,
   power,
   isAiming,
+  variant = 'local',
 }: AimOverlayProps) {
   const cueBall = balls[0];
   if (!cueBall || cueBall.inPocket || !isAiming) return null;
 
-  const collision = predictEngineCollision(cueBall, balls, aimAngle, power);
+  const collision = traceCueCollision(cueBall, balls, aimAngle);
 
   // Ghost ball position at collision point
   const ghostPos = collision.point;
   const ghostX = ghostPos ? ghostPos.x : null;
   const ghostY = ghostPos ? ghostPos.y : null;
 
-  const cuePathEnd = ghostPos ?? getRailPoint(cueBall, aimAngle);
-  const targetPathEnd =
+  const targetSegments =
     collision.targetBall && collision.targetDirection
-      ? getRailPoint(
-          collision.targetBall,
-          Math.atan2(collision.targetDirection.y, collision.targetDirection.x)
+      ? traceRailSegments(
+          { x: collision.targetBall.x, y: collision.targetBall.y },
+          Math.atan2(collision.targetDirection.y, collision.targetDirection.x),
+          MAX_TARGET_BOUNCES
         )
-      : null;
+      : [];
 
   // Cue stick position: keep the tip just behind the cue ball at low power,
   // then pull it back visibly as the player charges the shot.
@@ -198,6 +242,9 @@ export function AimOverlay({
   };
 
   const cueColors = getCueColors();
+  const isOpponent = variant === 'opponent';
+  const whiteLine = isOpponent ? 'rgba(147, 197, 253, 0.75)' : 'url(#aimLineGrad)';
+  const yellowLine = isOpponent ? 'rgba(96, 165, 250, 0.75)' : 'rgba(255, 196, 45, 0.9)';
 
   return (
     <svg
@@ -254,32 +301,38 @@ export function AimOverlay({
           />
 
           {/* Target ball path: pure post-contact direction, no pocket snapping */}
-          {collision.targetBall && collision.targetDirection && targetPathEnd && (
+          {targetSegments.map((segment, index) => (
             <line
-              x1={collision.targetBall.x + collision.targetDirection.x * collision.targetBall.radius}
-              y1={collision.targetBall.y + collision.targetDirection.y * collision.targetBall.radius}
-              x2={targetPathEnd.x}
-              y2={targetPathEnd.y}
-              stroke="rgba(255, 196, 45, 0.9)"
-              strokeWidth="2.5"
-              strokeDasharray="9,6"
+              key={`target-${index}`}
+              x1={segment.from.x}
+              y1={segment.from.y}
+              x2={segment.to.x}
+              y2={segment.to.y}
+              stroke={yellowLine}
+              strokeWidth={segment.isBounce ? '2' : '2.7'}
+              strokeDasharray={segment.isBounce ? '5,7' : '9,6'}
               strokeLinecap="round"
+              opacity={segment.isBounce ? '0.68' : '0.95'}
             />
-          )}
+          ))}
         </g>
       )}
 
       {/* Cue ball path: where the cue is sending the white ball */}
-      <line
-        x1={cueBall.x}
-        y1={cueBall.y}
-        x2={cuePathEnd.x}
-        y2={cuePathEnd.y}
-        stroke="url(#aimLineGrad)"
-        strokeWidth="2.5"
-        strokeDasharray="12,6"
-        strokeLinecap="round"
-      />
+      {collision.cueSegments.map((segment, index) => (
+        <line
+          key={`cue-${index}`}
+          x1={segment.from.x}
+          y1={segment.from.y}
+          x2={segment.to.x}
+          y2={segment.to.y}
+          stroke={whiteLine}
+          strokeWidth={segment.isBounce ? '2' : '2.5'}
+          strokeDasharray={segment.isBounce ? '5,7' : '12,6'}
+          strokeLinecap="round"
+          opacity={segment.isBounce ? '0.68' : '1'}
+        />
+      ))}
 
       {/* Cue Stick */}
       <g

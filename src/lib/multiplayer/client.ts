@@ -2,13 +2,14 @@
 
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
-import type { Room, RoomShot, RoomMessage, BallState, GameMode, ShotStart, TurnTimeout } from './types';
+import type { Room, RoomShot, RoomMessage, BallState, GameMode, ShotStart, TurnTimeout, AimPreview } from './types';
 import type { EngineState } from '@/lib/engine/gameEngine';
 
 interface MultiplayerClientCallbacks {
   onRoomUpdate: (room: Room) => void;
   onOpponentShot: (shot: RoomShot) => void;
   onOpponentShotStart: (shot: ShotStart) => void;
+  onOpponentAim: (aim: AimPreview) => void;
   onTurnTimeout: (timeout: TurnTimeout) => void;
   onMessage: (message: RoomMessage) => void;
   onOpponentJoined: (room: Room) => void;
@@ -185,7 +186,29 @@ export class MultiplayerClient {
     }
     if (!data?.valid) throw new Error(data?.reason ?? 'Jogada inválida.');
 
+    if (gameState?.currentPlayer === 1 || gameState?.currentPlayer === 2) {
+      await this.syncTurnFromEngineState(gameState.currentPlayer);
+    }
+
     // A Edge Function valida a jogada, grava o shot e passa o turno.
+  }
+
+  private async syncTurnFromEngineState(currentPlayer: number): Promise<void> {
+    if (!this.roomId) return;
+
+    const room = await this.refreshRoom();
+    if (!room) return;
+
+    const expectedTurn = currentPlayer === 1 ? room.player_1_id : room.player_2_id;
+    if (!expectedTurn || room.current_turn === expectedTurn) return;
+
+    await supabase
+      .from('rooms')
+      .update({
+        current_turn: expectedTurn,
+        turn_started_at: new Date().toISOString(),
+      })
+      .eq('id', this.roomId);
   }
 
   // ── Definir vencedor ──────────────────────────────────────────
@@ -212,6 +235,21 @@ export class MultiplayerClient {
       player_id: this.userId,
       message: JSON.stringify(shotStart),
       message_type: 'shot_start',
+    });
+  }
+
+  async sendAimPreview(aimAngle: number, power: number): Promise<void> {
+    if (!this.channel || !this.roomId) return;
+
+    await this.channel.send({
+      type: 'broadcast',
+      event: 'aim_preview',
+      payload: {
+        player_id: this.userId,
+        aim_angle: aimAngle,
+        power,
+        preview_id: crypto.randomUUID(),
+      } satisfies AimPreview,
     });
   }
 
@@ -368,6 +406,12 @@ export class MultiplayerClient {
         if (shot.player_id !== this.userId && !this.seenShotStartIds.has(shot.shot_id)) {
           this.seenShotStartIds.add(shot.shot_id);
           this.callbacks.onOpponentShotStart(shot);
+        }
+      })
+      .on('broadcast', { event: 'aim_preview' }, ({ payload }) => {
+        const aim = payload as AimPreview;
+        if (aim.player_id !== this.userId) {
+          this.callbacks.onOpponentAim(aim);
         }
       })
       .on('broadcast', { event: 'turn_timeout' }, ({ payload }) => {

@@ -13,6 +13,7 @@ interface MatchTableProps {
   isAiming: boolean;
   isBreakShot?: boolean;
   pocketedBallIds?: number[];
+  opponentAim?: { angle: number; power: number } | null;
   children: ReactNode;
   scale?: number;
 }
@@ -24,6 +25,7 @@ export function MatchTable({
   isAiming,
   isBreakShot,
   pocketedBallIds = [],
+  opponentAim,
   children,
   scale = 1,
 }: MatchTableProps) {
@@ -60,6 +62,16 @@ export function MatchTable({
         <PoolTable balls={balls} className="w-full h-full" />
         <PocketedBallRack balls={balls} pocketedBallIds={pocketedBallIds} />
         <AimOverlay balls={balls} aimAngle={aimAngle} power={power} isAiming={isAiming} isBreakShot={isBreakShot} />
+        {opponentAim && (
+          <AimOverlay
+            balls={balls}
+            aimAngle={opponentAim.angle}
+            power={opponentAim.power}
+            isAiming
+            isBreakShot={isBreakShot}
+            variant="opponent"
+          />
+        )}
         {children}
       </div>
     </div>

@@ -130,7 +130,14 @@ serve(async (req: Request) => {
     return json({ valid: false, reason: `Erro ao gravar jogada: ${insertError.message}` }, 500);
   }
 
-  const nextPlayerId = room.player_1_id === user.id ? room.player_2_id : room.player_1_id;
+  const engineCurrentPlayer = typeof game_state?.currentPlayer === 'number'
+    ? game_state.currentPlayer
+    : null;
+  const nextPlayerId = engineCurrentPlayer === 1
+    ? room.player_1_id
+    : engineCurrentPlayer === 2
+      ? room.player_2_id
+      : room.player_1_id === user.id ? room.player_2_id : room.player_1_id;
   if (!nextPlayerId) {
     return json({ valid: false, reason: 'Oponente nÃ£o encontrado.' }, 400);
   }

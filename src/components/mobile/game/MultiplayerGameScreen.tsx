@@ -38,16 +38,19 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     playerNumber,
     opponentShot,
     opponentShotStart,
+    opponentAim,
     turnTimeout,
     error,
     joinRoom,
     sendShotStart,
+    sendAimPreview,
     sendTurnTimeout,
     requestTurnTimeout,
     sendShot,
     leaveRoom,
     clearOpponentShot,
     clearOpponentShotStart,
+    clearOpponentAim,
     clearTurnTimeout,
   } = useMultiplayer();
 
@@ -61,6 +64,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
   const hasJoinedRef = useRef(false);
   const pendingShotRef = useRef<PendingShot | null>(null);
   const timeoutHandledTurnRef = useRef<string | null>(null);
+  const lastAimPreviewSentRef = useRef(0);
 
   const getPlayerNumberForId = useCallback(
     (playerId: string | null | undefined): 1 | 2 | null => {
@@ -137,9 +141,10 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
 
   useEffect(() => {
     if (!opponentShotStart) return;
+    clearOpponentAim();
     engineRef.current.applyOpponentShot(opponentShotStart.aim_angle, opponentShotStart.power);
     clearOpponentShotStart();
-  }, [opponentShotStart, clearOpponentShotStart]);
+  }, [clearOpponentAim, opponentShotStart, clearOpponentShotStart]);
 
   useEffect(() => {
     if (!turnTimeout) return;
@@ -248,12 +253,26 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
       };
 
       setSyncedTimeLeft(30);
+      clearOpponentAim();
       void sendShotStart(aimAngle, power).catch((err) => {
         console.warn('[Multiplayer] Falha ao transmitir inicio da tacada:', err);
       });
       engineRef.current.shoot(power, aimAngle, { x: 0, y: 0 });
     },
-    [isConnected, isMyTurn, room, sendShotStart]
+    [clearOpponentAim, isConnected, isMyTurn, room, sendShotStart]
+  );
+
+  const handleAimPreview = useCallback(
+    (aimAngle: number, power: number) => {
+      if (!room || !isMyTurn || !isConnected) return;
+      const now = performance.now();
+      if (now - lastAimPreviewSentRef.current < 80) return;
+      lastAimPreviewSentRef.current = now;
+      void sendAimPreview(aimAngle, power).catch((err) => {
+        console.warn('[Multiplayer] Falha ao transmitir mira:', err);
+      });
+    },
+    [isConnected, isMyTurn, room, sendAimPreview],
   );
 
   if (joining) {
@@ -309,6 +328,8 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
         showBotThinking={false}
         externalTimeLeft={syncedTimeLeft}
         localPlayerNumber={playerNumber ?? 1}
+        opponentAim={opponentAim ? { angle: opponentAim.aim_angle, power: opponentAim.power } : null}
+        onAimPreview={handleAimPreview}
         header={(engineState, timeLeft) => (
           <div className="shrink-0 h-12 px-3 flex items-center justify-between bg-slate-950/80 backdrop-blur-sm z-20 border-b border-slate-800/50">
             <div className="flex-1 min-w-0">
