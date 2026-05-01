@@ -24,6 +24,7 @@ interface Segment {
   from: { x: number; y: number };
   to: { x: number; y: number };
   isBounce?: boolean;
+  reachesPocket?: boolean;
 }
 
 const WALL_LEFT = 28;
@@ -33,6 +34,10 @@ const WALL_BOTTOM = 372;
 const MAX_CUE_BOUNCES = 2;
 const MAX_TARGET_BOUNCES = 1;
 const POCKET_AIM_RADIUS = 20;
+const SHOT_SPEED = 0.3;
+const BALL_RESTITUTION = 0.9;
+const FRICTION = 0.985;
+const STOP_THRESHOLD = 0.05;
 const POCKETS = [
   { x: 20, y: 20 },
   { x: 400, y: 20 },
@@ -124,6 +129,25 @@ function reflectAngle(angle: number, rail: 'vertical' | 'horizontal') {
   return rail === 'vertical' ? Math.PI - angle : -angle;
 }
 
+function getTravelDistance(initialSpeed: number) {
+  if (initialSpeed <= STOP_THRESHOLD) return 0;
+
+  let speed = initialSpeed;
+  let distance = 0;
+  for (let i = 0; i < 360 && speed > STOP_THRESHOLD; i++) {
+    distance += speed;
+    speed *= FRICTION;
+  }
+  return distance;
+}
+
+function getTargetInitialSpeed(power: number, cueAngle: number, targetDirection: { x: number; y: number }) {
+  const cueDx = Math.cos(cueAngle);
+  const cueDy = Math.sin(cueAngle);
+  const normalVelocity = Math.max(0, cueDx * targetDirection.x + cueDy * targetDirection.y);
+  return power * SHOT_SPEED * ((1 + BALL_RESTITUTION) / 2) * normalVelocity;
+}
+
 function getPocketHit(from: { x: number; y: number }, angle: number, beforeDistance?: number) {
   const dx = Math.cos(angle);
   const dy = Math.sin(angle);
@@ -204,9 +228,15 @@ function traceCueCollision(
   return findFirstCollision(cueBall, balls, angle);
 }
 
-function traceRailSegments(from: { x: number; y: number }, angle: number, maxBounces: number): Segment[] {
+function traceRailSegments(
+  from: { x: number; y: number },
+  angle: number,
+  maxBounces: number,
+  maxDistance = Number.POSITIVE_INFINITY
+): Segment[] {
   let currentFrom = from;
   let currentAngle = angle;
+  let remainingDistance = maxDistance;
   const segments: Segment[] = [];
 
   for (let bounce = 0; bounce <= maxBounces; bounce++) {
@@ -214,16 +244,40 @@ function traceRailSegments(from: { x: number; y: number }, angle: number, maxBou
     const pocketHit = getPocketHit(currentFrom, currentAngle, railHit?.t);
 
     if (pocketHit) {
-      segments.push({ from: currentFrom, to: pocketHit, isBounce: bounce > 0 });
+      if (pocketHit.t <= remainingDistance + POCKET_AIM_RADIUS) {
+        segments.push({ from: currentFrom, to: pocketHit, isBounce: bounce > 0, reachesPocket: true });
+      } else {
+        segments.push({
+          from: currentFrom,
+          to: {
+            x: currentFrom.x + Math.cos(currentAngle) * remainingDistance,
+            y: currentFrom.y + Math.sin(currentAngle) * remainingDistance,
+          },
+          isBounce: bounce > 0,
+        });
+      }
       break;
     }
 
     if (!railHit) {
+      const distance = Math.min(remainingDistance, 260);
       segments.push({
         from: currentFrom,
         to: {
-          x: currentFrom.x + Math.cos(currentAngle) * 260,
-          y: currentFrom.y + Math.sin(currentAngle) * 260,
+          x: currentFrom.x + Math.cos(currentAngle) * distance,
+          y: currentFrom.y + Math.sin(currentAngle) * distance,
+        },
+        isBounce: bounce > 0,
+      });
+      break;
+    }
+
+    if (railHit.t >= remainingDistance) {
+      segments.push({
+        from: currentFrom,
+        to: {
+          x: currentFrom.x + Math.cos(currentAngle) * remainingDistance,
+          y: currentFrom.y + Math.sin(currentAngle) * remainingDistance,
         },
         isBounce: bounce > 0,
       });
@@ -231,6 +285,7 @@ function traceRailSegments(from: { x: number; y: number }, angle: number, maxBou
     }
 
     segments.push({ from: currentFrom, to: railHit, isBounce: bounce > 0 });
+    remainingDistance -= railHit.t;
     currentAngle = reflectAngle(currentAngle, railHit.rail);
     currentFrom = {
       x: railHit.x + Math.cos(currentAngle) * 0.8,
@@ -260,11 +315,16 @@ export function AimOverlay({
 
   const targetSegments =
     collision.targetBall && collision.targetDirection
-      ? traceRailSegments(
-          { x: collision.targetBall.x, y: collision.targetBall.y },
-          Math.atan2(collision.targetDirection.y, collision.targetDirection.x),
-          MAX_TARGET_BOUNCES
-        )
+      ? (() => {
+          const targetSpeed = getTargetInitialSpeed(power, aimAngle, collision.targetDirection);
+          const targetDistance = getTravelDistance(targetSpeed);
+          return traceRailSegments(
+            { x: collision.targetBall.x, y: collision.targetBall.y },
+            Math.atan2(collision.targetDirection.y, collision.targetDirection.x),
+            MAX_TARGET_BOUNCES,
+            targetDistance
+          );
+        })()
       : [];
 
   // Cue stick position: keep the tip just behind the cue ball at low power,
@@ -354,6 +414,15 @@ export function AimOverlay({
               opacity={segment.isBounce ? '0.68' : '0.95'}
             />
           ))}
+          {targetSegments.length > 0 && !targetSegments[targetSegments.length - 1].reachesPocket && (
+            <circle
+              cx={targetSegments[targetSegments.length - 1].to.x}
+              cy={targetSegments[targetSegments.length - 1].to.y}
+              r="3.5"
+              fill={yellowLine}
+              opacity="0.9"
+            />
+          )}
         </g>
       )}
 
