@@ -60,7 +60,7 @@ export interface RoomMessage {
   room_id: string;
   player_id: string;
   message: string;
-  message_type: 'quick' | 'text';
+  message_type: 'quick' | 'text' | 'shot_start';
 }
 
 export interface MultiplayerState {

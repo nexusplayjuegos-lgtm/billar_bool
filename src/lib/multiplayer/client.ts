@@ -25,6 +25,7 @@ export class MultiplayerClient {
   private lastShotNumber = 0;
   private subscribedRoomId: string | null = null;
   private isSubscribing = false;
+  private seenShotStartIds = new Set<string>();
 
   constructor(userId: string, callbacks: MultiplayerClientCallbacks) {
     this.userId = userId;
@@ -189,17 +190,28 @@ export class MultiplayerClient {
 
   // ── Definir vencedor ──────────────────────────────────────────
   async sendShotStart(aimAngle: number, power: number): Promise<void> {
-    if (!this.channel || !this.roomId) return;
+    if (!this.roomId) return;
 
-    await this.channel.send({
-      type: 'broadcast',
-      event: 'shot_start',
-      payload: {
-        player_id: this.userId,
-        aim_angle: aimAngle,
-        power,
-        shot_id: crypto.randomUUID(),
-      } satisfies ShotStart,
+    const shotStart: ShotStart = {
+      player_id: this.userId,
+      aim_angle: aimAngle,
+      power,
+      shot_id: crypto.randomUUID(),
+    };
+
+    if (this.channel) {
+      await this.channel.send({
+        type: 'broadcast',
+        event: 'shot_start',
+        payload: shotStart,
+      });
+    }
+
+    await supabase.from('room_messages').insert({
+      room_id: this.roomId,
+      player_id: this.userId,
+      message: JSON.stringify(shotStart),
+      message_type: 'shot_start',
     });
   }
 
@@ -353,7 +365,8 @@ export class MultiplayerClient {
       // Listener 1: Alterações na sala (turno, status, jogador 2 entrou)
       .on('broadcast', { event: 'shot_start' }, ({ payload }) => {
         const shot = payload as ShotStart;
-        if (shot.player_id !== this.userId) {
+        if (shot.player_id !== this.userId && !this.seenShotStartIds.has(shot.shot_id)) {
+          this.seenShotStartIds.add(shot.shot_id);
           this.callbacks.onOpponentShotStart(shot);
         }
       })
@@ -397,7 +410,20 @@ export class MultiplayerClient {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'room_messages', filter: `room_id=eq.${roomId}` },
         (payload) => {
-          this.callbacks.onMessage(payload.new as RoomMessage);
+          const message = payload.new as RoomMessage;
+          if (message.message_type === 'shot_start') {
+            try {
+              const shot = JSON.parse(message.message) as ShotStart;
+              if (shot.player_id !== this.userId && !this.seenShotStartIds.has(shot.shot_id)) {
+                this.seenShotStartIds.add(shot.shot_id);
+                this.callbacks.onOpponentShotStart(shot);
+              }
+            } catch {
+              console.warn('[Realtime] Evento shot_start invalido:', message.message);
+            }
+            return;
+          }
+          this.callbacks.onMessage(message);
         },
       )
       // SÓ DEPOIS de todos os .on(), chama .subscribe() com callback de status

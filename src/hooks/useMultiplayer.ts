@@ -208,7 +208,15 @@ export function useMultiplayer() {
 
       try {
         await client.sendShot(ballsState, aimAngle, power, gameState, spinX, spinY);
-        setState((prev) => ({ ...prev, isMyTurn: false }));
+        const room = await client.refreshRoom();
+        setState((prev) => ({
+          ...prev,
+          room: room ?? prev.room,
+          isConnected: room
+            ? room.status === 'playing' && !!room.player_1_id && !!room.player_2_id
+            : prev.isConnected,
+          isMyTurn: room ? room.current_turn === userId : false,
+        }));
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Erro ao enviar jogada.';
         console.warn('[Multiplayer] Jogada recusada; ressincronizando sala:', message);

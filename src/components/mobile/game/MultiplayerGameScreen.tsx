@@ -57,6 +57,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
   const [joining, setJoining] = useState(true);
   const [syncedTimeLeft, setSyncedTimeLeft] = useState(30);
   const [ballsMoving, setBallsMoving] = useState(false);
+  const [awaitingShotSync, setAwaitingShotSync] = useState(false);
   const hasJoinedRef = useRef(false);
   const pendingShotRef = useRef<PendingShot | null>(null);
   const timeoutHandledTurnRef = useRef<string | null>(null);
@@ -156,7 +157,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     timeoutHandledTurnRef.current = null;
 
     const updateTimer = () => {
-      if (ballsMoving || pendingShotRef.current) {
+      if (ballsMoving || pendingShotRef.current || awaitingShotSync) {
         setSyncedTimeLeft(30);
         return;
       }
@@ -194,7 +195,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     updateTimer();
     const timer = window.setInterval(updateTimer, 1000);
     return () => window.clearInterval(timer);
-  }, [ballsMoving, getPlayerNumberForId, requestTurnTimeout, room, sendTurnTimeout]);
+  }, [awaitingShotSync, ballsMoving, getPlayerNumberForId, requestTurnTimeout, room, sendTurnTimeout]);
 
   useEffect(() => {
     const engine = engineRef.current;
@@ -210,6 +211,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
 
       if (!pendingShot.hasMoved) return;
       pendingShotRef.current = null;
+      setAwaitingShotSync(true);
       setSyncedTimeLeft(30);
 
       const finalBallsState = state.balls.map((b) => ({
@@ -222,7 +224,8 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
         rotation: b.rotation,
       }));
 
-      void sendShot(finalBallsState, pendingShot.aimAngle, pendingShot.power, state);
+      void sendShot(finalBallsState, pendingShot.aimAngle, pendingShot.power, state)
+        .finally(() => setAwaitingShotSync(false));
     });
 
     return unsubscribe;
