@@ -32,6 +32,15 @@ const WALL_TOP = 28;
 const WALL_BOTTOM = 372;
 const MAX_CUE_BOUNCES = 2;
 const MAX_TARGET_BOUNCES = 1;
+const POCKET_AIM_RADIUS = 20;
+const POCKETS = [
+  { x: 20, y: 20 },
+  { x: 400, y: 20 },
+  { x: 780, y: 20 },
+  { x: 20, y: 380 },
+  { x: 400, y: 380 },
+  { x: 780, y: 380 },
+];
 
 function getCollisionDistance(
   from: { x: number; y: number; radius: number },
@@ -115,6 +124,29 @@ function reflectAngle(angle: number, rail: 'vertical' | 'horizontal') {
   return rail === 'vertical' ? Math.PI - angle : -angle;
 }
 
+function getPocketHit(from: { x: number; y: number }, angle: number, beforeDistance?: number) {
+  const dx = Math.cos(angle);
+  const dy = Math.sin(angle);
+  let bestPocket: { x: number; y: number; t: number } | null = null;
+
+  for (const pocket of POCKETS) {
+    const px = pocket.x - from.x;
+    const py = pocket.y - from.y;
+    const t = px * dx + py * dy;
+    if (t <= 0) continue;
+    if (beforeDistance !== undefined && t > beforeDistance + POCKET_AIM_RADIUS) continue;
+
+    const perpendicular = Math.abs(px * (-dy) + py * dx);
+    if (perpendicular > POCKET_AIM_RADIUS) continue;
+
+    if (!bestPocket || t < bestPocket.t) {
+      bestPocket = { ...pocket, t };
+    }
+  }
+
+  return bestPocket;
+}
+
 function traceCueCollision(
   cueBall: Ball,
   balls: Ball[],
@@ -179,6 +211,13 @@ function traceRailSegments(from: { x: number; y: number }, angle: number, maxBou
 
   for (let bounce = 0; bounce <= maxBounces; bounce++) {
     const railHit = getRailHit(currentFrom, currentAngle);
+    const pocketHit = getPocketHit(currentFrom, currentAngle, railHit?.t);
+
+    if (pocketHit) {
+      segments.push({ from: currentFrom, to: pocketHit, isBounce: bounce > 0 });
+      break;
+    }
+
     if (!railHit) {
       segments.push({
         from: currentFrom,

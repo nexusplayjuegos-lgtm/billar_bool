@@ -64,6 +64,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
   const hasJoinedRef = useRef(false);
   const pendingShotRef = useRef<PendingShot | null>(null);
   const timeoutHandledTurnRef = useRef<string | null>(null);
+  const lastTimerTurnKeyRef = useRef<string | null>(null);
   const lastAimPreviewSentRef = useRef(0);
 
   const getPlayerNumberForId = useCallback(
@@ -158,8 +159,12 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
 
   useEffect(() => {
     const turnStartedAt = room?.turn_started_at ?? room?.updated_at;
-    if (!turnStartedAt) return;
-    timeoutHandledTurnRef.current = null;
+    if (!turnStartedAt || !room?.current_turn) return;
+    const turnKey = `${room.current_turn}:${turnStartedAt}`;
+    if (lastTimerTurnKeyRef.current !== turnKey) {
+      lastTimerTurnKeyRef.current = turnKey;
+      timeoutHandledTurnRef.current = null;
+    }
 
     const updateTimer = () => {
       if (ballsMoving || pendingShotRef.current || awaitingShotSync) {
@@ -173,24 +178,25 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
 
       if (
         nextTimeLeft === 0 &&
-        room?.current_turn &&
-        timeoutHandledTurnRef.current !== `${room.current_turn}:${turnStartedAt}`
+        room.current_turn &&
+        timeoutHandledTurnRef.current !== turnKey
       ) {
         const nextPlayerId = room.current_turn === room.player_1_id ? room.player_2_id : room.player_1_id;
         if (nextPlayerId) {
-          const nextPlayerNumber = getPlayerNumberForId(nextPlayerId);
-          timeoutHandledTurnRef.current = `${room.current_turn}:${turnStartedAt}`;
-          if (nextPlayerNumber) {
-            engineRef.current.setMultiplayerTurn(nextPlayerNumber, { ballInHand: true, foul: true });
-          }
-          setSyncedTimeLeft(30);
+          timeoutHandledTurnRef.current = turnKey;
           void requestTurnTimeout(room.current_turn, nextPlayerId).then((updatedRoom) => {
-            if (updatedRoom) {
+            if (updatedRoom?.current_turn === nextPlayerId) {
+              const nextPlayerNumber = getPlayerNumberForId(nextPlayerId);
+              if (nextPlayerNumber) {
+                engineRef.current.setMultiplayerTurn(nextPlayerNumber, { ballInHand: true, foul: true });
+              }
+              setSyncedTimeLeft(30);
               void sendTurnTimeout(nextPlayerId).catch((err) => {
                 console.warn('[Multiplayer] Falha ao transmitir timeout do turno:', err);
               });
             }
           }).catch((err) => {
+            timeoutHandledTurnRef.current = null;
             console.warn('[Multiplayer] Falha ao passar turno por timeout:', err);
           });
         }
