@@ -469,17 +469,17 @@ class GameEngine {
           b.x += nx * overlap * 0.5;
           b.y += ny * overlap * 0.5;
 
-          const dvx = b.vx - a.vx;
-          const dvy = b.vy - a.vy;
-          const velAlongNormal = dvx * nx + dvy * ny;
-          if (velAlongNormal > 0) continue;
+          const aNormal = a.vx * nx + a.vy * ny;
+          const bNormal = b.vx * nx + b.vy * ny;
+          const normalDelta = aNormal - bNormal;
+          if (normalDelta <= 0) continue;
 
-          const impulse = (-(1 + BALL_RESTITUTION) * velAlongNormal) / 2;
-          a.vx -= impulse * nx;
-          a.vy -= impulse * ny;
-          b.vx += impulse * nx;
-          b.vy += impulse * ny;
-          const impactIntensity = Math.abs(velAlongNormal) / 8;
+          const transfer = normalDelta * BALL_RESTITUTION;
+          a.vx -= transfer * nx;
+          a.vy -= transfer * ny;
+          b.vx += transfer * nx;
+          b.vy += transfer * ny;
+          const impactIntensity = Math.abs(normalDelta) / 8;
           if (pass === 0 && impactIntensity > 0.05) {
             playBallHit(Math.min(impactIntensity, 1));
           }
