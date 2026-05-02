@@ -528,8 +528,8 @@ class GameEngine {
     }
 
     if (this.firstContact === null) {
-      this.state.foul = true;
-      this.state.ballInHand = true;
+      this.state.foul = false;
+      this.state.ballInHand = false;
       this.switchTurn();
       return;
     }
@@ -617,7 +617,7 @@ class GameEngine {
     }
 
     if (!keptTurn) {
-      this.state.ballInHand = true;
+      this.state.ballInHand = false;
       this.switchTurn();
     }
   }

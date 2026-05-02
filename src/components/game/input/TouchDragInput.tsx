@@ -165,6 +165,17 @@ export function TouchDragInput({
     onShoot();
   }, [isDraggingBall, isDragging, dragPos, onPlaceCueBall, onShoot]);
 
+  const handleLeave = useCallback(() => {
+    if (isDraggingBall) {
+      setIsDraggingBall(false);
+      setDragPos(null);
+    }
+    if (isDragging) {
+      setIsDragging(false);
+      onPowerChange(0);
+    }
+  }, [isDraggingBall, isDragging, onPowerChange]);
+
   const cursorClass = ballInHand && !disabled
     ? isDraggingBall ? 'cursor-grabbing' : 'cursor-grab'
     : 'cursor-default';
@@ -190,7 +201,7 @@ export function TouchDragInput({
         onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
         onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
         onMouseUp={handleEnd}
-        onMouseLeave={handleEnd}
+        onMouseLeave={handleLeave}
         onTouchStart={(e) => {
           const touch = e.touches[0];
           handleStart(touch.clientX, touch.clientY);

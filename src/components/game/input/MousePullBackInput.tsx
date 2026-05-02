@@ -163,6 +163,17 @@ export function MousePullBackInput({
     }
   }, [isDraggingBall, isPulling, dragPos, onPlaceCueBall, onShoot]);
 
+  const handleMouseLeave = useCallback(() => {
+    if (isDraggingBall) {
+      setIsDraggingBall(false);
+      setDragPos(null);
+    }
+    if (isPulling) {
+      setIsPulling(false);
+      onPowerChange(0);
+    }
+  }, [isDraggingBall, isPulling, onPowerChange]);
+
   const cursorClass = ballInHand && !disabled
     ? isDraggingBall ? 'cursor-grabbing' : 'cursor-grab'
     : 'cursor-crosshair';
@@ -188,7 +199,7 @@ export function MousePullBackInput({
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
       />
     </>
   );
