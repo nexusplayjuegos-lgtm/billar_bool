@@ -365,6 +365,10 @@ class GameEngine {
     if (this.state.gameOver) return;
 
     let anyMoving = false;
+    const previousPositions = new Map<number, { x: number; y: number }>();
+    this.state.balls.forEach((ball) => {
+      previousPositions.set(ball.id, { x: ball.x, y: ball.y });
+    });
 
     for (const ball of this.state.balls) {
       if (ball.inPocket) continue;
@@ -419,10 +423,40 @@ class GameEngine {
         const a = balls[i];
         const b = balls[j];
         if (a.inPocket || b.inPocket) continue;
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
         const minDist = a.radius + b.radius;
+        if (dist >= minDist) {
+          const prevA = previousPositions.get(a.id) ?? a;
+          const prevB = previousPositions.get(b.id) ?? b;
+          const relStartX = prevB.x - prevA.x;
+          const relStartY = prevB.y - prevA.y;
+          const relMoveX = (b.x - prevB.x) - (a.x - prevA.x);
+          const relMoveY = (b.y - prevB.y) - (a.y - prevA.y);
+          const relMoveLenSq = relMoveX * relMoveX + relMoveY * relMoveY;
+
+          if (relMoveLenSq > 0) {
+            const t = Math.max(
+              0,
+              Math.min(1, -((relStartX * relMoveX + relStartY * relMoveY) / relMoveLenSq))
+            );
+            const closestX = relStartX + relMoveX * t;
+            const closestY = relStartY + relMoveY * t;
+            const closestDist = Math.sqrt(closestX * closestX + closestY * closestY);
+
+            if (closestDist < minDist && closestDist > 0) {
+              a.x = prevA.x + (a.x - prevA.x) * t;
+              a.y = prevA.y + (a.y - prevA.y) * t;
+              b.x = prevB.x + (b.x - prevB.x) * t;
+              b.y = prevB.y + (b.y - prevB.y) * t;
+              dx = closestX;
+              dy = closestY;
+              dist = closestDist;
+            }
+          }
+        }
+
         if (dist < minDist && dist > 0) {
           const nx = dx / dist;
           const ny = dy / dist;

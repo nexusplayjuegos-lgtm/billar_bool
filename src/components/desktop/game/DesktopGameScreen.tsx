@@ -32,6 +32,7 @@ export function DesktopGameScreen({ modeId }: DesktopGameScreenProps) {
     <GameScreen
       onExit={handleExit}
       gameMode={modeType === 'brazilian' ? 'brazilian' : '8ball'}
+      tableScale={0.9}
       header={(engineState, timeLeft) => (
         <header className="shrink-0 h-14 bg-slate-900 border-b border-slate-800 flex items-center px-4">
           <Link href={`/${locale}`}>

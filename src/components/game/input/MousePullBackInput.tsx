@@ -19,16 +19,23 @@ const TABLE_RIGHT = 772;
 const TABLE_TOP = 28;
 const TABLE_BOTTOM = 372;
 const AIM_DEADZONE = 24;
-const POWER_SCALE = 0.34;
+const POWER_SCALE = 0.55;
 const AIM_SMOOTHING = 0.22;
 
-function getShotFromPull(cueBall: Ball, pos: { x: number; y: number }) {
-  const dx = cueBall.x - pos.x;
-  const dy = cueBall.y - pos.y;
-  const pullDistance = Math.sqrt(dx * dx + dy * dy);
-  const angle = Math.atan2(dy, dx);
+function getAimFromPointer(cueBall: Ball, pos: { x: number; y: number }) {
+  return Math.atan2(pos.y - cueBall.y, pos.x - cueBall.x);
+}
+
+function getPowerFromPull(
+  start: { x: number; y: number },
+  pos: { x: number; y: number },
+  angle: number
+) {
+  const pullDistance =
+    (start.x - pos.x) * Math.cos(angle) +
+    (start.y - pos.y) * Math.sin(angle);
   const power = Math.min(Math.max((pullDistance - AIM_DEADZONE) * POWER_SCALE, 0), 100);
-  return { angle, power };
+  return power;
 }
 
 function smoothAngle(previous: number, next: number) {
@@ -53,6 +60,7 @@ export function MousePullBackInput({
   const [isDraggingBall, setIsDraggingBall] = useState(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
   const lastAngleRef = useRef(0);
+  const pullStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const getLogicalPos = useCallback(
     (clientX: number, clientY: number) => {
@@ -107,13 +115,12 @@ export function MousePullBackInput({
 
       const cueBall = balls[0];
       if (!cueBall || cueBall.inPocket) return;
-      const { angle, power } = getShotFromPull(cueBall, pos);
+      const angle = getAimFromPointer(cueBall, pos);
       setIsPulling(true);
-      if (power > 0) {
-        lastAngleRef.current = angle;
-        onAimChange(angle);
-      }
-      onPowerChange(power);
+      pullStartRef.current = pos;
+      lastAngleRef.current = angle;
+      onAimChange(angle);
+      onPowerChange(0);
     },
     [balls, disabled, getLogicalPos, clampToTable, ballInHand, onPlaceCueBall, isBreakShot, onAimChange, onPowerChange]
   );
@@ -131,16 +138,29 @@ export function MousePullBackInput({
         return;
       }
 
-      if (!isPulling) return;
       const pos = getLogicalPos(e.clientX, e.clientY);
       if (!pos) return;
       const cueBall = balls[0];
       if (!cueBall) return;
-      const { angle, power } = getShotFromPull(cueBall, pos);
-      if (power > 0) {
+
+      if (!isPulling) {
+        const angle = getAimFromPointer(cueBall, pos);
         const smoothedAngle = smoothAngle(lastAngleRef.current, angle);
         lastAngleRef.current = smoothedAngle;
         onAimChange(smoothedAngle);
+        onPowerChange(0);
+        return;
+      }
+
+      const start = pullStartRef.current ?? pos;
+      let power = getPowerFromPull(start, pos, lastAngleRef.current);
+      if (power <= 0) {
+        const angle = getAimFromPointer(cueBall, pos);
+        const smoothedAngle = smoothAngle(lastAngleRef.current, angle);
+        lastAngleRef.current = smoothedAngle;
+        pullStartRef.current = pos;
+        onAimChange(smoothedAngle);
+        power = 0;
       }
       onPowerChange(power);
     },
@@ -159,6 +179,7 @@ export function MousePullBackInput({
 
     if (isPulling) {
       setIsPulling(false);
+      pullStartRef.current = null;
       onShoot();
     }
   }, [isDraggingBall, isPulling, dragPos, onPlaceCueBall, onShoot]);
@@ -170,6 +191,7 @@ export function MousePullBackInput({
     }
     if (isPulling) {
       setIsPulling(false);
+      pullStartRef.current = null;
       onPowerChange(0);
     }
   }, [isDraggingBall, isPulling, onPowerChange]);

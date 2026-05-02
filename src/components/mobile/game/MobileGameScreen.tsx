@@ -25,7 +25,7 @@ export function MobileGameScreen() {
       <GameScreen
         blockScroll
         onExit={handleExitGame}
-        tableScale={0.92}
+        tableScale={0.84}
         gameMode={modeType === 'brazilian' ? 'brazilian' : '8ball'}
         header={(engineState, timeLeft) => (
           <div className="shrink-0 h-12 px-3 flex items-center justify-between bg-slate-950/80 backdrop-blur-sm z-20 border-b border-slate-800/50">

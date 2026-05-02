@@ -327,7 +327,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
         blockScroll
         onExit={handleExitGame}
         onShoot={handleShoot}
-        tableScale={0.92}
+        tableScale={0.84}
         gameMode={modeType === 'brazilian' ? 'brazilian' : '8ball'}
         engine={engineRef.current}
         enableLocalTurnTimer={false}
