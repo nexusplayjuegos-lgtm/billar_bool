@@ -18,9 +18,16 @@ const TABLE_LEFT = 28;
 const TABLE_RIGHT = 772;
 const TABLE_TOP = 28;
 const TABLE_BOTTOM = 372;
-const AIM_DEADZONE = 24;
-const POWER_SCALE = 0.55;
-const AIM_SMOOTHING = 0.22;
+const AIM_DEADZONE = 32;
+const POWER_SCALE = 0.38;
+const AIM_SMOOTHING = 0.1;
+const MIN_AIM_DISTANCE = 42;
+
+function getDistance(a: { x: number; y: number }, b: { x: number; y: number }) {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  return Math.sqrt(dx * dx + dy * dy);
+}
 
 function getAimFromPointer(cueBall: Ball, pos: { x: number; y: number }) {
   return Math.atan2(pos.y - cueBall.y, pos.x - cueBall.x);
@@ -115,7 +122,10 @@ export function MousePullBackInput({
 
       const cueBall = balls[0];
       if (!cueBall || cueBall.inPocket) return;
-      const angle = getAimFromPointer(cueBall, pos);
+      const angle =
+        getDistance(cueBall, pos) >= MIN_AIM_DISTANCE
+          ? getAimFromPointer(cueBall, pos)
+          : lastAngleRef.current;
       setIsPulling(true);
       pullStartRef.current = pos;
       lastAngleRef.current = angle;
@@ -144,22 +154,19 @@ export function MousePullBackInput({
       if (!cueBall) return;
 
       if (!isPulling) {
-        const angle = getAimFromPointer(cueBall, pos);
-        const smoothedAngle = smoothAngle(lastAngleRef.current, angle);
-        lastAngleRef.current = smoothedAngle;
-        onAimChange(smoothedAngle);
-        onPowerChange(0);
         return;
       }
 
       const start = pullStartRef.current ?? pos;
       let power = getPowerFromPull(start, pos, lastAngleRef.current);
       if (power <= 0) {
-        const angle = getAimFromPointer(cueBall, pos);
-        const smoothedAngle = smoothAngle(lastAngleRef.current, angle);
-        lastAngleRef.current = smoothedAngle;
+        if (getDistance(cueBall, pos) >= MIN_AIM_DISTANCE) {
+          const angle = getAimFromPointer(cueBall, pos);
+          const smoothedAngle = smoothAngle(lastAngleRef.current, angle);
+          lastAngleRef.current = smoothedAngle;
+          onAimChange(smoothedAngle);
+        }
         pullStartRef.current = pos;
-        onAimChange(smoothedAngle);
         power = 0;
       }
       onPowerChange(power);
