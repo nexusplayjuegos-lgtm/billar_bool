@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback, useEffect, useState } from 'react';
 import { Ball } from '@/types';
 
 interface MousePullBackInputProps {
@@ -68,6 +68,23 @@ export function MousePullBackInput({
     []
   );
 
+  const updatePull = useCallback(
+    (clientX: number, clientY: number) => {
+      const pos = getLogicalPos(clientX, clientY);
+      if (!pos) return;
+      const cueBall = balls[0];
+      if (!cueBall) return;
+      const { angle, power } = getShotFromPull(cueBall, pos);
+      if (power > 0) {
+        const smoothedAngle = smoothAngle(lastAngleRef.current, angle);
+        lastAngleRef.current = smoothedAngle;
+        onAimChange(smoothedAngle);
+      }
+      onPowerChange(power);
+    },
+    [balls, getLogicalPos, onAimChange, onPowerChange]
+  );
+
   const clampToTable = useCallback((x: number, y: number) => {
     const margin = 15;
     return {
@@ -132,19 +149,9 @@ export function MousePullBackInput({
       }
 
       if (!isPulling) return;
-      const pos = getLogicalPos(e.clientX, e.clientY);
-      if (!pos) return;
-      const cueBall = balls[0];
-      if (!cueBall) return;
-      const { angle, power } = getShotFromPull(cueBall, pos);
-      if (power > 0) {
-        const smoothedAngle = smoothAngle(lastAngleRef.current, angle);
-        lastAngleRef.current = smoothedAngle;
-        onAimChange(smoothedAngle);
-      }
-      onPowerChange(power);
+      updatePull(e.clientX, e.clientY);
     },
-    [isDraggingBall, isPulling, balls, getLogicalPos, clampToTable, onAimChange, onPowerChange, isBreakShot]
+    [isDraggingBall, isPulling, getLogicalPos, clampToTable, updatePull, isBreakShot]
   );
 
   const handleMouseUp = useCallback(() => {
@@ -157,22 +164,35 @@ export function MousePullBackInput({
       return;
     }
 
-    if (isPulling) {
-      setIsPulling(false);
-      onShoot();
-    }
-  }, [isDraggingBall, isPulling, dragPos, onPlaceCueBall, onShoot]);
+    // A tacada de mouse é finalizada pelo listener global de document.
+  }, [isDraggingBall, dragPos, onPlaceCueBall]);
 
   const handleMouseLeave = useCallback(() => {
     if (isDraggingBall) {
       setIsDraggingBall(false);
       setDragPos(null);
     }
-    if (isPulling) {
+  }, [isDraggingBall]);
+
+  useEffect(() => {
+    if (!isPulling || isDraggingBall) return;
+
+    const handleDocumentMove = (event: MouseEvent) => {
+      updatePull(event.clientX, event.clientY);
+    };
+
+    const handleDocumentUp = () => {
       setIsPulling(false);
-      onPowerChange(0);
-    }
-  }, [isDraggingBall, isPulling, onPowerChange]);
+      onShoot();
+    };
+
+    document.addEventListener('mousemove', handleDocumentMove);
+    document.addEventListener('mouseup', handleDocumentUp);
+    return () => {
+      document.removeEventListener('mousemove', handleDocumentMove);
+      document.removeEventListener('mouseup', handleDocumentUp);
+    };
+  }, [isPulling, isDraggingBall, updatePull, onShoot]);
 
   const cursorClass = ballInHand && !disabled
     ? isDraggingBall ? 'cursor-grabbing' : 'cursor-grab'
