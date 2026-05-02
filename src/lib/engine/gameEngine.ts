@@ -17,6 +17,7 @@ const STOP_THRESHOLD = 0.015;
 const POCKET_RADIUS = 20;
 const SHOT_SPEED_SCALE = 0.48;
 const COLLISION_PASSES = 4;
+const MIN_COLLISION_SPEED = 0.02;
 
 const POCKETS = [
   { x: 18, y: 18 },
@@ -463,15 +464,21 @@ class GameEngine {
         if (dist < minDist && dist > 0) {
           const nx = dx / dist;
           const ny = dy / dist;
+          const aNormal = a.vx * nx + a.vy * ny;
+          const bNormal = b.vx * nx + b.vy * ny;
+          const normalDelta = aNormal - bNormal;
+          const relativeSpeed = Math.abs(normalDelta);
+
+          // If both balls are effectively stopped, do not keep separating
+          // tiny overlaps across future frames; that looks like delayed motion.
+          if (relativeSpeed < MIN_COLLISION_SPEED) continue;
+
           const overlap = minDist - dist;
           a.x -= nx * overlap * 0.5;
           a.y -= ny * overlap * 0.5;
           b.x += nx * overlap * 0.5;
           b.y += ny * overlap * 0.5;
 
-          const aNormal = a.vx * nx + a.vy * ny;
-          const bNormal = b.vx * nx + b.vy * ny;
-          const normalDelta = aNormal - bNormal;
           if (normalDelta <= 0) continue;
 
           const transfer = normalDelta * BALL_RESTITUTION;
@@ -525,6 +532,16 @@ class GameEngine {
         }
       }
     }
+
+    for (const ball of this.state.balls) {
+      if (ball.inPocket) continue;
+      if (Math.abs(ball.vx) < STOP_THRESHOLD) ball.vx = 0;
+      if (Math.abs(ball.vy) < STOP_THRESHOLD) ball.vy = 0;
+    }
+
+    anyMoving = this.state.balls.some(
+      (ball) => !ball.inPocket && (ball.vx !== 0 || ball.vy !== 0)
+    );
 
     const wasMoving = this.state.ballsMoving;
     this.state.ballsMoving = anyMoving;
