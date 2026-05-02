@@ -12,9 +12,11 @@ const WALL_TOP = 28;
 const WALL_BOTTOM = 372;
 const FRICTION = 0.985;
 const WALL_RESTITUTION = 0.8;
-const BALL_RESTITUTION = 0.9;
+const BALL_RESTITUTION = 0.94;
 const STOP_THRESHOLD = 0.05;
 const POCKET_RADIUS = 20;
+const SHOT_SPEED_SCALE = 0.38;
+const COLLISION_PASSES = 4;
 
 const POCKETS = [
   { x: 18, y: 18 },
@@ -236,7 +238,7 @@ class GameEngine {
     const cueBall = this.state.balls[0];
     if (!cueBall || cueBall.inPocket) return;
 
-    const speed = power * 0.3;
+    const speed = power * SHOT_SPEED_SCALE;
     cueBall.vx = Math.cos(angle) * speed;
     cueBall.vy = Math.sin(angle) * speed;
     this.state.shots += 1;
@@ -418,8 +420,9 @@ class GameEngine {
     }
 
     const balls = this.state.balls;
-    for (let i = 0; i < balls.length; i++) {
-      for (let j = i + 1; j < balls.length; j++) {
+    for (let pass = 0; pass < COLLISION_PASSES; pass++) {
+      for (let i = 0; i < balls.length; i++) {
+        for (let j = i + 1; j < balls.length; j++) {
         const a = balls[i];
         const b = balls[j];
         if (a.inPocket || b.inPocket) continue;
@@ -427,7 +430,7 @@ class GameEngine {
         let dy = b.y - a.y;
         let dist = Math.sqrt(dx * dx + dy * dy);
         const minDist = a.radius + b.radius;
-        if (dist >= minDist) {
+        if (pass === 0 && dist >= minDist) {
           const prevA = previousPositions.get(a.id) ?? a;
           const prevB = previousPositions.get(b.id) ?? b;
           const relStartX = prevB.x - prevA.x;
@@ -477,7 +480,7 @@ class GameEngine {
           b.vx += impulse * nx;
           b.vy += impulse * ny;
           const impactIntensity = Math.abs(velAlongNormal) / 8;
-          if (impactIntensity > 0.05) {
+          if (pass === 0 && impactIntensity > 0.05) {
             playBallHit(Math.min(impactIntensity, 1));
           }
 
@@ -498,6 +501,7 @@ class GameEngine {
           }
         }
       }
+    }
     }
 
     for (const ball of this.state.balls) {
