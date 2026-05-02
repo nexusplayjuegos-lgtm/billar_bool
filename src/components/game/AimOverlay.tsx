@@ -329,7 +329,7 @@ export function AimOverlay({
 
   // Cue stick position: keep the tip just behind the cue ball at low power,
   // then pull it back visibly as the player charges the shot.
-  const cueTipOffset = 18 + power * 0.92;
+  const cueTipOffset = 24 + power * 1.18;
   const cueDistance = 82 + cueTipOffset;
   const cueX = cueBall.x - Math.cos(aimAngle) * cueDistance;
   const cueY = cueBall.y - Math.sin(aimAngle) * cueDistance;

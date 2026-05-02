@@ -18,8 +18,8 @@ const TABLE_LEFT = 28;
 const TABLE_RIGHT = 772;
 const TABLE_TOP = 28;
 const TABLE_BOTTOM = 372;
-const AIM_DEADZONE = 32;
-const POWER_SCALE = 0.38;
+const AIM_DEADZONE = 12;
+const POWER_SCALE = 0.62;
 const AIM_SMOOTHING = 0.1;
 const MIN_AIM_DISTANCE = 42;
 
@@ -35,12 +35,9 @@ function getAimFromPointer(cueBall: Ball, pos: { x: number; y: number }) {
 
 function getPowerFromPull(
   start: { x: number; y: number },
-  pos: { x: number; y: number },
-  angle: number
+  pos: { x: number; y: number }
 ) {
-  const pullDistance =
-    (start.x - pos.x) * Math.cos(angle) +
-    (start.y - pos.y) * Math.sin(angle);
+  const pullDistance = getDistance(start, pos);
   return Math.min(Math.max((pullDistance - AIM_DEADZONE) * POWER_SCALE, 0), 100);
 }
 
@@ -156,7 +153,7 @@ export function TouchDragInput({
       const cueBall = balls[0];
       if (!cueBall) return;
       const start = pullStartRef.current ?? pos;
-      let power = getPowerFromPull(start, pos, lastAngleRef.current);
+      let power = getPowerFromPull(start, pos);
 
       if (power <= 0) {
         if (getDistance(cueBall, pos) >= MIN_AIM_DISTANCE) {
