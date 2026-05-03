@@ -13,11 +13,12 @@ const WALL_BOTTOM = 372;
 const FRICTION = 0.97;
 const WALL_RESTITUTION = 0.80;
 const BALL_RESTITUTION = 0.94;
-const STOP_THRESHOLD = 0.010;
+const STOP_THRESHOLD = 0.02;
 const POCKET_RADIUS = 20;
 const SHOT_SPEED_SCALE = 0.48;
 const COLLISION_PASSES = 2;
 const MIN_COLLISION_SPEED = 0.02;
+const PHYSICS_SUBSTEPS = 2;
 
 const POCKETS = [
   { x: 18, y: 18 },
@@ -368,189 +369,145 @@ class GameEngine {
     if (this.state.gameOver) return;
 
     let anyMoving = false;
-    const previousPositions = new Map<number, { x: number; y: number }>();
-    this.state.balls.forEach((ball) => {
-      previousPositions.set(ball.id, { x: ball.x, y: ball.y });
-    });
+    let wallHit = false;
+
+    for (let substep = 0; substep < PHYSICS_SUBSTEPS; substep++) {
+      for (const ball of this.state.balls) {
+        if (ball.inPocket) continue;
+        ball.x += ball.vx / PHYSICS_SUBSTEPS;
+        ball.y += ball.vy / PHYSICS_SUBSTEPS;
+      }
+
+      for (const ball of this.state.balls) {
+        if (ball.inPocket) continue;
+        if (ball.x < WALL_LEFT) {
+          ball.vx = -ball.vx * WALL_RESTITUTION;
+          ball.x = WALL_LEFT;
+          wallHit = true;
+        } else if (ball.x > WALL_RIGHT) {
+          ball.vx = -ball.vx * WALL_RESTITUTION;
+          ball.x = WALL_RIGHT;
+          wallHit = true;
+        }
+        if (ball.y < WALL_TOP) {
+          ball.vy = -ball.vy * WALL_RESTITUTION;
+          ball.y = WALL_TOP;
+          wallHit = true;
+        } else if (ball.y > WALL_BOTTOM) {
+          ball.vy = -ball.vy * WALL_RESTITUTION;
+          ball.y = WALL_BOTTOM;
+          wallHit = true;
+        }
+      }
+
+      const balls = this.state.balls;
+      for (let pass = 0; pass < COLLISION_PASSES; pass++) {
+        for (let i = 0; i < balls.length; i++) {
+          for (let j = i + 1; j < balls.length; j++) {
+            const a = balls[i];
+            const b = balls[j];
+            if (a.inPocket || b.inPocket) continue;
+
+            let dx = b.x - a.x;
+            let dy = b.y - a.y;
+            let dist = Math.hypot(dx, dy);
+            const minDist = a.radius + b.radius;
+
+            if (dist === 0) {
+              dx = 1;
+              dy = 0;
+              dist = 1;
+            }
+
+            if (dist < minDist) {
+              const nx = dx / dist;
+              const ny = dy / dist;
+              const overlap = minDist - dist;
+              a.x -= nx * overlap * 0.5;
+              a.y -= ny * overlap * 0.5;
+              b.x += nx * overlap * 0.5;
+              b.y += ny * overlap * 0.5;
+
+              const relVelX = b.vx - a.vx;
+              const relVelY = b.vy - a.vy;
+              const relSpeed = relVelX * nx + relVelY * ny;
+
+              if (relSpeed < 0 && Math.abs(relSpeed) > MIN_COLLISION_SPEED) {
+                const impulse = -(1 + BALL_RESTITUTION) * relSpeed * 0.5;
+                a.vx -= impulse * nx;
+                a.vy -= impulse * ny;
+                b.vx += impulse * nx;
+                b.vy += impulse * ny;
+
+                const impactIntensity = Math.min(Math.abs(relSpeed) / 8, 1);
+                if (impactIntensity > 0.05) {
+                  playBallHit(impactIntensity);
+                }
+
+                if (this.firstContact === null) {
+                  if (a.id === 0) this.firstContact = b.id;
+                  else if (b.id === 0) this.firstContact = a.id;
+                }
+                if (this.mode === 'brazilian') {
+                  if ((a.id === 0 && b.id === 1) || (a.id === 1 && b.id === 0)) {
+                    this.redBallContact = true;
+                  }
+                  if ((a.id === 1 && b.id === 2) || (a.id === 2 && b.id === 1)) {
+                    this.yellowBallContact = true;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      for (const ball of this.state.balls) {
+        if (ball.inPocket) continue;
+        for (const pocket of POCKETS) {
+          const dx = ball.x - pocket.x;
+          const dy = ball.y - pocket.y;
+          if (Math.sqrt(dx * dx + dy * dy) < POCKET_RADIUS) {
+            ball.inPocket = true;
+            ball.vx = 0;
+            ball.vy = 0;
+            this.pocketedThisTurn.push(ball.id);
+            if (!this.state.pocketedBalls.includes(ball.id)) {
+              this.state.pocketedBalls.push(ball.id);
+            }
+            if (this.mode === 'brazilian' && ball.id === 1) {
+              this.redBallPocketed = true;
+            }
+            playPocket();
+            break;
+          }
+        }
+      }
+    }
 
     for (const ball of this.state.balls) {
       if (ball.inPocket) continue;
-      ball.x += ball.vx;
-      ball.y += ball.vy;
-      ball.vx *= FRICTION;
-      ball.vy *= FRICTION;
+      const speed = Math.hypot(ball.vx, ball.vy);
+      if (speed < STOP_THRESHOLD) {
+        ball.vx = 0;
+        ball.vy = 0;
+      } else {
+        const friction = FRICTION;
+        ball.vx = (ball.vx / speed) * speed * friction;
+        ball.vy = (ball.vy / speed) * speed * friction;
+      }
 
-      // Rotação realista de rolamento: a bola gira uma volta (2π)
-      // para cada circunferência percorrida (2π × radius).
-      // A marca na superfície visível se move no sentido CONTRÁRIO
-      // ao movimento da bola (rolling without slipping).
       const distance = Math.hypot(ball.vx, ball.vy);
       if (distance > 0.001) {
         ball.rotation -= distance / ball.radius;
       }
-
-      if (Math.abs(ball.vx) < STOP_THRESHOLD) ball.vx = 0;
-      if (Math.abs(ball.vy) < STOP_THRESHOLD) ball.vy = 0;
       if (ball.vx === 0 && ball.vy === 0) {
         ball.rotation = Math.round(ball.rotation * 100) / 100;
       }
-      if (ball.vx !== 0 || ball.vy !== 0) anyMoving = true;
     }
 
-    let wallHit = false;
-    for (const ball of this.state.balls) {
-      if (ball.inPocket) continue;
-      if (ball.x < WALL_LEFT) {
-        ball.vx = -ball.vx * WALL_RESTITUTION;
-        ball.x = WALL_LEFT;
-        wallHit = true;
-      } else if (ball.x > WALL_RIGHT) {
-        ball.vx = -ball.vx * WALL_RESTITUTION;
-        ball.x = WALL_RIGHT;
-        wallHit = true;
-      }
-      if (ball.y < WALL_TOP) {
-        ball.vy = -ball.vy * WALL_RESTITUTION;
-        ball.y = WALL_TOP;
-        wallHit = true;
-      } else if (ball.y > WALL_BOTTOM) {
-        ball.vy = -ball.vy * WALL_RESTITUTION;
-        ball.y = WALL_BOTTOM;
-        wallHit = true;
-      }
-
-      if (Math.abs(ball.vx) < STOP_THRESHOLD) ball.vx = 0;
-      if (Math.abs(ball.vy) < STOP_THRESHOLD) ball.vy = 0;
-    }
     if (wallHit) {
       playWallHit();
-    }
-
-    const balls = this.state.balls;
-    for (let pass = 0; pass < COLLISION_PASSES; pass++) {
-      for (let i = 0; i < balls.length; i++) {
-        for (let j = i + 1; j < balls.length; j++) {
-        const a = balls[i];
-        const b = balls[j];
-        if (a.inPocket || b.inPocket) continue;
-        let dx = b.x - a.x;
-        let dy = b.y - a.y;
-        let dist = Math.sqrt(dx * dx + dy * dy);
-        const minDist = a.radius + b.radius;
-        if (pass === 0 && dist >= minDist) {
-          const prevA = previousPositions.get(a.id) ?? a;
-          const prevB = previousPositions.get(b.id) ?? b;
-          const relStartX = prevB.x - prevA.x;
-          const relStartY = prevB.y - prevA.y;
-          const relMoveX = (b.x - prevB.x) - (a.x - prevA.x);
-          const relMoveY = (b.y - prevB.y) - (a.y - prevA.y);
-          const relMoveLenSq = relMoveX * relMoveX + relMoveY * relMoveY;
-
-          if (relMoveLenSq > 0) {
-            const t = Math.max(
-              0,
-              Math.min(1, -((relStartX * relMoveX + relStartY * relMoveY) / relMoveLenSq))
-            );
-            const closestX = relStartX + relMoveX * t;
-            const closestY = relStartY + relMoveY * t;
-            const closestDist = Math.sqrt(closestX * closestX + closestY * closestY);
-
-            if (closestDist < minDist && closestDist > 0) {
-              a.x = prevA.x + (a.x - prevA.x) * t;
-              a.y = prevA.y + (a.y - prevA.y) * t;
-              b.x = prevB.x + (b.x - prevB.x) * t;
-              b.y = prevB.y + (b.y - prevB.y) * t;
-              dx = closestX;
-              dy = closestY;
-              dist = closestDist;
-            }
-          }
-        }
-
-        if (dist < minDist && dist > 0) {
-          const nx = dx / dist;
-          const ny = dy / dist;
-          const aNormal = a.vx * nx + a.vy * ny;
-          const bNormal = b.vx * nx + b.vy * ny;
-          const normalDelta = aNormal - bNormal;
-          const relativeSpeed = Math.abs(normalDelta);
-          const overlap = minDist - dist;
-
-          a.x -= nx * overlap * 0.5;
-          a.y -= ny * overlap * 0.5;
-          b.x += nx * overlap * 0.5;
-          b.y += ny * overlap * 0.5;
-
-          if (relativeSpeed < MIN_COLLISION_SPEED) {
-            if (Math.hypot(a.vx, a.vy) < MIN_COLLISION_SPEED) {
-              a.vx = 0;
-              a.vy = 0;
-            }
-            if (Math.hypot(b.vx, b.vy) < MIN_COLLISION_SPEED) {
-              b.vx = 0;
-              b.vy = 0;
-            }
-            continue;
-          }
-
-          if (normalDelta <= 0) continue;
-
-          const transfer = normalDelta * BALL_RESTITUTION;
-          a.vx -= transfer * nx;
-          a.vy -= transfer * ny;
-          b.vx += transfer * nx;
-          b.vy += transfer * ny;
-          const impactIntensity = Math.abs(normalDelta) / 8;
-          if (pass === 0 && impactIntensity > 0.05) {
-            playBallHit(Math.min(impactIntensity, 1));
-          }
-
-          // Track contacts for rules
-          if (this.firstContact === null) {
-            if (a.id === 0) this.firstContact = b.id;
-            else if (b.id === 0) this.firstContact = a.id;
-          }
-          // Sinuca: track red ball contact (white → red)
-          if (this.mode === 'brazilian') {
-            if ((a.id === 0 && b.id === 1) || (a.id === 1 && b.id === 0)) {
-              this.redBallContact = true;
-            }
-            // Sinuca: track yellow ball contact (red → yellow)
-            if ((a.id === 1 && b.id === 2) || (a.id === 2 && b.id === 1)) {
-              this.yellowBallContact = true;
-            }
-          }
-        }
-      }
-    }
-    }
-
-    for (const ball of this.state.balls) {
-      if (ball.inPocket) continue;
-      for (const pocket of POCKETS) {
-        const dx = ball.x - pocket.x;
-        const dy = ball.y - pocket.y;
-        if (Math.sqrt(dx * dx + dy * dy) < POCKET_RADIUS) {
-          ball.inPocket = true;
-          ball.vx = 0;
-          ball.vy = 0;
-          this.pocketedThisTurn.push(ball.id);
-          if (!this.state.pocketedBalls.includes(ball.id)) {
-            this.state.pocketedBalls.push(ball.id);
-          }
-          if (this.mode === 'brazilian' && ball.id === 1) {
-            this.redBallPocketed = true;
-          }
-          playPocket();
-          break;
-        }
-      }
-    }
-
-    for (const ball of this.state.balls) {
-      if (ball.inPocket) continue;
-      if (Math.abs(ball.vx) < STOP_THRESHOLD) ball.vx = 0;
-      if (Math.abs(ball.vy) < STOP_THRESHOLD) ball.vy = 0;
     }
 
     anyMoving = this.state.balls.some(
