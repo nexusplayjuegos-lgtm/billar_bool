@@ -35,6 +35,10 @@
   ],
   "exclude": [
     "node_modules",
-    "supabase/functions"
+    "supabase/functions",
+    "tests",
+    "playwright-report",
+    "test-results",
+    ".playwright-mcp"
   ]
 }

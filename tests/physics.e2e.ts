@@ -13,7 +13,7 @@ test.beforeEach(async ({ page }) => {
 // ============================================================
 // TESTE 1: Primeira tacada - Break shot
 // ============================================================
-test('Break shot: bola branca sai em linha reta e perde velocidade gradualmente', async () => {
+test('Break shot: bola branca sai em linha reta e perde velocidade gradualmente', async ({ page }) => {
   // Espera canvas estar pronto
   const canvas = await page.locator('canvas').first();
   expect(canvas).toBeVisible();
@@ -143,7 +143,7 @@ test('Friction: bola desacelera e para de forma suave', async ({ page }) => {
 // ============================================================
 // TESTE 4: Parada e stripe visual
 // ============================================================
-test('Stripe animation stops when ball stops', async () => {
+test('Stripe animation stops when ball stops', async ({ page }) => {
   const canvas = await page.locator('canvas').first();
   expect(canvas).toBeVisible();
 
@@ -175,7 +175,7 @@ test('Stripe animation stops when ball stops', async () => {
 // ============================================================
 // TESTE 5: Rebote em borda
 // ============================================================
-test('Cushion: bola rebate em borda e perde energia', async () => {
+test('Cushion: bola rebate em borda e perde energia', async ({ page }) => {
   const canvas = await page.locator('canvas').first();
   expect(canvas).toBeVisible();
 
@@ -210,7 +210,7 @@ test('Cushion: bola rebate em borda e perde energia', async () => {
 // ============================================================
 // TESTE 6: Múltiplas bolas em movimento
 // ============================================================
-test('Multi-ball: conjunto de bolas se move de forma previsível', async () => {
+test('Multi-ball: conjunto de bolas se move de forma previsível', async ({ page }) => {
   const canvas = await page.locator('canvas').first();
   expect(canvas).toBeVisible();
 
