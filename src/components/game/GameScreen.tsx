@@ -106,6 +106,31 @@ export function GameScreen({
   }, [addCoins, addXP, potentialReward, gameMode]);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__gameState = engineState;
+    }
+  }, [engineState]);
+
+  useEffect(() => {
+    const handleTestShoot = (event: Event) => {
+      const customEvent = event as CustomEvent<{ power: number; angle: number }>;
+      const detail = customEvent.detail;
+      if (!detail || typeof detail.power !== 'number' || typeof detail.angle !== 'number') return;
+      if (detail.power >= MIN_SHOOT_POWER) {
+        engine.shoot(detail.power, detail.angle, { x: 0, y: 0 });
+        setPower(0);
+        setTimeLeft(30);
+        setIsAiming(false);
+      }
+    };
+
+    window.addEventListener('shoot', handleTestShoot as EventListener);
+    return () => {
+      window.removeEventListener('shoot', handleTestShoot as EventListener);
+    };
+  }, [engine]);
+
+  useEffect(() => {
     if (externalTimeLeft !== undefined) return;
     if (!engineState || engineState.gameOver || engineState.ballsMoving) return;
     const timer = setInterval(() => {

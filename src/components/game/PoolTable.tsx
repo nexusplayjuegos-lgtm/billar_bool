@@ -207,9 +207,12 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
 
   // scrollX/scrollY: offset acumulado da textura interna
   // rotation acumula distância percorrida no engine de física
+  const isActuallyStopped = vx === 0 && vy === 0;
+  const shouldAnimate = isMoving && !isActuallyStopped;
+  
   let scrollX = 0;
   let scrollY = 0;
-  if (isMoving) {
+  if (shouldAnimate) {
     const dirX = vx / speed;
     const dirY = vy / speed;
     // Ciclo da textura = circunferência da bola (2πr)
@@ -253,7 +256,7 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   if (isStriped && number && number > 8) {
     const circumference = radius * Math.PI * 2;
     // Offset cíclico da faixa na direcção do movimento
-    const stripeOffset = isMoving
+    const stripeOffset = shouldAnimate
       ? (rotation % circumference) * (vy / (speed || 1))
       : 0;
     const stripeH = radius * 0.65;

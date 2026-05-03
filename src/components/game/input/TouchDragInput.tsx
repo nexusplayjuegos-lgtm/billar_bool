@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import { Ball } from '@/types';
 
 interface TouchDragInputProps {
@@ -175,6 +175,31 @@ export function TouchDragInput({
       onPowerChange(0);
     }
   }, [isDraggingBall, isDragging, onPowerChange]);
+
+  useEffect(() => {
+    if (!isDragging && !isDraggingBall) return;
+
+    const handleDocumentMove = (event: TouchEvent) => {
+      event.preventDefault();
+      const touch = event.touches[0];
+      if (!touch) return;
+      handleMove(touch.clientX, touch.clientY);
+    };
+
+    const handleDocumentEnd = () => {
+      handleEnd();
+    };
+
+    document.addEventListener('touchmove', handleDocumentMove, { passive: false });
+    document.addEventListener('touchend', handleDocumentEnd);
+    document.addEventListener('touchcancel', handleDocumentEnd);
+
+    return () => {
+      document.removeEventListener('touchmove', handleDocumentMove);
+      document.removeEventListener('touchend', handleDocumentEnd);
+      document.removeEventListener('touchcancel', handleDocumentEnd);
+    };
+  }, [isDragging, isDraggingBall, handleMove, handleEnd]);
 
   const cursorClass = ballInHand && !disabled
     ? isDraggingBall ? 'cursor-grabbing' : 'cursor-grab'

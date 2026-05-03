@@ -10,13 +10,13 @@ const WALL_LEFT = 28;
 const WALL_RIGHT = 772;
 const WALL_TOP = 28;
 const WALL_BOTTOM = 372;
-const FRICTION = 0.993;
-const WALL_RESTITUTION = 0.86;
-const BALL_RESTITUTION = 0.98;
-const STOP_THRESHOLD = 0.015;
+const FRICTION = 0.97;
+const WALL_RESTITUTION = 0.80;
+const BALL_RESTITUTION = 0.94;
+const STOP_THRESHOLD = 0.010;
 const POCKET_RADIUS = 20;
 const SHOT_SPEED_SCALE = 0.48;
-const COLLISION_PASSES = 4;
+const COLLISION_PASSES = 2;
 const MIN_COLLISION_SPEED = 0.02;
 
 const POCKETS = [
@@ -384,13 +384,16 @@ class GameEngine {
       // para cada circunferência percorrida (2π × radius).
       // A marca na superfície visível se move no sentido CONTRÁRIO
       // ao movimento da bola (rolling without slipping).
-      const distance = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+      const distance = Math.hypot(ball.vx, ball.vy);
       if (distance > 0.001) {
         ball.rotation -= distance / ball.radius;
       }
 
       if (Math.abs(ball.vx) < STOP_THRESHOLD) ball.vx = 0;
       if (Math.abs(ball.vy) < STOP_THRESHOLD) ball.vy = 0;
+      if (ball.vx === 0 && ball.vy === 0) {
+        ball.rotation = Math.round(ball.rotation * 100) / 100;
+      }
       if (ball.vx !== 0 || ball.vy !== 0) anyMoving = true;
     }
 
@@ -415,6 +418,9 @@ class GameEngine {
         ball.y = WALL_BOTTOM;
         wallHit = true;
       }
+
+      if (Math.abs(ball.vx) < STOP_THRESHOLD) ball.vx = 0;
+      if (Math.abs(ball.vy) < STOP_THRESHOLD) ball.vy = 0;
     }
     if (wallHit) {
       playWallHit();
@@ -468,16 +474,24 @@ class GameEngine {
           const bNormal = b.vx * nx + b.vy * ny;
           const normalDelta = aNormal - bNormal;
           const relativeSpeed = Math.abs(normalDelta);
-
-          // If both balls are effectively stopped, do not keep separating
-          // tiny overlaps across future frames; that looks like delayed motion.
-          if (relativeSpeed < MIN_COLLISION_SPEED) continue;
-
           const overlap = minDist - dist;
+
           a.x -= nx * overlap * 0.5;
           a.y -= ny * overlap * 0.5;
           b.x += nx * overlap * 0.5;
           b.y += ny * overlap * 0.5;
+
+          if (relativeSpeed < MIN_COLLISION_SPEED) {
+            if (Math.hypot(a.vx, a.vy) < MIN_COLLISION_SPEED) {
+              a.vx = 0;
+              a.vy = 0;
+            }
+            if (Math.hypot(b.vx, b.vy) < MIN_COLLISION_SPEED) {
+              b.vx = 0;
+              b.vy = 0;
+            }
+            continue;
+          }
 
           if (normalDelta <= 0) continue;
 
