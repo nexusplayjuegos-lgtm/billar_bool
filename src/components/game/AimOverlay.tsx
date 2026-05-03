@@ -11,6 +11,8 @@ interface AimOverlayProps {
   isAiming: boolean;
   isBreakShot?: boolean;
   variant?: 'local' | 'opponent';
+  playerType?: 'solid' | 'stripe' | null;
+  gameMode?: '8ball' | 'brazilian';
 }
 
 interface CollisionInfo {
@@ -296,12 +298,47 @@ function traceRailSegments(
   return segments;
 }
 
+function isValidTargetBall(
+  targetBall: Ball | null,
+  balls: Ball[],
+  playerType: 'solid' | 'stripe' | null,
+  gameMode: '8ball' | 'brazilian' = '8ball',
+  isBreakShot?: boolean
+): boolean {
+  if (!targetBall || gameMode !== '8ball' || isBreakShot) return true;
+  if (playerType === null) return true; // Grupo ainda não definido
+
+  // Se é bola 8
+  if (targetBall.number === 8) {
+    // Só pode bater na 8 se não há mais bolas do grupo
+    const hasOtherBalls = balls.some(
+      (b) =>
+        !b.inPocket &&
+        b.id !== targetBall.id &&
+        b.id !== 0 && // não é bola branca
+        b.number !== 8 && // não é bola 8
+        ((playerType === 'solid' && !b.isStriped) || (playerType === 'stripe' && b.isStriped))
+    );
+    return !hasOtherBalls; // Válido se NÃO há outras bolas
+  }
+
+  // Validar se bola alvo é do grupo correto
+  const isTargetStriped = targetBall.isStriped ?? false;
+  const isPlayerSolid = playerType === 'solid';
+  const ballBelongsToPlayer = isPlayerSolid ? !isTargetStriped : isTargetStriped;
+
+  return ballBelongsToPlayer;
+}
+
 export function AimOverlay({
   balls,
   aimAngle,
   power,
   isAiming,
+  isBreakShot,
   variant = 'local',
+  playerType,
+  gameMode = '8ball',
 }: AimOverlayProps) {
   const cueBall = balls[0];
   if (!cueBall || cueBall.inPocket || !isAiming) return null;
@@ -345,6 +382,18 @@ export function AimOverlay({
   const whiteLine = isOpponent ? 'rgba(147, 197, 253, 0.75)' : 'url(#aimLineGrad)';
   const yellowLine = isOpponent ? 'rgba(96, 165, 250, 0.75)' : 'rgba(255, 196, 45, 0.9)';
 
+  // Validar se bola alvo é válida (apenas para mira local)
+  const isValidTarget = isValidTargetBall(
+    collision.targetBall,
+    balls,
+    playerType ?? null,
+    gameMode,
+    isBreakShot
+  );
+  const ghostBallStrokeColor = isValidTarget
+    ? 'rgba(255, 255, 255, 0.9)'
+    : 'rgba(239, 68, 68, 0.95)'; // Vermelho se inválida
+
   return (
     <svg
       className={cn(
@@ -387,7 +436,7 @@ export function AimOverlay({
             cy={ghostY}
             r={cueBall.radius}
             fill="rgba(255, 255, 255, 0.25)"
-            stroke="rgba(255, 255, 255, 0.9)"
+            stroke={ghostBallStrokeColor}
             strokeWidth="2"
           />
           

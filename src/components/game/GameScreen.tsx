@@ -239,11 +239,13 @@ export function GameScreen({
           balls={engineState.balls}
           aimAngle={aimAngle}
           power={power}
-          isAiming={isAiming}
+          isAiming={isAiming && engineState.currentPlayer === localPlayerNumber}
           isBreakShot={engineState.isBreakShot}
           pocketedBallIds={engineState.pocketedBalls}
           opponentAim={opponentAim}
           scale={tableScale}
+          playerType={engineState.currentPlayer === localPlayerNumber ? engineState.player1Type : engineState.player2Type}
+          gameMode={gameMode}
         >
           {overlay && overlay(engineState, inputHandlers)}
         </MatchTable>
