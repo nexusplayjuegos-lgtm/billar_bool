@@ -354,12 +354,13 @@ export function AimOverlay({
     collision.targetBall && collision.targetDirection
       ? (() => {
           const targetSpeed = getTargetInitialSpeed(power, aimAngle, collision.targetDirection);
-          const targetDistance = getTravelDistance(targetSpeed);
+          // Limit target preview to short direction only - no long trajectory
+          const shortDistance = Math.min(getTravelDistance(targetSpeed) * 0.3, 100); // Max 100 units or 30% of full distance
           return traceRailSegments(
             { x: collision.targetBall.x, y: collision.targetBall.y },
             Math.atan2(collision.targetDirection.y, collision.targetDirection.x),
-            MAX_TARGET_BOUNCES,
-            targetDistance
+            0, // No bounces for target ball preview
+            shortDistance
           );
         })()
       : [];
