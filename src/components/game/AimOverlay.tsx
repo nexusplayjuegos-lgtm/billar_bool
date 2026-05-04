@@ -36,17 +36,17 @@ const WALL_BOTTOM = 372;
 const MAX_CUE_BOUNCES = 2;
 const MAX_TARGET_BOUNCES = 1;
 const POCKET_AIM_RADIUS = 20;
-const SHOT_SPEED = 0.3;
-const BALL_RESTITUTION = 0.9;
-const FRICTION = 0.985;
-const STOP_THRESHOLD = 0.05;
+const SHOT_SPEED = 0.48;
+const BALL_RESTITUTION = 0.94;
+const FRICTION = 0.97;
+const STOP_THRESHOLD = 0.02;
 const POCKETS = [
-  { x: 20, y: 20 },
-  { x: 400, y: 20 },
-  { x: 780, y: 20 },
-  { x: 20, y: 380 },
-  { x: 400, y: 380 },
-  { x: 780, y: 380 },
+  { x: 18, y: 18 },
+  { x: 400, y: 18 },
+  { x: 782, y: 18 },
+  { x: 18, y: 382 },
+  { x: 400, y: 382 },
+  { x: 782, y: 382 },
 ];
 
 function getCollisionDistance(
@@ -63,7 +63,7 @@ function getCollisionDistance(
   if (proj <= 0) return null;
 
   const perp = Math.abs(dx * (-sin) + dy * cos);
-  const hitDist = from.radius + targetBall.radius + 0.5;
+  const hitDist = from.radius + targetBall.radius;
 
   if (perp > hitDist) return null;
 
