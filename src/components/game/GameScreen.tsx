@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, ReactNode } from 'react';
+import { useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -74,6 +74,7 @@ export function GameScreen({
   const [showLoseModal, setShowLoseModal] = useState(false);
   const [showGuestPopup, setShowGuestPopup] = useState(false);
   const router = useRouter();
+  const previousBallsMovingRef = useRef<boolean | null>(null);
 
   useEffect(() => {
     engine.setMode(gameMode);
@@ -149,6 +150,24 @@ export function GameScreen({
     }, 1000);
     return () => clearInterval(timer);
   }, [engineState, engine, enableLocalTurnTimer, externalTimeLeft]);
+
+  // CORREÇÃO LOTE 4: Reseta timer quando turno muda (currentPlayer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!engineState || externalTimeLeft !== undefined) return;
+    setTimeLeft(30);
+  }, [engineState?.currentPlayer, externalTimeLeft]);
+
+  // CORREÇÃO LOTE 4: Reseta timer quando jogada termina (ballsMoving transição)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!engineState || externalTimeLeft !== undefined) return;
+    const wasMoving = previousBallsMovingRef.current;
+    previousBallsMovingRef.current = engineState.ballsMoving;
+    if (wasMoving === true && engineState.ballsMoving === false && !engineState.gameOver) {
+      setTimeLeft(30);
+    }
+  }, [engineState?.ballsMoving, externalTimeLeft]);
 
   useEffect(() => {
     if (!blockScroll) return;
