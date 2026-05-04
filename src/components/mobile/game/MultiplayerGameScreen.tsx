@@ -136,9 +136,13 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     if (!opponentShot) return;
     if (opponentShot.game_state) {
       engineRef.current.applyRemoteState(opponentShot.game_state as Partial<EngineState>);
+      const currentEngineState = engineRef.current.getState();
+      if (playerNumber !== null && currentEngineState.currentPlayer === playerNumber) {
+        setSyncedTimeLeft(30);
+      }
     }
     clearOpponentShot();
-  }, [opponentShot, clearOpponentShot]);
+  }, [opponentShot, clearOpponentShot, playerNumber]);
 
   useEffect(() => {
     if (!opponentShotStart) return;
@@ -304,6 +308,8 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
     );
   }
 
+  const hasLocalTurn = isMyTurn || (playerNumber !== null && engineRef.current.getState().currentPlayer === playerNumber);
+
   const roomReady =
     room?.id === roomId &&
     room.status === 'playing' &&
@@ -344,7 +350,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
                 engineState={engineState}
                 myProfile={myProfile}
                 opponentProfile={opponentProfile}
-                isMyTurn={isMyTurn}
+                isMyTurn={hasLocalTurn}
                 playerNumber={playerNumber}
                 roomId={roomId}
               />
@@ -365,7 +371,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
             onPlaceCueBall={handlers.onPlaceCueBall}
             ballInHand={handlers.ballInHand}
             isBreakShot={handlers.isBreakShot}
-            disabled={engineState.ballsMoving || engineState.gameOver || !isMyTurn}
+            disabled={engineState.ballsMoving || engineState.gameOver || !hasLocalTurn}
           />
         )}
       />
