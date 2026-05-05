@@ -133,14 +133,18 @@ serve(async (req: Request) => {
   const engineCurrentPlayer = typeof game_state?.currentPlayer === 'number'
     ? game_state.currentPlayer
     : null;
+  // gameState.currentPlayer es quem ACABOU de disparar. O próximo jogador é o outro.
   const nextPlayerId = engineCurrentPlayer === 1
-    ? room.player_1_id
+    ? room.player_2_id  // Se player 1 disparou, o próximo é player 2
     : engineCurrentPlayer === 2
-      ? room.player_2_id
+      ? room.player_1_id  // Se player 2 disparou, o próximo é player 1
       : room.player_1_id === user.id ? room.player_2_id : room.player_1_id;
   if (!nextPlayerId) {
     return json({ valid: false, reason: 'Oponente nÃ£o encontrado.' }, 400);
   }
+
+  // Debug: log antes de atualizar
+  console.error(`[validate-shot] Atualizando turno - room_id: ${room_id}, nextPlayerId: ${nextPlayerId}, gameState.currentPlayer: ${engineCurrentPlayer}`);
 
   const { error: turnError } = await serviceClient
     .from('rooms')
@@ -151,8 +155,11 @@ serve(async (req: Request) => {
     .eq('id', room_id);
 
   if (turnError) {
+    console.error(`[validate-shot] Erro ao atualizar turno:`, turnError);
     return json({ valid: false, reason: `Erro ao passar turno: ${turnError.message}` }, 500);
   }
 
+  // Debug: sucesso
+  console.error(`[validate-shot] Turno atualizado com sucesso para ${nextPlayerId}`);
   return json({ valid: true });
 });
