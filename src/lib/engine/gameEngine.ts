@@ -577,17 +577,16 @@ class GameEngine {
     }
 
     const eight = this.state.balls.find((b) => b.number === 8);
-    if (eight && eight.inPocket) {
+    if (eight && this.pocketedThisTurn.includes(eight.id)) {
       const playerGroup = player === 1 ? this.state.player1Type : this.state.player2Type;
-      const groupBalls = this.state.balls.filter(
+      const remainingGroupBalls = this.state.balls.filter(
         (b) =>
           !b.inPocket &&
-          b.number !== 0 &&
           b.number !== 8 &&
           ((playerGroup === 'solid' && b.number && b.number <= 7) ||
             (playerGroup === 'stripe' && b.number && b.number >= 9))
       );
-      if (groupBalls.length === 0) {
+      if (playerGroup && remainingGroupBalls.length === 0) {
         this.state.winner = player;
       } else {
         this.state.winner = player === 1 ? 2 : 1;
