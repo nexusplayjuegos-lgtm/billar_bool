@@ -240,12 +240,19 @@ export function GameScreen({
     );
   }
 
+  const isLocalPlayerTurn = engineState.currentPlayer === localPlayerNumber;
+  const canLocalPlayerAct = isLocalPlayerTurn && !engineState.ballsMoving && !engineState.gameOver;
+  const canPlaceCueBall = canLocalPlayerAct && engineState.ballInHand;
+  const shouldShowIdleCue = canLocalPlayerAct && !engineState.ballInHand && !isAiming;
+
   const inputHandlers: InputHandlers = {
     onAimChange: handleAimChange,
     onPowerChange: handlePowerChange,
     onShoot: handleShoot,
-    onPlaceCueBall: handlePlaceCueBall,
-    ballInHand: engineState.ballInHand && engineState.currentPlayer === localPlayerNumber,
+    onPlaceCueBall: (x, y) => {
+      if (canPlaceCueBall) handlePlaceCueBall(x, y);
+    },
+    ballInHand: canPlaceCueBall,
     isBreakShot: engineState.isBreakShot,
   };
 
@@ -258,12 +265,13 @@ export function GameScreen({
           balls={engineState.balls}
           aimAngle={aimAngle}
           power={power}
-          isAiming={isAiming && engineState.currentPlayer === localPlayerNumber}
+          isAiming={isAiming && isLocalPlayerTurn}
+          showIdleCue={shouldShowIdleCue}
           isBreakShot={engineState.isBreakShot}
           pocketedBallIds={engineState.pocketedBalls}
           opponentAim={opponentAim}
           scale={tableScale}
-          playerType={engineState.currentPlayer === localPlayerNumber ? engineState.player1Type : engineState.player2Type}
+          playerType={isLocalPlayerTurn ? engineState.player1Type : engineState.player2Type}
           gameMode={gameMode}
         >
           {overlay && overlay(engineState, inputHandlers)}
@@ -271,7 +279,7 @@ export function GameScreen({
       </div>
 
       {/* Indicador de ball-in-hand / break shot */}
-      {engineState.ballInHand && engineState.currentPlayer === localPlayerNumber && !engineState.ballsMoving && !engineState.gameOver && (
+      {canPlaceCueBall && (
         <div className="absolute top-14 left-1/2 -translate-x-1/2 z-30">
           <div className="px-4 py-1.5 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-500/40 flex items-center gap-2">
             <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />

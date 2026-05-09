@@ -9,6 +9,7 @@ interface AimOverlayProps {
   aimAngle: number;
   power: number;
   isAiming: boolean;
+  showIdleCue?: boolean;
   isBreakShot?: boolean;
   variant?: 'local' | 'opponent';
   playerType?: 'solid' | 'stripe' | null;
@@ -40,6 +41,7 @@ const SHOT_SPEED = 0.48;
 const BALL_RESTITUTION = 0.94;
 const FRICTION = 0.97;
 const STOP_THRESHOLD = 0.02;
+const MIN_TARGET_GUIDE_DISTANCE = 8;
 const POCKETS = [
   { x: 18, y: 18 },
   { x: 400, y: 18 },
@@ -335,13 +337,15 @@ export function AimOverlay({
   aimAngle,
   power,
   isAiming,
+  showIdleCue = false,
   isBreakShot,
   variant = 'local',
   playerType,
   gameMode = '8ball',
 }: AimOverlayProps) {
   const cueBall = balls[0];
-  if (!cueBall || cueBall.inPocket || !isAiming) return null;
+  const isVisible = isAiming || showIdleCue;
+  if (!cueBall || cueBall.inPocket || !isVisible) return null;
 
   const collision = traceCueCollision(cueBall, balls, aimAngle);
 
@@ -351,16 +355,22 @@ export function AimOverlay({
   const ghostY = ghostPos ? ghostPos.y : null;
 
   const targetSegments =
-    collision.targetBall && collision.targetDirection
+    isAiming && collision.targetBall && collision.targetDirection
       ? (() => {
           const targetSpeed = getTargetInitialSpeed(power, aimAngle, collision.targetDirection);
           // Limit target preview to short direction only - no long trajectory
           const shortDistance = Math.min(getTravelDistance(targetSpeed) * 0.3, 100); // Max 100 units or 30% of full distance
+          const targetStart = {
+            x: collision.targetBall.x + collision.targetDirection.x * collision.targetBall.radius,
+            y: collision.targetBall.y + collision.targetDirection.y * collision.targetBall.radius,
+          };
+          const guideDistance = shortDistance - collision.targetBall.radius;
+          if (guideDistance < MIN_TARGET_GUIDE_DISTANCE) return [];
           return traceRailSegments(
-            { x: collision.targetBall.x, y: collision.targetBall.y },
+            targetStart,
             Math.atan2(collision.targetDirection.y, collision.targetDirection.x),
             0, // No bounces for target ball preview
-            shortDistance
+            guideDistance
           );
         })()
       : [];
@@ -399,7 +409,7 @@ export function AimOverlay({
     <svg
       className={cn(
         "absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-200",
-        isAiming ? "opacity-100" : "opacity-0"
+        isVisible ? "opacity-100" : "opacity-0"
       )}
       viewBox="0 0 800 400"
       preserveAspectRatio="none"
@@ -429,7 +439,7 @@ export function AimOverlay({
       </defs>
 
       {/* Ghost Ball at collision point */}
-      {ghostX !== null && ghostY !== null && (
+      {isAiming && ghostX !== null && ghostY !== null && (
         <g>
           {/* Main ghost ball */}
           <circle
@@ -477,7 +487,7 @@ export function AimOverlay({
       )}
 
       {/* Cue ball path: where the cue is sending the white ball */}
-      {collision.cueSegments.map((segment, index) => (
+      {isAiming && collision.cueSegments.map((segment, index) => (
         <line
           key={`cue-${index}`}
           x1={segment.from.x}
