@@ -106,9 +106,12 @@ export function DesktopLobbyScreen() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 p-8"
+        className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-blue-950 to-purple-950 p-8 shadow-[0_24px_70px_rgba(2,6,23,0.38)]"
       >
         <div className="relative z-10">
+          <div className="mb-3 inline-flex rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-200">
+            Arena recomendada · London
+          </div>
           <h1 className="text-4xl font-black text-white mb-2">
             Bem-vindo, {profile.username}!
           </h1>
@@ -125,14 +128,14 @@ export function DesktopLobbyScreen() {
                   router.push(`/${locale}/play/${mode.id}`);
                 }
               }}
-              className="px-6 py-3 bg-white text-purple-600 font-bold rounded-xl flex items-center gap-2 hover:bg-white/90 transition-colors"
+              className="px-6 py-3 bg-white text-slate-950 font-bold rounded-xl flex items-center gap-2 hover:bg-white/90 transition-colors shadow-lg shadow-white/10"
             >
               <Play className="w-5 h-5" />
               Jogar Agora
             </button>
             <button
               onClick={() => { setMpView('menu'); setShowMultiplayer(true); }}
-              className="px-6 py-3 border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 font-bold rounded-xl flex items-center gap-2 transition-colors"
+              className="px-6 py-3 border border-cyan-300/40 text-cyan-200 hover:bg-cyan-500/10 font-bold rounded-xl flex items-center gap-2 transition-colors"
             >
               <Wifi className="w-5 h-5" />
               Multijogador
@@ -157,7 +160,7 @@ export function DesktopLobbyScreen() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="bg-slate-800/50 rounded-xl p-4"
+            className="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60 shadow-[0_12px_30px_rgba(2,6,23,0.18)]"
           >
             <div className="flex items-center gap-2 mb-2">
               <stat.icon className={`w-5 h-5 ${stat.color}`} />
@@ -186,7 +189,7 @@ export function DesktopLobbyScreen() {
                   router.push(`/${locale}/play/${mode.id}`);
                 }
               }}
-              className="bg-slate-800/50 rounded-xl p-4 cursor-pointer hover:bg-slate-800 transition-colors"
+              className="bg-slate-800/60 rounded-xl p-4 cursor-pointer hover:bg-slate-800 transition-colors border border-slate-700/60 shadow-[0_12px_30px_rgba(2,6,23,0.18)]"
               style={{ borderLeft: `4px solid ${mode.color}` }}
             >
               <div className="flex items-start justify-between mb-3">
@@ -219,7 +222,7 @@ export function DesktopLobbyScreen() {
       {/* Leaderboard Preview */}
       <div>
         <h2 className="text-xl font-bold text-white mb-4">Top Jogadores</h2>
-        <div className="bg-slate-800/50 rounded-xl overflow-hidden">
+        <div className="bg-slate-800/60 rounded-xl overflow-hidden border border-slate-700/60">
           {MOCK_LEADERBOARD.global.slice(0, 5).map((player) => (
             <div
               key={player.rank}

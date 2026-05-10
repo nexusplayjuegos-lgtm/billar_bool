@@ -56,20 +56,21 @@ export default function LeaderboardScreen() {
   return (
     <div className="min-h-screen bg-slate-900 p-4">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold text-white text-center mb-6">
+        <h1 className="text-3xl font-black text-white text-center mb-2">
           {t('leaderboard.title')}
         </h1>
+        <p className="mb-6 text-center text-sm text-slate-400">Compete semanalmente e sobe na liga</p>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 rounded-xl border border-slate-700/60 bg-slate-800/50 p-1">
           {(['weekly', 'monthly', 'allTime'] as const).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
               className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
                 period === p
-                  ? 'bg-amber-500 text-white'
-                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                  ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950'
+                  : 'text-slate-400 hover:bg-slate-700/70'
               }`}
             >
               {t(`leaderboard.${p}`)}
@@ -87,7 +88,11 @@ export default function LeaderboardScreen() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="bg-slate-800/50 rounded-xl p-4 flex items-center gap-4 border border-slate-700/50"
+                className={`rounded-xl p-4 flex items-center gap-4 border shadow-[0_12px_28px_rgba(2,6,23,0.2)] ${
+                  index < 3
+                    ? 'bg-gradient-to-r from-slate-800 via-slate-800/80 to-amber-500/10 border-amber-300/25'
+                    : 'bg-slate-800/60 border-slate-700/50'
+                }`}
               >
                 <div className="w-8 flex-shrink-0">
                   {getRankIcon(index + 1)}

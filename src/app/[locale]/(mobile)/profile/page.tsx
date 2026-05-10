@@ -22,13 +22,13 @@ export default function ProfilePage() {
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="text-center mb-6"
+        className="text-center mb-6 rounded-2xl border border-slate-700/60 bg-slate-900/45 p-5 shadow-[0_16px_36px_rgba(2,6,23,0.24)]"
       >
-        <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-900 font-bold text-3xl mb-3">
+        <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-amber-300 to-amber-600 flex items-center justify-center text-slate-900 font-black text-3xl mb-3 ring-4 ring-amber-300/15">
           {profile.username.slice(0, 2).toUpperCase()}
         </div>
         <h1 className="text-2xl font-bold text-white">{profile.username}</h1>
-        <p className="text-slate-400">{profile.rank}</p>
+        <p className="text-slate-400">{profile.rank} · Nível {profile.level}</p>
       </motion.div>
 
       {/* Stats */}
@@ -38,19 +38,19 @@ export default function ProfilePage() {
         transition={{ delay: 0.1 }}
         className="grid grid-cols-2 gap-3 mb-6"
       >
-        <div className="bg-slate-800/50 rounded-xl p-4 text-center">
+        <div className="bg-slate-800/70 rounded-xl p-4 text-center border border-slate-700/60">
           <p className="text-3xl font-bold text-blue-400">{profile.stats.wins}</p>
           <p className="text-xs text-slate-400">Vitórias</p>
         </div>
-        <div className="bg-slate-800/50 rounded-xl p-4 text-center">
+        <div className="bg-slate-800/70 rounded-xl p-4 text-center border border-slate-700/60">
           <p className="text-3xl font-bold text-red-400">{profile.stats.losses}</p>
           <p className="text-xs text-slate-400">Derrotas</p>
         </div>
-        <div className="bg-slate-800/50 rounded-xl p-4 text-center">
+        <div className="bg-slate-800/70 rounded-xl p-4 text-center border border-slate-700/60">
           <p className="text-3xl font-bold text-green-400">{profile.stats.winRate}%</p>
           <p className="text-xs text-slate-400">Win Rate</p>
         </div>
-        <div className="bg-slate-800/50 rounded-xl p-4 text-center">
+        <div className="bg-slate-800/70 rounded-xl p-4 text-center border border-slate-700/60">
           <p className="text-3xl font-bold text-amber-400">{profile.stats.maxWinStreak}</p>
           <p className="text-xs text-slate-400">Sequência Máx</p>
         </div>
@@ -63,13 +63,13 @@ export default function ProfilePage() {
         transition={{ delay: 0.2 }}
         className="space-y-2"
       >
-        <button className="w-full flex items-center gap-3 p-4 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition-colors">
+        <button className="w-full flex items-center gap-3 p-4 bg-slate-800/70 rounded-xl hover:bg-slate-800 transition-colors border border-slate-700/60">
           <User className="w-5 h-5 text-slate-400" />
           <span className="text-white">Editar Perfil</span>
         </button>
         <button
           onClick={() => setShowSettings(true)}
-          className="w-full flex items-center gap-3 p-4 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition-colors"
+          className="w-full flex items-center gap-3 p-4 bg-slate-800/70 rounded-xl hover:bg-slate-800 transition-colors border border-slate-700/60"
         >
           <Settings className="w-5 h-5 text-slate-400" />
           <span className="text-white">{t('navigation.settings')}</span>

@@ -16,7 +16,7 @@ interface CueCardProps {
 
 export function CueCard({ cue, index, onPreview }: CueCardProps) {
   const t = useTranslations();
-  const { profile, buyCue, equipCue } = useUserStore() as any;
+  const { profile, buyCue, equipCue } = useUserStore();
 
   const priceCoins = cue.price.coins;
   const priceCash = cue.price.cash;
@@ -49,9 +49,9 @@ export function CueCard({ cue, index, onPreview }: CueCardProps) {
       whileHover={!isLocked ? { scale: 1.02 } : {}}
       whileTap={!isLocked ? { scale: 0.98 } : {}}
       className={cn(
-        'relative bg-slate-800 rounded-2xl p-4 border-2 cursor-pointer transition-all',
-        isEquipped ? 'border-green-500 ring-2 ring-green-500/30' : 'border-slate-700',
-        isLocked ? 'opacity-60 cursor-not-allowed grayscale' : 'hover:border-slate-600'
+        'relative bg-slate-800/90 rounded-2xl p-4 border cursor-pointer transition-all shadow-[0_16px_36px_rgba(2,6,23,0.28)]',
+        isEquipped ? 'border-emerald-400 ring-2 ring-emerald-400/25' : 'border-slate-700/80',
+        isLocked ? 'opacity-60 cursor-not-allowed grayscale' : 'hover:border-slate-500'
       )}
     >
       {/* Badge de raridade */}
@@ -81,6 +81,7 @@ export function CueCard({ cue, index, onPreview }: CueCardProps) {
 
       {/* Visual do Taco - Canvas 2D Profissional */}
       <div className="h-28 mb-3 relative mt-6 flex items-center justify-center">
+        <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/5 to-transparent" />
         <CueCanvas cueId={cue.id} width={260} height={52} />
 
         {/* Badge de equipado */}
@@ -116,7 +117,7 @@ export function CueCard({ cue, index, onPreview }: CueCardProps) {
         </div>
 
         {/* Preço ou Status */}
-        <div className="pt-2 border-t border-slate-700 flex items-center justify-between">
+        <div className="pt-2 border-t border-slate-700 flex items-center justify-between gap-2">
           {isOwned ? (
             <span className="text-green-400 font-semibold flex items-center gap-1 text-sm">
               <Check className="w-4 h-4" /> Adquirido

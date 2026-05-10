@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Lock, Play } from 'lucide-react';
+import { Lock, Play, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { GameMode } from '@/types';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,7 @@ export function GameModeCard({ mode, index, isSelected, onSelect }: GameModeCard
 
   const isLocked = profile.level < mode.minLevel;
   const canAfford = profile.currencies.coins >= mode.entryFee.coins;
+  const onlinePlayers = `${(2.4 + index * 1.7).toFixed(1)}K`;
 
   const handleCardClick = () => {
     if (!isLocked) {
@@ -43,12 +44,12 @@ export function GameModeCard({ mode, index, isSelected, onSelect }: GameModeCard
       onClick={handleCardClick}
       className={cn(
         'relative flex-shrink-0 w-56 landscape:w-36 h-52 landscape:h-28 rounded-xl overflow-hidden cursor-pointer',
-        'border-2 transition-all duration-300',
-        isSelected && !isLocked ? 'ring-2 ring-white/50' : '',
+        'border transition-all duration-300 shadow-[0_18px_42px_rgba(2,6,23,0.36)]',
+        isSelected && !isLocked ? 'ring-2 ring-cyan-300/70 border-cyan-200/60' : '',
         isLocked
-          ? 'border-slate-600 opacity-60'
+          ? 'border-slate-700 opacity-60'
           : canAfford
-          ? 'border-transparent hover:border-white/30'
+          ? 'border-white/10 hover:border-white/35'
           : 'border-red-500/50 opacity-80'
       )}
       style={{
@@ -74,7 +75,7 @@ export function GameModeCard({ mode, index, isSelected, onSelect }: GameModeCard
 
       {/* Lock Overlay */}
       {isLocked && (
-        <div className="absolute inset-0 bg-slate-950/70 flex flex-col items-center justify-center z-10">
+        <div className="absolute inset-0 bg-slate-950/75 flex flex-col items-center justify-center z-10 backdrop-blur-sm">
           <Lock className="w-8 h-8 landscape:w-5 landscape:h-5 text-slate-400 mb-1" />
           <span className="text-slate-300 text-xs landscape:text-[10px] font-medium">
             Nível {mode.minLevel}
@@ -89,6 +90,11 @@ export function GameModeCard({ mode, index, isSelected, onSelect }: GameModeCard
 
       {/* Content */}
       <div className="relative h-full flex flex-col p-3 landscape:p-2">
+        <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-slate-950/45 px-2 py-0.5 text-[10px] font-semibold text-cyan-100 landscape:right-2 landscape:top-2 landscape:text-[8px]">
+          <Users className="h-3 w-3 landscape:h-2.5 landscape:w-2.5" />
+          {onlinePlayers}
+        </div>
+
         {/* Icon */}
         <div
           className="w-12 h-12 landscape:w-8 landscape:h-8 rounded-xl flex items-center justify-center mb-2 landscape:mb-1"
@@ -102,7 +108,7 @@ export function GameModeCard({ mode, index, isSelected, onSelect }: GameModeCard
         </div>
 
         {/* Title */}
-        <h3 className="text-white text-base landscape:text-xs font-bold mb-0.5 landscape:mb-0">
+        <h3 className="text-white text-base landscape:text-xs font-black mb-0.5 landscape:mb-0">
           {t(`${mode.id.split('_')[1]}.name`)}
         </h3>
         <p className="text-white/70 text-xs landscape:text-[9px] mb-1 landscape:mb-0.5">
@@ -115,7 +121,7 @@ export function GameModeCard({ mode, index, isSelected, onSelect }: GameModeCard
         </p>
 
         {/* Entry Fee & Reward */}
-        <div className="mt-2 landscape:mt-0.5 space-y-1 landscape:space-y-0.5">
+        <div className="mt-2 landscape:mt-0.5 space-y-1 landscape:space-y-0.5 rounded-lg bg-slate-950/25 p-2 landscape:p-1">
           <div className="flex items-center justify-between">
             <span className="text-white/60 text-[10px] landscape:text-[8px]">Entrada:</span>
             <div className="flex items-center gap-1">
@@ -147,7 +153,7 @@ export function GameModeCard({ mode, index, isSelected, onSelect }: GameModeCard
             className={cn(
               'mt-2 landscape:mt-1 w-full py-2 landscape:py-1 rounded-lg flex items-center justify-center gap-1.5 font-bold transition-all text-sm landscape:text-[10px]',
               canAfford
-                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-400 hover:to-blue-500'
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 shadow-lg shadow-blue-500/20'
                 : 'bg-slate-700 text-slate-400 cursor-not-allowed'
             )}
             disabled={!canAfford}

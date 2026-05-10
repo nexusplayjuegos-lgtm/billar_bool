@@ -151,7 +151,13 @@ export function MobileLobbyScreen() {
         animate={{ opacity: 1, y: 0 }}
         className="px-4 py-3 landscape:py-2"
       >
-        <h1 className="text-xl landscape:text-base font-bold text-white mb-1 landscape:mb-0">
+        <div className="mb-1 flex items-center gap-2 landscape:mb-0">
+          <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-200">
+            Premiere
+          </span>
+          <span className="text-[10px] font-medium text-slate-400">Liga {profile.rank}</span>
+        </div>
+        <h1 className="text-xl landscape:text-base font-black text-white mb-1 landscape:mb-0">
           {t('lobby.welcome', { username: profile.username })}
         </h1>
         <div className="flex items-center gap-4 text-sm landscape:text-xs text-slate-400">
@@ -169,7 +175,7 @@ export function MobileLobbyScreen() {
       {/* Game Modes Carousel */}
       <div className="flex-1 flex flex-col">
         <div className="px-4 mb-2 landscape:mb-1">
-          <h2 className="text-base landscape:text-sm font-semibold text-white">Escolha seu modo</h2>
+          <h2 className="text-base landscape:text-sm font-bold text-white">Escolha sua arena</h2>
           <p className="text-sm landscape:text-xs text-slate-400">Deslize para ver mais opções</p>
         </div>
 
@@ -201,7 +207,7 @@ export function MobileLobbyScreen() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="px-4 py-2 landscape:py-1.5 bg-slate-900/50 border-t border-slate-800"
+        className="px-4 py-2 landscape:py-1.5 bg-slate-900/60 border-t border-slate-800/80"
       >
         <div className="flex items-center justify-between mb-1.5 landscape:mb-1">
           <h3 className="text-sm landscape:text-xs font-semibold text-white flex items-center gap-2">
@@ -220,7 +226,7 @@ export function MobileLobbyScreen() {
           ].map((player, i) => (
             <div
               key={i}
-              className="flex-1 bg-slate-800/50 rounded-lg p-2 landscape:p-1.5 flex items-center gap-2 landscape:gap-1"
+              className="flex-1 bg-slate-800/70 rounded-lg p-2 landscape:p-1.5 flex items-center gap-2 landscape:gap-1 border border-slate-700/50"
             >
               <span className="text-lg landscape:text-base">{getCountryFlag(player.country)}</span>
               <div className="flex-1 min-w-0">

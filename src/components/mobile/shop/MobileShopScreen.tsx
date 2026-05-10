@@ -39,13 +39,16 @@ export function MobileShopScreen() {
         animate={{ opacity: 1, y: 0 }}
         className="px-4 py-4"
       >
-        <h1 className="text-2xl font-bold text-white">{t('shop.title')}</h1>
+        <div className="mb-1 inline-flex rounded-full border border-emerald-300/25 bg-emerald-300/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-200">
+          Coleção premium
+        </div>
+        <h1 className="text-2xl font-black text-white">{t('shop.title')}</h1>
         <p className="text-sm text-slate-400">Itens premium para dominar a mesa</p>
       </motion.div>
 
       {/* Tabs */}
       <div className="px-4 mb-4">
-        <div className="flex gap-1 bg-slate-800/50 p-1 rounded-xl overflow-x-auto">
+        <div className="flex gap-1 bg-slate-800/60 p-1 rounded-xl overflow-x-auto border border-slate-700/60">
           {tabs.map((tab) => (
             <motion.button
               key={tab.id}
@@ -53,7 +56,7 @@ export function MobileShopScreen() {
               className={cn(
                 'flex-1 min-w-[70px] py-2 px-3 rounded-lg text-sm font-medium transition-all',
                 activeTab === tab.id
-                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
+                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-blue-500/20'
                   : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
               )}
               whileTap={{ scale: 0.95 }}
@@ -124,7 +127,7 @@ export function MobileShopScreen() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 }}
                   className={cn(
-                    'relative bg-slate-900 rounded-xl p-4 border-2',
+                    'relative bg-slate-900/90 rounded-xl p-4 border shadow-[0_14px_28px_rgba(2,6,23,0.24)]',
                     pack.popular ? 'border-amber-400/50' : 'border-slate-700'
                   )}
                 >
@@ -181,7 +184,7 @@ export function MobileShopScreen() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  className="bg-slate-900 rounded-xl p-4 border border-emerald-500/30"
+                  className="bg-slate-900/90 rounded-xl p-4 border border-emerald-500/30 shadow-[0_14px_28px_rgba(2,6,23,0.24)]"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">

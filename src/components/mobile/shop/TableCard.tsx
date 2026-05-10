@@ -15,7 +15,7 @@ interface TableCardProps {
 
 export function TableCard({ tableId, index }: TableCardProps) {
   const t = useTranslations();
-  const { profile } = useUserStore() as any;
+  const { profile } = useUserStore();
 
   const design = TABLE_DESIGNS.find(d => d.id === tableId);
   if (!design) return null;
@@ -38,9 +38,9 @@ export function TableCard({ tableId, index }: TableCardProps) {
       whileHover={!isLocked ? { scale: 1.02 } : {}}
       whileTap={!isLocked ? { scale: 0.98 } : {}}
       className={cn(
-        'relative bg-slate-800 rounded-2xl p-4 border-2 cursor-pointer transition-all',
-        isEquipped ? 'border-green-500 ring-2 ring-green-500/30' : 'border-slate-700',
-        isLocked ? 'opacity-60 cursor-not-allowed grayscale' : 'hover:border-slate-600'
+        'relative bg-slate-800/90 rounded-2xl p-4 border cursor-pointer transition-all shadow-[0_16px_36px_rgba(2,6,23,0.28)]',
+        isEquipped ? 'border-emerald-400 ring-2 ring-emerald-400/25' : 'border-slate-700/80',
+        isLocked ? 'opacity-60 cursor-not-allowed grayscale' : 'hover:border-slate-500'
       )}
     >
       {/* Badge de raridade */}
@@ -55,7 +55,7 @@ export function TableCard({ tableId, index }: TableCardProps) {
       </div>
 
       {/* Visual da Mesa - Canvas 2D Profissional */}
-      <div className="h-32 mb-3 relative mt-6 flex items-center justify-center bg-slate-900/50 rounded-xl p-2">
+      <div className="h-32 mb-3 relative mt-6 flex items-center justify-center bg-slate-900/70 rounded-xl p-2 border border-white/5">
         <TableCanvas tableId={tableId} width={220} height={110} />
 
         {/* Badge de equipado */}
