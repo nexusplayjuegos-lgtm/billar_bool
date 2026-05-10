@@ -42,6 +42,7 @@ const BALL_RESTITUTION = 0.94;
 const FRICTION = 0.97;
 const STOP_THRESHOLD = 0.02;
 const MIN_TARGET_GUIDE_DISTANCE = 8;
+const THIN_CUT_ASSIST_RADIUS = 2;
 const POCKETS = [
   { x: 18, y: 18 },
   { x: 400, y: 18 },
@@ -65,7 +66,7 @@ function getCollisionDistance(
   if (proj <= 0) return null;
 
   const perp = Math.abs(dx * (-sin) + dy * cos);
-  const hitDist = from.radius + targetBall.radius;
+  const hitDist = from.radius + targetBall.radius + THIN_CUT_ASSIST_RADIUS;
 
   if (perp > hitDist) return null;
 

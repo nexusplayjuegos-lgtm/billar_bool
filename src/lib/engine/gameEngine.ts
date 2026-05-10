@@ -19,6 +19,19 @@ const SHOT_SPEED_SCALE = 0.48;
 const COLLISION_PASSES = 2;
 const MIN_COLLISION_SPEED = 0.02;
 const PHYSICS_SUBSTEPS = 2;
+const THIN_CUT_ASSIST_RADIUS = 2;
+
+interface Position {
+  x: number;
+  y: number;
+}
+
+interface SweptBallCollision {
+  nx: number;
+  ny: number;
+  contactA: Position;
+  contactB: Position;
+}
 
 const POCKETS = [
   { x: 18, y: 18 },
@@ -140,6 +153,56 @@ function createBrazilianBalls(): Ball[] {
 
 function createInitialBalls(mode: '8ball' | 'brazilian'): Ball[] {
   return mode === 'brazilian' ? createBrazilianBalls() : create8BallBalls();
+}
+
+function getSweptBallCollision(
+  a: Ball,
+  b: Ball,
+  previousA: Position,
+  previousB: Position,
+  assistedMinDist: number
+): SweptBallCollision | null {
+  const startX = previousB.x - previousA.x;
+  const startY = previousB.y - previousA.y;
+  const endX = b.x - a.x;
+  const endY = b.y - a.y;
+  const moveX = endX - startX;
+  const moveY = endY - startY;
+  const moveLengthSq = moveX * moveX + moveY * moveY;
+
+  if (moveLengthSq <= 0) return null;
+
+  const aCoef = moveLengthSq;
+  const bCoef = 2 * (startX * moveX + startY * moveY);
+  const cCoef = startX * startX + startY * startY - assistedMinDist * assistedMinDist;
+
+  if (cCoef <= 0) return null;
+
+  const discriminant = bCoef * bCoef - 4 * aCoef * cCoef;
+  if (discriminant < 0) return null;
+
+  const t = (-bCoef - Math.sqrt(discriminant)) / (2 * aCoef);
+  if (t < 0 || t > 1) return null;
+
+  const contactA = {
+    x: previousA.x + (a.x - previousA.x) * t,
+    y: previousA.y + (a.y - previousA.y) * t,
+  };
+  const contactB = {
+    x: previousB.x + (b.x - previousB.x) * t,
+    y: previousB.y + (b.y - previousB.y) * t,
+  };
+
+  const nxRaw = contactB.x - contactA.x;
+  const nyRaw = contactB.y - contactA.y;
+  const normalLength = Math.hypot(nxRaw, nyRaw);
+  if (normalLength <= 0) return null;
+
+  const nx = nxRaw / normalLength;
+  const ny = nyRaw / normalLength;
+  if (moveX * nx + moveY * ny >= 0) return null;
+
+  return { nx, ny, contactA, contactB };
 }
 
 class GameEngine {
@@ -372,6 +435,8 @@ class GameEngine {
     let wallHit = false;
 
     for (let substep = 0; substep < PHYSICS_SUBSTEPS; substep++) {
+      const previousPositions = this.state.balls.map((ball) => ({ x: ball.x, y: ball.y }));
+
       for (const ball of this.state.balls) {
         if (ball.inPocket) continue;
         ball.x += ball.vx / PHYSICS_SUBSTEPS;
@@ -412,6 +477,11 @@ class GameEngine {
             let dy = b.y - a.y;
             let dist = Math.hypot(dx, dy);
             const minDist = a.radius + b.radius;
+            const assistedMinDist = minDist + THIN_CUT_ASSIST_RADIUS;
+            const sweptCollision =
+              pass === 0
+                ? getSweptBallCollision(a, b, previousPositions[i], previousPositions[j], assistedMinDist)
+                : null;
 
             if (dist === 0) {
               dx = 1;
@@ -419,14 +489,27 @@ class GameEngine {
               dist = 1;
             }
 
-            if (dist < minDist) {
-              const nx = dx / dist;
-              const ny = dy / dist;
+            if (sweptCollision && dist >= minDist) {
+              a.x = sweptCollision.contactA.x;
+              a.y = sweptCollision.contactA.y;
+              b.x = sweptCollision.contactB.x;
+              b.y = sweptCollision.contactB.y;
+              dx = b.x - a.x;
+              dy = b.y - a.y;
+              dist = Math.hypot(dx, dy) || 1;
+            }
+
+            if (dist < assistedMinDist || sweptCollision) {
+              const nx = sweptCollision?.nx ?? dx / dist;
+              const ny = sweptCollision?.ny ?? dy / dist;
               const overlap = minDist - dist;
-              a.x -= nx * overlap * 0.5;
-              a.y -= ny * overlap * 0.5;
-              b.x += nx * overlap * 0.5;
-              b.y += ny * overlap * 0.5;
+
+              if (overlap > 0) {
+                a.x -= nx * overlap * 0.5;
+                a.y -= ny * overlap * 0.5;
+                b.x += nx * overlap * 0.5;
+                b.y += ny * overlap * 0.5;
+              }
 
               const relVelX = b.vx - a.vx;
               const relVelY = b.vy - a.vy;
