@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Share2 } from 'lucide-react';
 import { useLocale } from '@/hooks';
 import { gameEngine, createGameEngine, EngineState } from '@/lib/engine/gameEngine';
-import { playTick } from '@/lib/audio/gameAudio';
+import { playTick, unlockAudio } from '@/lib/audio/gameAudio';
 import { useGameStore, useUserStore } from '@/lib/store';
 import { MatchTable } from './MatchTable';
 import { Confetti } from './Confetti';
@@ -40,6 +40,12 @@ interface GameScreenProps {
   localPlayerNumber?: 1 | 2;
   opponentAim?: { angle: number; power: number } | null;
   onAimPreview?: (angle: number, power: number) => void;
+}
+
+declare global {
+  interface Window {
+    __gameState?: EngineState | null;
+  }
 }
 
 export function GameScreen({
@@ -75,14 +81,17 @@ export function GameScreen({
   const [showGuestPopup, setShowGuestPopup] = useState(false);
   const router = useRouter();
   const previousBallsMovingRef = useRef<boolean | null>(null);
+  const gameResultHandledRef = useRef(false);
 
   useEffect(() => {
+    gameResultHandledRef.current = false;
     engine.setMode(gameMode);
     engine.start();
     const unsubscribe = engine.subscribe((state) => {
       setEngineState(state);
-      if (state.gameOver && state.winner) {
-        const won = state.winner === 1;
+      if (state.gameOver && state.winner !== null && !gameResultHandledRef.current) {
+        gameResultHandledRef.current = true;
+        const won = state.winner === localPlayerNumber;
         const reward = won ? potentialReward : Math.floor(potentialReward * 0.1);
         // Atualiza economia e stats
         if (won) {
@@ -104,11 +113,11 @@ export function GameScreen({
       engine.stop();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addCoins, addXP, potentialReward, gameMode]);
+  }, [addCoins, addXP, potentialReward, gameMode, localPlayerNumber]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      (window as any).__gameState = engineState;
+      window.__gameState = engineState;
     }
   }, [engineState]);
 
@@ -185,17 +194,20 @@ export function GameScreen({
   }, [blockScroll]);
 
   const handleAimChange = useCallback((angle: number) => {
+    void unlockAudio();
     setAimAngle(angle);
     setIsAiming(true);
     onAimPreview?.(angle, power);
   }, [onAimPreview, power]);
 
   const handlePowerChange = useCallback((p: number) => {
+    void unlockAudio();
     setPower(p);
     onAimPreview?.(aimAngle, p);
   }, [aimAngle, onAimPreview]);
 
   const handleShoot = useCallback(() => {
+    void unlockAudio();
     if (power >= MIN_SHOOT_POWER) {
       if (customOnShoot) {
         customOnShoot(power, aimAngle);
@@ -209,6 +221,7 @@ export function GameScreen({
   }, [power, aimAngle, customOnShoot, engine]);
 
   const handlePlaceCueBall = useCallback((x: number, y: number) => {
+    void unlockAudio();
     engine.placeCueBall(x, y);
   }, [engine]);
 
