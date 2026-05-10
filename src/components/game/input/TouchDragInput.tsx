@@ -21,6 +21,7 @@ const TABLE_BOTTOM = 372;
 const AIM_DEADZONE = 24;
 const POWER_SCALE = 0.34;
 const AIM_SMOOTHING = 0.12;
+const FLEX_AIM_DEADZONE = 18;
 
 function getShotFromPull(cueBall: Ball, pos: { x: number; y: number }) {
   const dx = cueBall.x - pos.x;
@@ -28,6 +29,15 @@ function getShotFromPull(cueBall: Ball, pos: { x: number; y: number }) {
   const dist = Math.sqrt(dx * dx + dy * dy);
   const angle = Math.atan2(dy, dx);
   const power = Math.min(Math.max((dist - AIM_DEADZONE) * POWER_SCALE, 0), 100);
+  return { angle, power };
+}
+
+function getShotFromDrag(start: { x: number; y: number }, current: { x: number; y: number }) {
+  const dx = start.x - current.x;
+  const dy = start.y - current.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  const angle = Math.atan2(dy, dx);
+  const power = Math.min(Math.max((dist - FLEX_AIM_DEADZONE) * POWER_SCALE, 0), 100);
   return { angle, power };
 }
 
@@ -52,6 +62,7 @@ export function TouchDragInput({
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingBall, setIsDraggingBall] = useState(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
   const lastAngleRef = useRef(0);
 
   const getLogicalPos = useCallback(
@@ -110,14 +121,10 @@ export function TouchDragInput({
       const cueBall = balls[0];
       if (!cueBall || cueBall.inPocket) return;
       setIsDragging(true);
-      const { angle, power } = getShotFromPull(cueBall, pos);
-      if (power > 0) {
-        lastAngleRef.current = angle;
-        onAimChange(angle);
-      }
-      onPowerChange(power);
+      dragStartRef.current = pos;
+      onPowerChange(0);
     },
-    [balls, disabled, getLogicalPos, clampToTable, onAimChange, onPowerChange, ballInHand, onPlaceCueBall, isBreakShot]
+    [balls, disabled, getLogicalPos, clampToTable, onPowerChange, ballInHand, onPlaceCueBall, isBreakShot]
   );
 
   const handleMove = useCallback(
@@ -139,7 +146,8 @@ export function TouchDragInput({
       if (!pos) return;
       const cueBall = balls[0];
       if (!cueBall) return;
-      const { angle, power } = getShotFromPull(cueBall, pos);
+      const dragStart = dragStartRef.current;
+      const { angle, power } = dragStart ? getShotFromDrag(dragStart, pos) : getShotFromPull(cueBall, pos);
       if (power > 0) {
         const smoothedAngle = smoothAngle(lastAngleRef.current, angle);
         lastAngleRef.current = smoothedAngle;
@@ -162,6 +170,7 @@ export function TouchDragInput({
 
     if (!isDragging) return;
     setIsDragging(false);
+    dragStartRef.current = null;
     onShoot();
   }, [isDraggingBall, isDragging, dragPos, onPlaceCueBall, onShoot]);
 
@@ -172,6 +181,7 @@ export function TouchDragInput({
     }
     if (isDragging) {
       setIsDragging(false);
+      dragStartRef.current = null;
       onPowerChange(0);
     }
   }, [isDraggingBall, isDragging, onPowerChange]);

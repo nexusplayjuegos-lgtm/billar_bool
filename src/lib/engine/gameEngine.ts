@@ -555,7 +555,7 @@ class GameEngine {
             ball.vx = 0;
             ball.vy = 0;
             this.pocketedThisTurn.push(ball.id);
-            if (!this.state.pocketedBalls.includes(ball.id)) {
+            if (ball.id !== 0 && !this.state.pocketedBalls.includes(ball.id)) {
               this.state.pocketedBalls.push(ball.id);
             }
             if (this.mode === 'brazilian' && ball.id === 1) {

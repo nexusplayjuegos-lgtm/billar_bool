@@ -38,6 +38,7 @@ function PocketBall({ ball, index }: { ball: Ball; index: number }) {
 
 export function PocketedBallRack({ balls, pocketedBallIds }: PocketedBallRackProps) {
   const orderedBalls = pocketedBallIds
+    .filter((id) => id !== 0)
     .map((id) => balls.find((ball) => ball.id === id && ball.number !== 0))
     .filter((ball): ball is Ball => Boolean(ball));
 
