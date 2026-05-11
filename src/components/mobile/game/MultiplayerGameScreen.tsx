@@ -364,25 +364,25 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
           </div>
         )}
         overlay={(engineState, handlers) => (
-          <>
-            <TouchDragInput
-              balls={engineState.balls}
-              onAimChange={handlers.onAimChange}
-              onPowerChange={handlers.onPowerChange}
-              onPlaceCueBall={handlers.onPlaceCueBall}
-              ballInHand={handlers.ballInHand}
-              isBreakShot={handlers.isBreakShot}
-              disabled={engineState.ballsMoving || engineState.gameOver || !hasLocalTurn}
+          <TouchDragInput
+            balls={engineState.balls}
+            onAimChange={handlers.onAimChange}
+            onPowerChange={handlers.onPowerChange}
+            onPlaceCueBall={handlers.onPlaceCueBall}
+            ballInHand={handlers.ballInHand}
+            isBreakShot={handlers.isBreakShot}
+            disabled={engineState.ballsMoving || engineState.gameOver || !hasLocalTurn}
+          />
+        )}
+        footer={(engineState, power, setPower, onShoot) => (
+          <div className="absolute left-2 top-1/2 z-30 -translate-y-1/2">
+            <PowerSlider
+              value={Math.round(power)}
+              onChange={setPower}
+              onShoot={onShoot}
+              disabled={engineState.ballsMoving || engineState.gameOver || !hasLocalTurn || engineState.ballInHand}
             />
-            <div className="absolute left-2 top-1/2 z-30 -translate-y-1/2">
-              <PowerSlider
-                value={Math.round(handlers.power)}
-                onChange={handlers.onPowerChange}
-                onShoot={handlers.onShoot}
-                disabled={engineState.ballsMoving || engineState.gameOver || !hasLocalTurn || handlers.ballInHand}
-              />
-            </div>
-          </>
+          </div>
         )}
       />
     </div>

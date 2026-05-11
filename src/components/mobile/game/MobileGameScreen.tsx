@@ -41,25 +41,25 @@ export function MobileGameScreen() {
           </div>
         )}
         overlay={(engineState, handlers) => (
-          <>
-            <TouchDragInput
-              balls={engineState.balls}
-              onAimChange={handlers.onAimChange}
-              onPowerChange={handlers.onPowerChange}
-              onPlaceCueBall={handlers.onPlaceCueBall}
-              ballInHand={handlers.ballInHand}
-              isBreakShot={handlers.isBreakShot}
-              disabled={engineState.ballsMoving || engineState.gameOver || engineState.currentPlayer === 2}
+          <TouchDragInput
+            balls={engineState.balls}
+            onAimChange={handlers.onAimChange}
+            onPowerChange={handlers.onPowerChange}
+            onPlaceCueBall={handlers.onPlaceCueBall}
+            ballInHand={handlers.ballInHand}
+            isBreakShot={handlers.isBreakShot}
+            disabled={engineState.ballsMoving || engineState.gameOver || engineState.currentPlayer === 2}
+          />
+        )}
+        footer={(engineState, power, setPower, onShoot) => (
+          <div className="absolute left-2 top-1/2 z-30 -translate-y-1/2">
+            <PowerSlider
+              value={Math.round(power)}
+              onChange={setPower}
+              onShoot={onShoot}
+              disabled={engineState.ballsMoving || engineState.gameOver || engineState.currentPlayer === 2 || engineState.ballInHand}
             />
-            <div className="absolute left-2 top-1/2 z-30 -translate-y-1/2">
-              <PowerSlider
-                value={Math.round(handlers.power)}
-                onChange={handlers.onPowerChange}
-                onShoot={handlers.onShoot}
-                disabled={engineState.ballsMoving || engineState.gameOver || engineState.currentPlayer === 2 || handlers.ballInHand}
-              />
-            </div>
-          </>
+          </div>
         )}
       />
     </div>
