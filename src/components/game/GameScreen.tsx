@@ -206,8 +206,8 @@ export function GameScreen({
     onAimPreview?.(aimAngle, p);
   }, [aimAngle, onAimPreview]);
 
-  const handleShoot = useCallback(async () => {
-    await unlockAudio();
+  const handleShoot = useCallback(() => {
+    void unlockAudio();
     if (power >= MIN_SHOOT_POWER) {
       if (customOnShoot) {
         customOnShoot(power, aimAngle);
@@ -220,8 +220,8 @@ export function GameScreen({
     setIsAiming(false);
   }, [power, aimAngle, customOnShoot, engine]);
 
-  const handlePlaceCueBall = useCallback(async (x: number, y: number) => {
-    await unlockAudio();
+  const handlePlaceCueBall = useCallback((x: number, y: number) => {
+    void unlockAudio();
     engine.placeCueBall(x, y);
   }, [engine]);
 

@@ -26,9 +26,6 @@ export function GameModeCard({ mode, index, isSelected, onSelect, onPlay }: Game
   const handleCardClick = () => {
     if (isLocked) return;
     onSelect(mode);
-    if (canAfford) {
-      onPlay(mode);
-    }
   };
 
   const handlePlayClick = (e: React.MouseEvent) => {
