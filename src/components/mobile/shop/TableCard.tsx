@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useUserStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { TableCanvas } from './TableCanvas';
-import { TABLE_DESIGNS } from '@/lib/shop/tableDesigns';
+import { TABLE_DESIGNS, normalizeTableDesignId } from '@/lib/shop/tableDesigns';
 
 interface TableCardProps {
   tableId: string;
@@ -15,20 +15,33 @@ interface TableCardProps {
 
 export function TableCard({ tableId, index }: TableCardProps) {
   const t = useTranslations();
-  const { profile } = useUserStore();
+  const { profile, buyTable, equipTable } = useUserStore();
 
-  const design = TABLE_DESIGNS.find(d => d.id === tableId);
+  const normalizedTableId = normalizeTableDesignId(tableId);
+  const design = TABLE_DESIGNS.find(d => d.id === normalizedTableId);
   if (!design) return null;
 
-  // Mock price baseado na raridade
-  const price = design.rarity === 'common' ? 0 :
-    design.rarity === 'rare' ? 5000 :
-    design.rarity === 'epic' ? 15000 : 50000;
+  const ownedTables = profile.equipment.ownedTables.map(normalizeTableDesignId);
+  const currentTable = normalizeTableDesignId(profile.equipment.currentTable);
+  const isFree = design.price.coins === 0 && design.price.cash === 0;
+  const isOwned = isFree || ownedTables.includes(normalizedTableId);
+  const isEquipped = currentTable === normalizedTableId;
+  const canAfford = profile.currencies.coins >= design.price.coins && profile.currencies.cash >= design.price.cash;
+  const isLocked = Boolean(design.levelRequired && profile.level < design.levelRequired);
+  const currencyLabel = design.price.cash > 0 ? `${design.price.cash} cash` : `${design.price.coins.toLocaleString()}`;
+  const unavailableLabel = isLocked ? `Nv. ${design.levelRequired}` : 'Saldo insuficiente';
 
-  const isOwned = profile?.equipment?.ownedTables?.includes(tableId) || false;
-  const isEquipped = profile?.equipment?.currentTable === tableId;
-  const canAfford = (profile?.currencies?.coins || 0) >= price;
-  const isLocked = false; // Mesas não têm level requirement no mock
+  const handleBuy = () => {
+    if (!isOwned && canAfford && !isLocked) {
+      void buyTable(normalizedTableId, design.price);
+    }
+  };
+
+  const handleEquip = () => {
+    if (isOwned && !isEquipped) {
+      void equipTable(normalizedTableId);
+    }
+  };
 
   return (
     <motion.div
@@ -83,21 +96,44 @@ export function TableCard({ tableId, index }: TableCardProps) {
         <div className="pt-2 border-t border-slate-700 flex items-center justify-between">
           {isOwned ? (
             <span className="text-green-400 font-semibold flex items-center gap-1 text-sm">
-              <Check className="w-4 h-4" /> Adquirida
+              <Check className="w-4 h-4" /> {isFree ? 'Grátis' : 'Adquirida'}
             </span>
           ) : (
             <span className={cn(
               "font-bold flex items-center gap-1 text-sm",
-              canAfford ? 'text-amber-400' : 'text-red-400'
+              canAfford && !isLocked ? 'text-amber-400' : 'text-red-400'
             )}>
               <Coins className="w-4 h-4" />
-              {price.toLocaleString()}
+              {currencyLabel}
             </span>
+          )}
+
+          {!isOwned && (
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleBuy();
+              }}
+              className={cn(
+                "px-3 py-1.5 rounded-lg font-semibold text-xs",
+                canAfford && !isLocked
+                  ? "bg-amber-500 hover:bg-amber-400 text-slate-900"
+                  : "bg-slate-700 text-slate-400 cursor-not-allowed"
+              )}
+              disabled={!canAfford || isLocked}
+            >
+              {canAfford && !isLocked ? 'Comprar' : unavailableLabel}
+            </motion.button>
           )}
 
           {isOwned && !isEquipped && (
             <motion.button
               whileTap={{ scale: 0.95 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEquip();
+              }}
               className="px-3 py-1.5 rounded-lg font-semibold text-xs bg-blue-500 hover:bg-blue-400 text-white"
             >
               Equipar

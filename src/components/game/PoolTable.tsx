@@ -3,13 +3,15 @@
 import { useRef, useEffect, useState } from 'react';
 import { Ball } from '@/types';
 import { cn } from '@/lib/utils';
+import { getTableDesign } from '@/lib/shop/tableDesigns';
 
 interface PoolTableProps {
   balls: Ball[];
   className?: string;
+  tableId?: string;
 }
 
-export function PoolTable({ balls, className }: PoolTableProps) {
+export function PoolTable({ balls, className, tableId = 'classic-green' }: PoolTableProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [pocketAnim] = useState(() => new Map<number, number>());
 
@@ -28,26 +30,31 @@ export function PoolTable({ balls, className }: PoolTableProps) {
     ctx.clearRect(0, 0, 800, 400);
 
     const borderWidth = 18;
+    const tableDesign = getTableDesign(tableId) ?? getTableDesign('classic-green');
+    const feltColor = tableDesign?.feltColor ?? '#0a6b7a';
+    const cushionColor = tableDesign?.cushionColor ?? '#0d3d33';
+    const woodColor = tableDesign?.woodColor ?? '#2d1f12';
+    const lineColor = tableDesign?.lineColor ?? '#ffffff';
 
     ctx.fillStyle = '#1a1008';
     ctx.fillRect(0, 0, 800, 400);
 
-    ctx.fillStyle = '#2d1f12';
+    ctx.fillStyle = woodColor;
     ctx.fillRect(4, 4, 800 - 8, 400 - 8);
-    ctx.strokeStyle = '#4a3520';
+    ctx.strokeStyle = cushionColor;
     ctx.lineWidth = 2;
     ctx.strokeRect(6, 6, 800 - 12, 400 - 12);
     ctx.strokeStyle = '#1a0f08';
     ctx.strokeRect(8, 8, 800 - 16, 400 - 16);
 
     const feltGradient = ctx.createRadialGradient(400, 200, 0, 400, 200, 350);
-    feltGradient.addColorStop(0, '#0d8b9e');
-    feltGradient.addColorStop(0.5, '#0a6b7a');
-    feltGradient.addColorStop(1, '#074a54');
+    feltGradient.addColorStop(0, feltColor);
+    feltGradient.addColorStop(0.5, feltColor);
+    feltGradient.addColorStop(1, cushionColor);
     ctx.fillStyle = feltGradient;
     ctx.fillRect(borderWidth, borderWidth, 800 - borderWidth * 2, 400 - borderWidth * 2);
 
-    ctx.strokeStyle = '#0d3d33';
+    ctx.strokeStyle = cushionColor;
     ctx.lineWidth = 3;
     ctx.strokeRect(borderWidth + 2, borderWidth + 2, 800 - borderWidth * 2 - 4, 400 - borderWidth * 2 - 4);
 
@@ -56,7 +63,7 @@ export function PoolTable({ balls, className }: PoolTableProps) {
     ctx.strokeRect(borderWidth + 8, borderWidth + 8, 800 - borderWidth * 2 - 16, 400 - borderWidth * 2 - 16);
 
     const diamonds = [150, 250, 350, 450, 550, 650];
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.fillStyle = `${lineColor}66`;
     diamonds.forEach((x) => {
       ctx.beginPath();
       ctx.moveTo(x, borderWidth + 4);
@@ -124,7 +131,7 @@ export function PoolTable({ balls, className }: PoolTableProps) {
       ctx.fill();
     });
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.strokeStyle = `${lineColor}55`;
     ctx.lineWidth = 1;
     ctx.setLineDash([6, 4]);
     ctx.beginPath();
@@ -135,7 +142,7 @@ export function PoolTable({ balls, className }: PoolTableProps) {
 
     ctx.beginPath();
     ctx.arc(800 * 0.75, 400 / 2, 3, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.fillStyle = `${lineColor}66`;
     ctx.fill();
 
     ctx.beginPath();
@@ -174,7 +181,7 @@ export function PoolTable({ balls, className }: PoolTableProps) {
 
       drawBall(ctx, ball);
     });
-  }, [balls, pocketAnim]);
+  }, [balls, pocketAnim, tableId]);
 
   return (
     <div className={cn('relative w-full h-full', className)}>

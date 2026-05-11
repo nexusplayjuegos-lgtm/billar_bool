@@ -1,7 +1,22 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { Session } from '@supabase/supabase-js';
+import type { Price } from '@/types';
 import { supabase, fetchProfile } from '../supabase/client';
 import { MOCK_USER } from '@/mocks/data';
+
+const TABLE_ID_ALIASES: Record<string, string> = {
+  table_classic_green: 'classic-green',
+  table_blue_velvet: 'midnight-blue',
+};
+
+function normalizeTableId(tableId: string): string {
+  return TABLE_ID_ALIASES[tableId] ?? tableId;
+}
+
+function normalizeTableIds(tableIds: string[]): string[] {
+  return Array.from(new Set(tableIds.map(normalizeTableId)));
+}
 
 const defaultProfile = {
   id: MOCK_USER.id,
@@ -18,12 +33,22 @@ const defaultProfile = {
   equipment: {
     currentCue: MOCK_USER.equipment.currentCue,
     ownedCues: MOCK_USER.equipment.ownedCues,
-    currentTable: MOCK_USER.equipment.currentTable,
-    ownedTables: MOCK_USER.equipment.ownedTables,
+    currentTable: normalizeTableId(MOCK_USER.equipment.currentTable),
+    ownedTables: normalizeTableIds(MOCK_USER.equipment.ownedTables),
   },
   social: MOCK_USER.social,
   settings: MOCK_USER.settings,
 };
+
+type UserProfile = typeof defaultProfile;
+
+interface MatchResult {
+  mode: string;
+  result: 'win' | 'loss' | 'draw';
+  coinsBet: number;
+  coinsWon: number;
+  xpGained: number;
+}
 
 interface DbProfile {
   id: string;
@@ -61,20 +86,20 @@ function adaptProfile(db: DbProfile) {
       coins: db.coins ?? 5000,
       cash: db.cash ?? 0,
     },
-    stats: db.stats ?? defaultProfile.stats,
+    stats: { ...defaultProfile.stats, ...db.stats },
     equipment: {
       currentCue: db.current_cue ?? 'cue_beginner',
       ownedCues: db.owned_cues ?? ['cue_beginner'],
-      currentTable: db.current_table ?? 'table_classic_green',
-      ownedTables: db.owned_tables ?? ['table_classic_green'],
+      currentTable: normalizeTableId(db.current_table ?? 'classic-green'),
+      ownedTables: normalizeTableIds(db.owned_tables ?? ['classic-green']),
     },
     settings: db.settings ?? defaultProfile.settings,
   };
 }
 
 interface UserState {
-  profile: any;
-  session: any | null;
+  profile: UserProfile;
+  session: Session | null;
   isLoading: boolean;
   isSessionLoaded: boolean;
   isOnline: boolean;
@@ -89,9 +114,11 @@ interface UserState {
   addCoins: (amount: number) => Promise<void>;
   removeCoins: (amount: number) => Promise<void>;
   addXP: (amount: number) => Promise<void>;
-  saveMatchResult: (result: any) => Promise<void>;
+  saveMatchResult: (result: MatchResult) => Promise<void>;
   buyCue: (cueId: string, price: number) => Promise<void>;
   equipCue: (cueId: string) => Promise<void>;
+  buyTable: (tableId: string, price: Price) => Promise<void>;
+  equipTable: (tableId: string) => Promise<void>;
   updateStats: (result: 'win' | 'loss', coinsWon?: number) => Promise<void>;
 }
 
@@ -410,6 +437,70 @@ export const useUserStore = create<UserState>()(
           await supabase
             .from('profiles')
             .update({ coins: newCoins, owned_cues: newOwnedCues })
+            .eq('id', session.user.id);
+        }
+      },
+
+      buyTable: async (tableId, price) => {
+        const { profile, session } = get();
+        if (!profile) return;
+        const normalizedTableId = normalizeTableId(tableId);
+        if (profile.equipment.ownedTables.includes(normalizedTableId)) return;
+        if (price.coins > 0 && profile.currencies.coins < price.coins) return;
+        if (price.cash > 0 && profile.currencies.cash < price.cash) return;
+
+        const newCoins = Math.max(0, profile.currencies.coins - price.coins);
+        const newCash = Math.max(0, profile.currencies.cash - price.cash);
+        const newOwnedTables = normalizeTableIds([...profile.equipment.ownedTables, normalizedTableId]);
+        const updatedProfile = {
+          ...profile,
+          currencies: {
+            ...profile.currencies,
+            coins: newCoins,
+            cash: newCash,
+          },
+          equipment: {
+            ...profile.equipment,
+            ownedTables: newOwnedTables,
+            currentTable: normalizedTableId,
+          },
+        };
+
+        set({ profile: updatedProfile });
+
+        if (session) {
+          await supabase
+            .from('profiles')
+            .update({
+              coins: newCoins,
+              cash: newCash,
+              owned_tables: newOwnedTables,
+              current_table: normalizedTableId,
+            })
+            .eq('id', session.user.id);
+        }
+      },
+
+      equipTable: async (tableId) => {
+        const { profile, session } = get();
+        if (!profile) return;
+        const normalizedTableId = normalizeTableId(tableId);
+        if (!profile.equipment.ownedTables.includes(normalizedTableId)) return;
+
+        const updatedProfile = {
+          ...profile,
+          equipment: {
+            ...profile.equipment,
+            currentTable: normalizedTableId,
+          },
+        };
+
+        set({ profile: updatedProfile });
+
+        if (session) {
+          await supabase
+            .from('profiles')
+            .update({ current_table: normalizedTableId })
             .eq('id', session.user.id);
         }
       },

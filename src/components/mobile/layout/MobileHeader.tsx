@@ -16,8 +16,8 @@ export function MobileHeader({ className }: MobileHeaderProps) {
   // Se não tiver profile (convidado), mostrar valores padrão
   const username = profile?.username || 'Convidado';
   const level = profile?.level || 1;
-  const coins = profile?.coins || 5000;
-  const cash = profile?.cash || 0;
+  const coins = profile?.currencies.coins || 5000;
+  const cash = profile?.currencies.cash || 0;
   const xp = profile?.xp || 0;
   const xpToNext = profile?.xp_to_next || 1000;
 

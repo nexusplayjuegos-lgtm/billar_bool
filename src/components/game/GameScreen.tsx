@@ -69,7 +69,7 @@ export function GameScreen({
   const t = useTranslations('game');
   const { locale } = useLocale();
   const { endGame, startGame, currentMode, modeType, potentialReward, entryFee } = useGameStore();
-  const { addCoins, removeCoins, addXP, isGuest } = useUserStore();
+  const { profile, addCoins, removeCoins, addXP, isGuest } = useUserStore();
 
   const [engineState, setEngineState] = useState<EngineState | null>(null);
   const [aimAngle, setAimAngle] = useState(0);
@@ -303,6 +303,7 @@ export function GameScreen({
           scale={tableScale}
           playerType={isLocalPlayerTurn ? engineState.player1Type : engineState.player2Type}
           gameMode={gameMode}
+          tableId={profile.equipment.currentTable}
         >
           {overlay && overlay(engineState, inputHandlers)}
         </MatchTable>

@@ -19,6 +19,7 @@ interface MatchTableProps {
   scale?: number;
   playerType?: 'solid' | 'stripe' | null;
   gameMode?: '8ball' | 'brazilian';
+  tableId?: string;
 }
 
 export function MatchTable({
@@ -34,6 +35,7 @@ export function MatchTable({
   scale = 1,
   playerType,
   gameMode,
+  tableId,
 }: MatchTableProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 800, height: 400 });
@@ -65,7 +67,7 @@ export function MatchTable({
   return (
     <div ref={containerRef} className="w-full h-full flex items-center justify-center">
       <div className="relative" style={{ width: size.width, height: size.height }}>
-        <PoolTable balls={balls} className="w-full h-full" />
+        <PoolTable balls={balls} className="w-full h-full" tableId={tableId} />
         <PocketedBallRack balls={balls} pocketedBallIds={pocketedBallIds} />
         <AimOverlay balls={balls} aimAngle={aimAngle} power={power} isAiming={isAiming} showIdleCue={showIdleCue} isBreakShot={isBreakShot} playerType={playerType} gameMode={gameMode} />
         {opponentAim && (

@@ -25,8 +25,8 @@ export const MOCK_USER: User = {
   equipment: {
     currentCue: "cue_venom_striker",
     ownedCues: ["cue_beginner", "cue_venom_striker"],
-    currentTable: "table_classic_green",
-    ownedTables: ["table_classic_green", "table_blue_velvet"]
+    currentTable: "classic-green",
+    ownedTables: ["classic-green"]
   },
   inventory: {
     spins: 3,

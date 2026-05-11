@@ -5,6 +5,11 @@ export interface TableDesign {
   id: string;
   name: string;
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  price: {
+    coins: number;
+    cash: number;
+  };
+  levelRequired?: number;
   feltColor: string;
   cushionColor: string;
   woodColor: string;
@@ -18,6 +23,7 @@ export const TABLE_DESIGNS: TableDesign[] = [
     id: 'classic-green',
     name: 'Classic Green',
     rarity: 'common',
+    price: { coins: 0, cash: 0 },
     feltColor: '#1B5E20',
     cushionColor: '#4E342E',
     woodColor: '#5D4037',
@@ -28,6 +34,7 @@ export const TABLE_DESIGNS: TableDesign[] = [
     id: 'midnight-blue',
     name: 'Midnight Blue',
     rarity: 'rare',
+    price: { coins: 5000, cash: 0 },
     feltColor: '#0D1B5E',
     cushionColor: '#1A237E',
     woodColor: '#37474F',
@@ -38,6 +45,7 @@ export const TABLE_DESIGNS: TableDesign[] = [
     id: 'tournament-red',
     name: 'Tournament Red',
     rarity: 'rare',
+    price: { coins: 5000, cash: 0 },
     feltColor: '#7B0000',
     cushionColor: '#4E342E',
     woodColor: '#3E2723',
@@ -48,6 +56,8 @@ export const TABLE_DESIGNS: TableDesign[] = [
     id: 'carbon-black',
     name: 'Carbon Black',
     rarity: 'epic',
+    price: { coins: 15000, cash: 0 },
+    levelRequired: 5,
     feltColor: '#0A0A0A',
     cushionColor: '#1C1C1C',
     woodColor: '#212121',
@@ -58,6 +68,8 @@ export const TABLE_DESIGNS: TableDesign[] = [
     id: 'emerald-pro',
     name: 'Emerald Pro',
     rarity: 'epic',
+    price: { coins: 15000, cash: 0 },
+    levelRequired: 5,
     feltColor: '#004D40',
     cushionColor: '#1B5E20',
     woodColor: '#1A237E',
@@ -68,6 +80,8 @@ export const TABLE_DESIGNS: TableDesign[] = [
     id: 'galaxy-void',
     name: 'Galaxy Void',
     rarity: 'legendary',
+    price: { coins: 0, cash: 60 },
+    levelRequired: 10,
     feltColor: '#0D001A',
     cushionColor: '#1A0033',
     woodColor: '#0D0D0D',
@@ -77,6 +91,16 @@ export const TABLE_DESIGNS: TableDesign[] = [
   },
 ];
 
+const TABLE_ID_ALIASES: Record<string, string> = {
+  table_classic_green: 'classic-green',
+  table_blue_velvet: 'midnight-blue',
+};
+
+export function normalizeTableDesignId(tableId: string): string {
+  return TABLE_ID_ALIASES[tableId] ?? tableId;
+}
+
 export function getTableDesign(tableId: string): TableDesign | undefined {
-  return TABLE_DESIGNS.find(d => d.id === tableId);
+  const normalizedTableId = normalizeTableDesignId(tableId);
+  return TABLE_DESIGNS.find(d => d.id === normalizedTableId);
 }
