@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Gamepad2, ShoppingCart, Users, Trophy } from 'lucide-react';
+import { Gamepad2, ShoppingCart, Users, Trophy, Crown, Package } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -9,6 +9,8 @@ import { useLocale } from '@/hooks';
 
 const navItems = [
   { id: 'play', icon: Gamepad2, href: '/', label: 'Play' },
+  { id: 'poolpass', icon: Crown, href: '/poolpass', label: 'Pass' },
+  { id: 'victorybox', icon: Package, href: '/victorybox', label: 'Boxes' },
   { id: 'shop', icon: ShoppingCart, href: '/shop', label: 'Shop', badge: 3 },
   { id: 'friends', icon: Users, href: '/friends', label: 'Friends', badge: 5 },
   { id: 'leaderboard', icon: Trophy, href: '/leaderboard', label: 'Ranking' },

@@ -438,3 +438,130 @@ export function playTick() {
   osc.start(t);
   osc.stop(t + 0.03);
 }
+
+export function playRewardClaim() {
+  const ctx = getPlayableCtx('rewardClaim');
+  if (!ctx) return;
+  const destination = outputNode();
+  if (!destination) return;
+  const t = now(ctx);
+
+  // Fanfarra curta e brilhante para recompensa
+  const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, t + i * 0.08);
+    gain.gain.setValueAtTime(0, t + i * 0.08);
+    gain.gain.linearRampToValueAtTime(0.25, t + i * 0.08 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.08 + 0.35);
+    osc.connect(gain);
+    gain.connect(destination);
+    osc.start(t + i * 0.08);
+    osc.stop(t + i * 0.08 + 0.35);
+  });
+
+  // Sparkle noise burst
+  playNoiseBurst(ctx, 0.3, 3000, 0.15);
+}
+
+export function playRankUp() {
+  const ctx = getPlayableCtx('rankUp');
+  if (!ctx) return;
+  const destination = outputNode();
+  if (!destination) return;
+  const t = now(ctx);
+
+  // Som de subida de nível — escalada poderosa
+  const baseNotes = [392.0, 493.88, 587.33, 783.99, 987.77];
+  baseNotes.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, t + i * 0.1);
+    gain.gain.setValueAtTime(0, t + i * 0.1);
+    gain.gain.linearRampToValueAtTime(0.3, t + i * 0.1 + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.5);
+    osc.connect(gain);
+    gain.connect(destination);
+    osc.start(t + i * 0.1);
+    osc.stop(t + i * 0.1 + 0.5);
+  });
+
+  // Harmonia superior
+  const harmonyNotes = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+  harmonyNotes.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, t + i * 0.1 + 0.05);
+    gain.gain.setValueAtTime(0, t + i * 0.1 + 0.05);
+    gain.gain.linearRampToValueAtTime(0.15, t + i * 0.1 + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.5);
+    osc.connect(gain);
+    gain.connect(destination);
+    osc.start(t + i * 0.1 + 0.05);
+    osc.stop(t + i * 0.1 + 0.5);
+  });
+}
+
+export function playBoxOpen() {
+  const ctx = getPlayableCtx('boxOpen');
+  if (!ctx) return;
+  const destination = outputNode();
+  if (!destination) return;
+  const t = now(ctx);
+
+  // Clack de trava se abrindo
+  const osc1 = ctx.createOscillator();
+  const gain1 = ctx.createGain();
+  osc1.type = 'square';
+  osc1.frequency.setValueAtTime(200, t);
+  osc1.frequency.exponentialRampToValueAtTime(50, t + 0.15);
+  gain1.gain.setValueAtTime(0.2, t);
+  gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+  osc1.connect(gain1);
+  gain1.connect(destination);
+  osc1.start(t);
+  osc1.stop(t + 0.2);
+
+  // Brilho de recompensa
+  const notes = [880, 1100, 1320, 1760];
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, t + 0.1 + i * 0.06);
+    gain.gain.setValueAtTime(0, t + 0.1 + i * 0.06);
+    gain.gain.linearRampToValueAtTime(0.2, t + 0.1 + i * 0.06 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1 + i * 0.06 + 0.3);
+    osc.connect(gain);
+    gain.connect(destination);
+    osc.start(t + 0.1 + i * 0.06);
+    osc.stop(t + 0.1 + i * 0.06 + 0.3);
+  });
+
+  // Textura de partículas
+  playNoiseBurst(ctx, 0.4, 4000, 0.12);
+}
+
+export function playBoxStartUnlock() {
+  const ctx = getPlayableCtx('boxStartUnlock');
+  if (!ctx) return;
+  const destination = outputNode();
+  if (!destination) return;
+  const t = now(ctx);
+
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(400, t);
+  osc.frequency.exponentialRampToValueAtTime(800, t + 0.15);
+  gain.gain.setValueAtTime(0.15, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+  osc.connect(gain);
+  gain.connect(destination);
+  osc.start(t);
+  osc.stop(t + 0.2);
+}

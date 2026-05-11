@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Share2 } from 'lucide-react';
 import { useLocale } from '@/hooks';
 import { gameEngine, createGameEngine, EngineState } from '@/lib/engine/gameEngine';
+import { useVictoryBoxes } from '@/hooks/useVictoryBoxes';
 import { playTick, unlockAudio } from '@/lib/audio/gameAudio';
 import { useGameStore, useUserStore } from '@/lib/store';
 import { MatchTable } from './MatchTable';
@@ -70,7 +71,8 @@ export function GameScreen({
   const t = useTranslations('game');
   const { locale } = useLocale();
   const { endGame, startGame, currentMode, modeType, potentialReward, entryFee } = useGameStore();
-  const { profile, addCoins, removeCoins, addXP, isGuest } = useUserStore();
+  const { profile, addCoins, removeCoins, addXP, isGuest, session } = useUserStore();
+  const { createBox } = useVictoryBoxes();
 
   const [engineState, setEngineState] = useState<EngineState | null>(null);
   const [aimAngle, setAimAngle] = useState(0);
@@ -98,6 +100,11 @@ export function GameScreen({
         if (won) {
           addCoins(reward);
           addXP(100);
+          // Ganha Victory Box ao vencer (apenas usuários logados)
+          if (session?.user?.id) {
+            const winStreak = profile?.stats?.currentWinStreak ?? 0;
+            void createBox('common', winStreak, modeType === 'brazilian' ? 'brazilian' : '8ball');
+          }
         } else {
           addCoins(reward);
           addXP(25);

@@ -159,3 +159,8 @@ export interface GameState {
   scratch: boolean;
   shots: number;
 }
+
+// Re-export Pool Pass types
+export * from './poolPass';
+// Re-export Victory Box types
+export * from './victoryBox';

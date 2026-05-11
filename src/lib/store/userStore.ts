@@ -119,6 +119,7 @@ interface UserState {
   equipCue: (cueId: string) => Promise<void>;
   buyTable: (tableId: string, price: Price) => Promise<void>;
   equipTable: (tableId: string) => Promise<void>;
+  addPoolPoints: (amount: number, seasonId?: string) => Promise<void>;
   updateStats: (result: 'win' | 'loss', coinsWon?: number) => Promise<void>;
 }
 
@@ -157,7 +158,29 @@ export const useUserStore = create<UserState>()(
         return null;
       },
 
-      updateStats: async (result: 'win' | 'loss', coinsWon: number = 0) => {
+      addPoolPoints: async (amount: number, seasonId?: string) => {
+    const { session } = get();
+    if (!session || !seasonId) return;
+
+    const { data: progress } = await supabase
+      .from('player_season_progress')
+      .select('id, pool_points, current_rank')
+      .eq('profile_id', session.user.id)
+      .eq('season_id', seasonId)
+      .single();
+
+    if (!progress) return;
+
+    const newPoints = (progress.pool_points || 0) + amount;
+    const newRank = Math.min(50, Math.floor(newPoints / 100) + 1);
+
+    await supabase
+      .from('player_season_progress')
+      .update({ pool_points: newPoints, current_rank: newRank })
+      .eq('id', progress.id);
+  },
+
+  updateStats: async (result: 'win' | 'loss', coinsWon: number = 0) => {
         const { profile, session } = get();
         if (!profile) return;
 

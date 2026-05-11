@@ -152,6 +152,45 @@
     "resetConfirm": "Are you sure? All data will be lost!",
     "version": "Version"
   },
+  "poolPass": {
+    "title": "Pool Pass",
+    "season": "Season {number}",
+    "rank": "Rank {rank}",
+    "poolPoints": "Pool Points",
+    "free": "Free",
+    "premium": "Premium",
+    "elite": "Elite",
+    "claim": "Claim",
+    "claimAll": "Claim All",
+    "unlockPremium": "Unlock Premium",
+    "unlockElite": "Unlock Elite",
+    "purchased": "Purchased",
+    "nextRank": "Next Rank",
+    "pointsToNext": "{points} PP to next",
+    "seasonEnded": "Season ended",
+    "gracePeriod": "Grace period: {days} days",
+    "rewards": "Rewards"
+  },
+  "victoryBox": {
+    "title": "Victory Boxes",
+    "empty": "No Victory Boxes",
+    "emptyDesc": "Win matches to earn boxes with rewards!",
+    "slotsFull": "Slots full! Open or accelerate a box to earn more.",
+    "locked": "Locked",
+    "unlocking": "Unlocking...",
+    "ready": "Ready!",
+    "open": "Open!",
+    "startUnlock": "Unlock",
+    "accelerate": "Accelerate",
+    "slotEmpty": "Empty slot",
+    "converted": "Slots full! Box converted to {coins} coins.",
+    "rarity": {
+      "common": "Common",
+      "rare": "Rare",
+      "epic": "Epic",
+      "legendary": "Legendary"
+    }
+  },
   "auth": {
       "loginTitle": "Entrar na sua conta",
       "registerTitle": "Criar nova conta",

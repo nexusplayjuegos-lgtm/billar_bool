@@ -154,6 +154,45 @@
     "resetConfirm": "¿Estás seguro? ¡Todos los datos se perderán!",
     "version": "Versión"
   },
+  "poolPass": {
+    "title": "Pool Pass",
+    "season": "Temporada {number}",
+    "rank": "Rango {rank}",
+    "poolPoints": "Pool Points",
+    "free": "Gratis",
+    "premium": "Premium",
+    "elite": "Élite",
+    "claim": "Reclamar",
+    "claimAll": "Reclamar Todo",
+    "unlockPremium": "Desbloquear Premium",
+    "unlockElite": "Desbloquear Élite",
+    "purchased": "Adquirido",
+    "nextRank": "Siguiente Rango",
+    "pointsToNext": "{points} PP para el siguiente",
+    "seasonEnded": "Temporada terminada",
+    "gracePeriod": "Período de gracia: {days} días",
+    "rewards": "Recompensas"
+  },
+  "victoryBox": {
+    "title": "Victory Boxes",
+    "empty": "Sin Victory Boxes",
+    "emptyDesc": "¡Gana partidas para obtener cajas con recompensas!",
+    "slotsFull": "¡Slots llenos! Abre o acelera una caja para ganar más.",
+    "locked": "Bloqueada",
+    "unlocking": "Desbloqueando...",
+    "ready": "¡Lista!",
+    "open": "¡Abrir!",
+    "startUnlock": "Desbloquear",
+    "accelerate": "Acelerar",
+    "slotEmpty": "Slot vacío",
+    "converted": "¡Slots llenos! Caja convertida en {coins} monedas.",
+    "rarity": {
+      "common": "Común",
+      "rare": "Rara",
+      "epic": "Épica",
+      "legendary": "Legendaria"
+    }
+  },
   "auth": {
         "loginTitle": "Entrar na sua conta",
         "registerTitle": "Criar nova conta",
