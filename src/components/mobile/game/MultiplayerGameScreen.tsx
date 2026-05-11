@@ -334,7 +334,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
         blockScroll
         onExit={handleExitGame}
         onShoot={handleShoot}
-        tableScale={0.84}
+        tableScale={0.78}
         gameMode={modeType === 'brazilian' ? 'brazilian' : '8ball'}
         engine={engineRef.current}
         enableLocalTurnTimer={false}
@@ -374,7 +374,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
               isBreakShot={handlers.isBreakShot}
               disabled={engineState.ballsMoving || engineState.gameOver || !hasLocalTurn}
             />
-            <div className="absolute right-2 top-1/2 z-30 -translate-y-1/2">
+            <div className="absolute left-2 top-1/2 z-30 -translate-y-1/2">
               <PowerSlider
                 value={Math.round(handlers.power)}
                 onChange={handlers.onPowerChange}
