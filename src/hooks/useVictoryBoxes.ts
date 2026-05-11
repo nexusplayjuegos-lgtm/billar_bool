@@ -88,10 +88,13 @@ export function useVictoryBoxes() {
   }, [userId, fetchBoxes]);
 
   const createBox = useCallback(
-    async (boxType: BoxType, winStreak = 0, mode: '1v1' | 'tournament' | '8ball' | 'brazilian' = '8ball') => {
-      if (!userId) return null;
+    async (boxType: BoxType | null, winStreak = 0, mode: '1v1' | 'tournament' | '8ball' | 'brazilian' = '8ball') => {
+      if (!userId) {
+        console.warn('[useVictoryBoxes] Cannot create box: no userId');
+        return null;
+      }
 
-      const determinedType = boxType || determineBoxType(winStreak, mode);
+      const determinedType = boxType ?? determineBoxType(winStreak, mode);
 
       try {
         const { data, error } = await supabase.functions.invoke<{ success: boolean; box?: Record<string, unknown>; converted?: boolean; fallbackCoins?: number }>(

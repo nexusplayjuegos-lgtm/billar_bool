@@ -103,7 +103,21 @@ export function GameScreen({
           // Ganha Victory Box ao vencer (apenas usuários logados)
           if (session?.user?.id) {
             const winStreak = profile?.stats?.currentWinStreak ?? 0;
-            void createBox('common', winStreak, modeType === 'brazilian' ? 'brazilian' : '8ball');
+            const gameMode = modeType === 'brazilian' ? 'brazilian' : '8ball';
+            console.log('[GameScreen] Creating victory box — winStreak:', winStreak, 'mode:', gameMode);
+            createBox(null, winStreak, gameMode)
+              .then((result) => {
+                if (result) {
+                  console.log('[GameScreen] Victory box created:', result);
+                } else {
+                  console.warn('[GameScreen] Victory box creation returned null');
+                }
+              })
+              .catch((err) => {
+                console.error('[GameScreen] Victory box creation failed:', err);
+              });
+          } else {
+            console.log('[GameScreen] Skipping victory box: user not logged in');
           }
         } else {
           addCoins(reward);
