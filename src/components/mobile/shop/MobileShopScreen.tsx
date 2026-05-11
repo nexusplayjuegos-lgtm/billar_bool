@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { CueCard } from './CueCard';
+import { CueCanvas } from './CueCanvas';
 import { TableCard } from './TableCard';
 import { PaymentModal } from './PaymentModal';
 import { TABLE_DESIGNS } from '@/lib/shop/tableDesigns';
@@ -282,12 +283,8 @@ export function MobileShopScreen() {
               <h3 className="text-xl font-bold text-white mb-4">
                 {t(previewCue.nameKey)}
               </h3>
-              <div className="h-48 flex items-center justify-center mb-4">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-                  className="w-64 h-6 rounded-full bg-gradient-to-r from-amber-400 to-amber-600"
-                />
+              <div className="mb-4 flex h-48 items-center justify-center rounded-xl border border-slate-700/70 bg-slate-950/45 px-3">
+                <CueCanvas cueId={previewCue.id} width={300} height={78} />
               </div>
               <p className="text-slate-400 text-sm mb-4">
                 {t(previewCue.descriptionKey)}
