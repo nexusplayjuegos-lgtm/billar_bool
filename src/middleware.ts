@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const LOCALES = ['en', 'es', 'pt'] as const;
 
-const PROTECTED_SEGMENTS = ['/play', '/shop', '/friends', '/leaderboard', '/profile', '/join'];
+const PROTECTED_SEGMENTS = ['/play', '/friends', '/leaderboard', '/profile', '/join'];
 
 function isProtected(pathname: string): boolean {
   return PROTECTED_SEGMENTS.some((seg) =>
@@ -24,7 +24,9 @@ export default function middleware(req: NextRequest) {
     const hasGuest = req.cookies.has('bool_guest');
     if (!hasAuth && !hasGuest) {
       const locale = LOCALES.find((l) => pathname.startsWith(`/${l}`)) ?? 'pt';
-      return NextResponse.redirect(new URL(`/${locale}/login`, req.url));
+      const loginUrl = new URL(`/${locale}/login`, req.url);
+      loginUrl.searchParams.set('redirect', `${pathname}${req.nextUrl.search}`);
+      return NextResponse.redirect(loginUrl);
     }
   }
 
