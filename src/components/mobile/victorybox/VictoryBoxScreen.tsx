@@ -3,9 +3,10 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Package, Plus } from 'lucide-react';
+import { ArrowLeft, Package, Plus, Zap, Crown } from 'lucide-react';
 import { useLocale } from '@/hooks';
 import { useVictoryBoxes } from '@/hooks/useVictoryBoxes';
+import { usePoolPass } from '@/hooks/usePoolPass';
 import { useUserStore } from '@/lib/store/userStore';
 import { cn } from '@/lib/utils';
 import { VictoryBoxCard } from './VictoryBoxCard';
@@ -16,7 +17,8 @@ export function VictoryBoxScreen() {
   const router = useRouter();
   const { locale } = useLocale();
   const { profile } = useUserStore();
-  const hasElite = false; // TODO: integrar com Pool Pass progress
+  const { progress: poolPassProgress } = usePoolPass();
+  const hasElite = poolPassProgress?.hasElite ?? false;
 
   const {
     boxes,
@@ -28,7 +30,7 @@ export function VictoryBoxScreen() {
     slotsUsed,
     maxSlots,
     slotsAvailable,
-  } = useVictoryBoxes(hasElite);
+  } = useVictoryBoxes();
 
   const [openModal, setOpenModal] = useState<{
     isOpen: boolean;
@@ -93,6 +95,12 @@ export function VictoryBoxScreen() {
             <span className="text-sm font-bold text-white">
               {slotsUsed}/{maxSlots}
             </span>
+            {hasElite && (
+              <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40">
+                <Crown className="w-3 h-3 text-amber-400" />
+                <span className="text-[10px] font-bold text-amber-300 uppercase">Elite</span>
+              </span>
+            )}
           </div>
         </div>
 
@@ -103,11 +111,30 @@ export function VictoryBoxScreen() {
               key={i}
               className={cn(
                 'flex-1 h-2 rounded-full transition-colors',
-                i < slotsUsed ? 'bg-gradient-to-r from-blue-500 to-purple-500' : 'bg-slate-800'
+                i < slotsUsed
+                  ? hasElite && i >= 4
+                    ? 'bg-gradient-to-r from-amber-400 to-amber-600'
+                    : 'bg-gradient-to-r from-blue-500 to-purple-500'
+                  : hasElite && i >= 4
+                    ? 'bg-slate-800 border border-amber-500/30'
+                    : 'bg-slate-800'
               )}
             />
           ))}
         </div>
+
+        {hasElite && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 mb-2"
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-400" />
+            <p className="text-xs text-amber-300 font-medium">
+              Desbloqueio 3x mais rápido
+            </p>
+          </motion.div>
+        )}
 
         {slotsAvailable === 0 && (
           <motion.div
@@ -149,15 +176,30 @@ export function VictoryBoxScreen() {
 
             {/* Empty slots */}
             {slotsAvailable > 0 &&
-              Array.from({ length: Math.min(slotsAvailable, 2) }).map((_, i) => (
-                <div
-                  key={`empty-${i}`}
-                  className="flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-slate-800 bg-slate-900/30 min-h-[180px]"
-                >
-                  <Plus className="w-8 h-8 text-slate-700 mb-2" />
-                  <p className="text-xs text-slate-600">Slot vazio</p>
-                </div>
-              ))}
+              Array.from({ length: Math.min(slotsAvailable, 2) }).map((_, i) => {
+                const slotIndex = slotsUsed + i;
+                const isEliteSlot = hasElite && slotIndex >= 4;
+                return (
+                  <div
+                    key={`empty-${i}`}
+                    className={cn(
+                      'flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed min-h-[180px]',
+                      isEliteSlot
+                        ? 'border-amber-500/40 bg-amber-500/5'
+                        : 'border-slate-800 bg-slate-900/30'
+                    )}
+                  >
+                    {isEliteSlot ? (
+                      <Crown className="w-6 h-6 text-amber-500/60 mb-1" />
+                    ) : (
+                      <Plus className="w-8 h-8 text-slate-700 mb-2" />
+                    )}
+                    <p className={cn('text-xs', isEliteSlot ? 'text-amber-400/70' : 'text-slate-600')}>
+                      {isEliteSlot ? 'Slot Elite' : 'Slot vazio'}
+                    </p>
+                  </div>
+                );
+              })}
           </div>
         )}
       </div>

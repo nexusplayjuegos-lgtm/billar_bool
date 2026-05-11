@@ -24,6 +24,7 @@ export interface VictoryBox {
   rewards: BoxReward[];
   openedAt: string | null;
   createdAt: string;
+  isEliteSpeed: boolean;
 }
 
 export const BOX_DURATIONS: Record<BoxType, number> = {

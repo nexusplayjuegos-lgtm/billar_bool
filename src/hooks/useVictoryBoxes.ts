@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useUserStore } from '@/lib/store/userStore';
+import { usePoolPass } from './usePoolPass';
 import type { VictoryBox, BoxType, BoxReward } from '@/types';
 import { getTimeRemaining, getMaxSlots, determineBoxType } from '@/types/victoryBox';
 
@@ -33,13 +34,16 @@ function adaptBox(raw: Record<string, unknown>): VictoryBox {
     rewards: (data.rewards as BoxReward[]) || [],
     openedAt: data.openedAt ? String(data.openedAt) : null,
     createdAt: String(data.createdAt ?? ''),
+    isEliteSpeed: Boolean(data.isEliteSpeed ?? false),
   };
 }
 
-export function useVictoryBoxes(hasElite = false) {
+export function useVictoryBoxes() {
   const [state, setState] = useState<VictoryBoxState>({ boxes: [], isLoading: true, error: null });
-  const { session, isSessionLoaded, profile } = useUserStore();
+  const { session, isSessionLoaded } = useUserStore();
+  const { progress: poolPassProgress } = usePoolPass();
   const userId = session?.user?.id ?? null;
+  const hasElite = poolPassProgress?.hasElite ?? false;
 
   const fetchBoxes = useCallback(async () => {
     if (!userId || !isSessionLoaded) {

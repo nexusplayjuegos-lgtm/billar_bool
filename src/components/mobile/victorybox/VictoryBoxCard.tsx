@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Lock, Zap, Clock, Package, CheckCircle2 } from 'lucide-react';
+import { Lock, Zap, Clock, Package, CheckCircle2, Zap as ZapIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { playBoxStartUnlock } from '@/lib/audio/gameAudio';
 import type { VictoryBox } from '@/types';
@@ -19,6 +19,7 @@ interface VictoryBoxCardProps {
 export function VictoryBoxCard({ box, hasElite, onStartUnlock, onAccelerate, onOpen }: VictoryBoxCardProps) {
   const [timeLeft, setTimeLeft] = useState(() => getTimeRemaining(box));
   const colors = BOX_COLORS[box.boxType];
+  const isEliteBox = box.isEliteSpeed;
 
   useEffect(() => {
     if (box.status !== 'unlocking') return;
@@ -53,9 +54,10 @@ export function VictoryBoxCard({ box, hasElite, onStartUnlock, onAccelerate, onO
       {/* Box visual */}
       <div
         className={cn(
-          'w-16 h-16 rounded-xl bg-gradient-to-br flex items-center justify-center text-2xl mb-3 shadow-lg',
+          'w-16 h-16 rounded-xl bg-gradient-to-br flex items-center justify-center text-2xl mb-3 shadow-lg relative',
           colors.bg,
-          colors.glow
+          colors.glow,
+          isEliteBox && 'ring-2 ring-amber-400/50'
         )}
       >
         {isReady ? (
@@ -69,6 +71,11 @@ export function VictoryBoxCard({ box, hasElite, onStartUnlock, onAccelerate, onO
           <Lock className="w-7 h-7 text-white/70" />
         ) : (
           <Clock className="w-7 h-7 text-white/70" />
+        )}
+        {isEliteBox && (
+          <div className="absolute -top-1.5 -right-1.5 p-1 rounded-full bg-amber-500 border border-amber-600 shadow-md" title="Velocidade Elite: 3x mais rápido">
+            <ZapIcon className="w-3 h-3 text-white" aria-label="Velocidade Elite: 3x mais rápido" />
+          </div>
         )}
       </div>
 
@@ -84,7 +91,14 @@ export function VictoryBoxCard({ box, hasElite, onStartUnlock, onAccelerate, onO
 
       {box.status === 'unlocking' && !isReady && (
         <div className="flex flex-col items-center gap-1 mb-2">
-          <p className="text-sm font-mono font-bold text-white">{formatBoxTimer(timeLeft)}</p>
+          <div className="flex items-center gap-1">
+            <p className="text-sm font-mono font-bold text-white">{formatBoxTimer(timeLeft)}</p>
+            {isEliteBox && (
+              <span title="Velocidade Elite: 3x mais rápido">
+                <ZapIcon className="w-3.5 h-3.5 text-amber-400" />
+              </span>
+            )}
+          </div>
           <div className="w-20 h-1 bg-slate-800 rounded-full overflow-hidden">
             <motion.div
               className={cn('h-full rounded-full bg-gradient-to-r', colors.bg)}

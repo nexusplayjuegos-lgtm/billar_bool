@@ -96,6 +96,7 @@ serve(async (req: Request) => {
       status: 'locked',
       unlock_duration_seconds: duration,
       rewards: rewardsData || [],
+      is_elite_speed: has_elite,
     })
     .select()
     .single();
