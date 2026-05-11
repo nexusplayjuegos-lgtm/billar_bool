@@ -19,6 +19,14 @@ const lastPlayedAt: Record<keyof typeof SOUND_COOLDOWNS, number> = {
   pocket: 0,
 };
 
+type AudioContextConstructor = typeof AudioContext;
+
+declare global {
+  interface Window {
+    webkitAudioContext?: AudioContextConstructor;
+  }
+}
+
 interface PersistedUserStorage {
   state?: {
     profile?: {
@@ -56,7 +64,9 @@ function getCtx(): AudioContext | null {
   if (typeof window === 'undefined') return null;
   if (!audioCtx) {
     try {
-      audioCtx = new AudioContext();
+      const AudioContextClass = window.AudioContext ?? window.webkitAudioContext;
+      if (!AudioContextClass) return null;
+      audioCtx = new AudioContextClass();
       masterGain = audioCtx.createGain();
       masterGain.gain.value = MASTER_VOLUME;
       masterGain.connect(audioCtx.destination);
@@ -78,7 +88,7 @@ function getPlayableCtx(soundName: string): AudioContext | null {
   if (ctx.state === 'suspended') {
     void unlockAudio();
     debugAudio('blocked: AudioContext suspended', { soundName, state: ctx.state }, `suspended:${soundName}`);
-    return null;
+    return ctx;
   }
   if (ctx.state !== 'running') {
     debugAudio('blocked: AudioContext not running', { soundName, state: ctx.state }, `state:${soundName}`);
@@ -102,6 +112,22 @@ function canPlay(sound: keyof typeof SOUND_COOLDOWNS): boolean {
   return true;
 }
 
+function primeSilentAudio(ctx: AudioContext): void {
+  const destination = outputNode();
+  if (!destination) return;
+
+  const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * 0.03)), ctx.sampleRate);
+  const source = ctx.createBufferSource();
+  const gain = ctx.createGain();
+  source.buffer = buffer;
+  gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.03);
+  source.connect(gain);
+  gain.connect(destination);
+  source.start(ctx.currentTime);
+  source.stop(ctx.currentTime + 0.03);
+}
+
 export async function unlockAudio(): Promise<boolean> {
   const ctx = getCtx();
   if (!ctx) return false;
@@ -116,6 +142,8 @@ export async function unlockAudio(): Promise<boolean> {
     }, 'unlock:start');
 
     try {
+      primeSilentAudio(ctx);
+
       if (ctx.state === 'suspended') {
         await ctx.resume();
       }
@@ -124,15 +152,6 @@ export async function unlockAudio(): Promise<boolean> {
         audioUnlocked = false;
         debugAudio('unlock deferred: AudioContext not running', { state: ctx.state }, 'unlock:deferred');
         return false;
-      }
-
-      const destination = outputNode();
-      if (destination) {
-        const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(destination);
-        source.start(ctx.currentTime);
       }
 
       audioUnlocked = ctx.state === 'running';
