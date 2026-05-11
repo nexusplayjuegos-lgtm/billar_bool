@@ -68,7 +68,7 @@ export function GameScreen({
   const engine = customEngine ?? gameEngine;
   const t = useTranslations('game');
   const { locale } = useLocale();
-  const { endGame, potentialReward, entryFee } = useGameStore();
+  const { endGame, startGame, currentMode, modeType, potentialReward, entryFee } = useGameStore();
   const { addCoins, removeCoins, addXP, isGuest } = useUserStore();
 
   const [engineState, setEngineState] = useState<EngineState | null>(null);
@@ -225,6 +225,23 @@ export function GameScreen({
     engine.placeCueBall(x, y);
   }, [engine]);
 
+  const handleRestartGame = useCallback(() => {
+    const restartModeType = modeType === 'brazilian' ? 'brazilian' : gameMode;
+    const restartMode = currentMode ?? restartModeType;
+
+    gameResultHandledRef.current = false;
+    previousBallsMovingRef.current = null;
+    setAimAngle(0);
+    setPower(0);
+    setIsAiming(false);
+    setTimeLeft(30);
+    setShowWinModal(false);
+    setShowLoseModal(false);
+    engine.reset();
+    engine.start();
+    startGame(restartMode, restartModeType, entryFee, potentialReward);
+  }, [currentMode, engine, entryFee, gameMode, modeType, potentialReward, startGame]);
+
   useEffect(() => {
     if (showWinModal && isGuest) {
       const shown = localStorage.getItem('guest_win_popup_shown');
@@ -356,10 +373,7 @@ export function GameScreen({
                   transition={{ delay: 0.6 }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    setShowWinModal(false);
-                    endGame(true);
-                  }}
+                  onClick={handleRestartGame}
                   className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-xl"
                 >
                   {t('playAgain')}
@@ -446,10 +460,7 @@ export function GameScreen({
                   transition={{ delay: 0.6 }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    setShowLoseModal(false);
-                    endGame(false);
-                  }}
+                  onClick={handleRestartGame}
                   className="px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 text-white font-bold rounded-xl"
                 >
                   {t('tryAgain')}
