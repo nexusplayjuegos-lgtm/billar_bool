@@ -193,6 +193,20 @@
       "legendary": "Lendária"
     }
   },
+  "shopReal": {
+    "catalog": "Catálogo",
+    "inventory": "Meu Inventário",
+    "buy": "Comprar",
+    "equip": "Equipar",
+    "equipped": "Equipado",
+    "owned": "Adquirido",
+    "insufficientFunds": "Saldo insuficiente",
+    "purchaseSuccess": "Compra realizada!",
+    "purchaseError": "Erro na compra",
+    "flashDeal": "Oferta Relâmpago",
+    "endsIn": "Termina em",
+    "savePercent": "ECONOMIZE {percent}%"
+  },
   "auth": {
         "loginTitle": "Entrar na sua conta",
         "registerTitle": "Criar nova conta",

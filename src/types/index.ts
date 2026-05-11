@@ -164,3 +164,5 @@ export interface GameState {
 export * from './poolPass';
 // Re-export Victory Box types
 export * from './victoryBox';
+// Re-export Shop types
+export * from './shop';

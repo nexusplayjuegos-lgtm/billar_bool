@@ -191,6 +191,20 @@
       "legendary": "Legendary"
     }
   },
+  "shopReal": {
+    "catalog": "Catalog",
+    "inventory": "My Inventory",
+    "buy": "Buy",
+    "equip": "Equip",
+    "equipped": "Equipped",
+    "owned": "Owned",
+    "insufficientFunds": "Insufficient funds",
+    "purchaseSuccess": "Purchase successful!",
+    "purchaseError": "Purchase error",
+    "flashDeal": "Flash Deal",
+    "endsIn": "Ends in",
+    "savePercent": "SAVE {percent}%"
+  },
   "auth": {
       "loginTitle": "Entrar na sua conta",
       "registerTitle": "Criar nova conta",
