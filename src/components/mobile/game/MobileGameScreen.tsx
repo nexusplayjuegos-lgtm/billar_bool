@@ -52,7 +52,7 @@ export function MobileGameScreen() {
           />
         )}
         footer={(engineState, power, setPower, onShoot) => (
-          <div className="absolute left-2 top-1/2 z-30 -translate-y-1/2">
+          <div className="absolute left-8 top-1/2 z-30 -translate-y-1/2">
             <PowerSlider
               value={Math.round(power)}
               onChange={setPower}
