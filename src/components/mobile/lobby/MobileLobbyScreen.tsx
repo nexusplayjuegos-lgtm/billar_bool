@@ -12,6 +12,7 @@ import { useMultiplayer } from '@/hooks/useMultiplayer';
 import { GameMode, type GameMode as GameModeType } from '@/types';
 import { cn, getCountryFlag } from '@/lib/utils';
 import { useLocale } from '@/hooks';
+import { unlockAudio } from '@/lib/audio/gameAudio';
 import type { Room } from '@/lib/multiplayer/types';
 
 type MultiplayerView = 'menu' | 'create' | 'join' | 'waiting';
@@ -58,11 +59,12 @@ export function MobileLobbyScreen() {
     setSelectedMode(mode);
   };
 
-  const handlePlay = (e: React.MouseEvent | React.PointerEvent) => {
+  const handlePlay = async (e: React.MouseEvent | React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!selectedMode) return;
     if (profile.currencies.coins < selectedMode.entryFee.coins) return;
+    await unlockAudio();
     removeCoins(selectedMode.entryFee.coins);
     startGame(selectedMode.id, selectedMode.type, selectedMode.entryFee.coins, selectedMode.reward.win);
     router.push(`/${locale}/game/${selectedMode.id}`);

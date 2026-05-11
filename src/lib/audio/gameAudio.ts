@@ -2,19 +2,55 @@
 
 let audioCtx: AudioContext | null = null;
 let masterGain: GainNode | null = null;
-let unlockInProgress = false;
+let unlockPromise: Promise<boolean> | null = null;
 let audioUnlocked = false;
 const MASTER_VOLUME = 0.7;
+const USER_STORAGE_KEY = 'bool-user-storage';
+const DEBUG_THROTTLE_MS = 1000;
 const SOUND_COOLDOWNS = {
   ball: 35,
   wall: 80,
   pocket: 120,
 } as const;
+const lastDebugAt: Record<string, number> = {};
 const lastPlayedAt: Record<keyof typeof SOUND_COOLDOWNS, number> = {
   ball: 0,
   wall: 0,
   pocket: 0,
 };
+
+interface PersistedUserStorage {
+  state?: {
+    profile?: {
+      settings?: {
+        sound?: unknown;
+      };
+    };
+  };
+}
+
+function debugAudio(message: string, details?: Record<string, unknown>, throttleKey?: string) {
+  if (process.env.NODE_ENV === 'production') return;
+  const key = throttleKey ?? message;
+  const timestamp = performance.now();
+  if (timestamp - (lastDebugAt[key] ?? 0) < DEBUG_THROTTLE_MS) return;
+  lastDebugAt[key] = timestamp;
+  console.debug('[gameAudio]', message, details ?? {});
+}
+
+function isSoundEnabled(): boolean {
+  if (typeof window === 'undefined') return true;
+
+  try {
+    const raw = window.localStorage.getItem(USER_STORAGE_KEY);
+    if (!raw) return true;
+    const parsed = JSON.parse(raw) as PersistedUserStorage;
+    const sound = parsed.state?.profile?.settings?.sound;
+    return typeof sound === 'boolean' ? sound : true;
+  } catch {
+    return true;
+  }
+}
 
 function getCtx(): AudioContext | null {
   if (typeof window === 'undefined') return null;
@@ -31,11 +67,25 @@ function getCtx(): AudioContext | null {
   return audioCtx;
 }
 
-function getPlayableCtx(): AudioContext | null {
+function getPlayableCtx(soundName: string): AudioContext | null {
+  if (!isSoundEnabled()) {
+    debugAudio('blocked: sound disabled by settings', { soundName }, `muted:${soundName}`);
+    return null;
+  }
+
   const ctx = getCtx();
   if (!ctx) return null;
   if (ctx.state === 'suspended') {
     void unlockAudio();
+    debugAudio('blocked: AudioContext suspended', { soundName, state: ctx.state }, `suspended:${soundName}`);
+    return null;
+  }
+  if (ctx.state !== 'running') {
+    debugAudio('blocked: AudioContext not running', { soundName, state: ctx.state }, `state:${soundName}`);
+    return null;
+  }
+  if (masterGain?.gain.value === 0) {
+    debugAudio('blocked: master gain is zero', { soundName }, `gain:${soundName}`);
     return null;
   }
   return ctx;
@@ -52,31 +102,56 @@ function canPlay(sound: keyof typeof SOUND_COOLDOWNS): boolean {
   return true;
 }
 
-export async function unlockAudio(): Promise<void> {
+export async function unlockAudio(): Promise<boolean> {
   const ctx = getCtx();
-  if (!ctx || unlockInProgress || audioUnlocked) return;
+  if (!ctx) return false;
+  if (audioUnlocked && ctx.state === 'running') return true;
+  if (unlockPromise) return unlockPromise;
 
-  unlockInProgress = true;
-  try {
-    if (ctx.state === 'suspended') {
-      await ctx.resume();
+  unlockPromise = (async () => {
+    debugAudio('unlock start', {
+      state: ctx.state,
+      soundEnabled: isSoundEnabled(),
+      masterVolume: masterGain?.gain.value ?? null,
+    }, 'unlock:start');
+
+    try {
+      if (ctx.state === 'suspended') {
+        await ctx.resume();
+      }
+
+      if (ctx.state !== 'running') {
+        audioUnlocked = false;
+        debugAudio('unlock deferred: AudioContext not running', { state: ctx.state }, 'unlock:deferred');
+        return false;
+      }
+
+      const destination = outputNode();
+      if (destination) {
+        const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(destination);
+        source.start(ctx.currentTime);
+      }
+
+      audioUnlocked = ctx.state === 'running';
+      debugAudio('unlock complete', { state: ctx.state, audioUnlocked }, 'unlock:complete');
+      return audioUnlocked;
+    } catch (error) {
+      audioUnlocked = false;
+      debugAudio(
+        'unlock failed',
+        { error: error instanceof Error ? error.message : String(error) },
+        'unlock:failed'
+      );
+      return false;
+    } finally {
+      unlockPromise = null;
     }
+  })();
 
-    const destination = outputNode();
-    if (destination) {
-      const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
-      const source = ctx.createBufferSource();
-      source.buffer = buffer;
-      source.connect(destination);
-      source.start(ctx.currentTime);
-    }
-
-    audioUnlocked = ctx.state === 'running';
-  } catch {
-    audioUnlocked = false;
-  } finally {
-    unlockInProgress = false;
-  }
+  return unlockPromise;
 }
 
 function installUnlockListeners() {
@@ -137,8 +212,9 @@ function playNoiseBurst(ctx: AudioContext, duration: number, filterFreq: number,
 }
 
 export function playCueHit(power: number = 50) {
-  const ctx = getPlayableCtx();
+  const ctx = getPlayableCtx('cueHit');
   if (!ctx) return;
+  debugAudio('play cue hit', { state: ctx.state, power }, 'play:cueHit');
   const destination = outputNode();
   if (!destination) return;
   const t = now(ctx);
@@ -176,7 +252,7 @@ export function playCueHit(power: number = 50) {
 
 export function playBallHit(intensity: number = 0.5) {
   if (!canPlay('ball')) return;
-  const ctx = getPlayableCtx();
+  const ctx = getPlayableCtx('ballHit');
   if (!ctx) return;
   const destination = outputNode();
   if (!destination) return;
@@ -204,7 +280,7 @@ export function playBallHit(intensity: number = 0.5) {
 
 export function playWallHit() {
   if (!canPlay('wall')) return;
-  const ctx = getPlayableCtx();
+  const ctx = getPlayableCtx('wallHit');
   if (!ctx) return;
   const destination = outputNode();
   if (!destination) return;
@@ -228,8 +304,9 @@ export function playWallHit() {
 
 export function playPocket() {
   if (!canPlay('pocket')) return;
-  const ctx = getPlayableCtx();
+  const ctx = getPlayableCtx('pocket');
   if (!ctx) return;
+  debugAudio('play pocket', { state: ctx.state }, 'play:pocket');
   const destination = outputNode();
   if (!destination) return;
   const t = now(ctx);
@@ -266,7 +343,7 @@ export function playPocket() {
 }
 
 export function playNearMiss() {
-  const ctx = getPlayableCtx();
+  const ctx = getPlayableCtx('nearMiss');
   if (!ctx) return;
   const destination = outputNode();
   if (!destination) return;
@@ -285,7 +362,7 @@ export function playNearMiss() {
 }
 
 export function playWin() {
-  const ctx = getPlayableCtx();
+  const ctx = getPlayableCtx('win');
   if (!ctx) return;
   const destination = outputNode();
   if (!destination) return;
@@ -307,7 +384,7 @@ export function playWin() {
 }
 
 export function playTurnChange() {
-  const ctx = getPlayableCtx();
+  const ctx = getPlayableCtx('turnChange');
   if (!ctx) return;
   const destination = outputNode();
   if (!destination) return;
@@ -326,7 +403,7 @@ export function playTurnChange() {
 }
 
 export function playTick() {
-  const ctx = getPlayableCtx();
+  const ctx = getPlayableCtx('tick');
   if (!ctx) return;
   const destination = outputNode();
   if (!destination) return;
