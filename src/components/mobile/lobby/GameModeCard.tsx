@@ -12,9 +12,10 @@ interface GameModeCardProps {
   index: number;
   isSelected?: boolean;
   onSelect: (mode: GameMode) => void;
+  onPlay: (mode: GameMode) => void;
 }
 
-export function GameModeCard({ mode, index, isSelected, onSelect }: GameModeCardProps) {
+export function GameModeCard({ mode, index, isSelected, onSelect, onPlay }: GameModeCardProps) {
   const t = useTranslations('modes');
   const { profile } = useUserStore();
 
@@ -23,15 +24,19 @@ export function GameModeCard({ mode, index, isSelected, onSelect }: GameModeCard
   const onlinePlayers = `${(2.4 + index * 1.7).toFixed(1)}K`;
 
   const handleCardClick = () => {
-    if (!isLocked) {
-      onSelect(mode);
+    if (isLocked) return;
+    onSelect(mode);
+    if (canAfford) {
+      onPlay(mode);
     }
   };
 
   const handlePlayClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isLocked) {
-      onSelect(mode);
+    if (isLocked) return;
+    onSelect(mode);
+    if (canAfford) {
+      onPlay(mode);
     }
   };
 

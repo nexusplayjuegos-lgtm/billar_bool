@@ -59,15 +59,19 @@ export function MobileLobbyScreen() {
     setSelectedMode(mode);
   };
 
-  const handlePlay = async (e: React.MouseEvent | React.PointerEvent) => {
+  const startSelectedGame = (mode: GameModeType) => {
+    if (profile.currencies.coins < mode.entryFee.coins) return;
+    void unlockAudio();
+    removeCoins(mode.entryFee.coins);
+    startGame(mode.id, mode.type, mode.entryFee.coins, mode.reward.win);
+    router.push(`/${locale}/game/${mode.id}`);
+  };
+
+  const handlePlay = (e: React.MouseEvent | React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!selectedMode) return;
-    if (profile.currencies.coins < selectedMode.entryFee.coins) return;
-    await unlockAudio();
-    removeCoins(selectedMode.entryFee.coins);
-    startGame(selectedMode.id, selectedMode.type, selectedMode.entryFee.coins, selectedMode.reward.win);
-    router.push(`/${locale}/game/${selectedMode.id}`);
+    startSelectedGame(selectedMode);
   };
 
   // ── Multiplayer ───────────────────────────────────────────────
@@ -198,6 +202,7 @@ export function MobileLobbyScreen() {
                 index={index}
                 isSelected={selectedMode?.id === mode.id}
                 onSelect={handleSelectMode}
+                onPlay={startSelectedGame}
               />
             </div>
           ))}
