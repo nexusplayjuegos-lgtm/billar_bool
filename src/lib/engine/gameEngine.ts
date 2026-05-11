@@ -101,7 +101,7 @@ function create8BallBalls(): Ball[] {
         radius: 10,
         color: ballColors[ballIndex],
         number: ballIndex + 1,
-        isStriped: ballIndex >= 7 && ballIndex < 14,
+        isStriped: ballIndex + 1 >= 9,
         inPocket: false,
         rotation: 0,
       });
