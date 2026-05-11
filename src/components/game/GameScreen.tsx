@@ -295,7 +295,7 @@ export function GameScreen({
           balls={engineState.balls}
           aimAngle={aimAngle}
           power={power}
-          isAiming={isAiming && isLocalPlayerTurn}
+          isAiming={isAiming && canLocalPlayerAct}
           showIdleCue={shouldShowIdleCue}
           isBreakShot={engineState.isBreakShot}
           pocketedBallIds={engineState.pocketedBalls}
