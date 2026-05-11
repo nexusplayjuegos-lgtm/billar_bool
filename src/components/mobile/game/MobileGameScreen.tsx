@@ -8,6 +8,7 @@ import { GameScreen } from '@/components/game/GameScreen';
 import { TouchDragInput } from '@/components/game/input/TouchDragInput';
 import { GameHUD } from './GameHUD';
 import { GameExitButton } from './GameExitButton';
+import { PowerSlider } from './PowerSlider';
 
 export function MobileGameScreen() {
   const router = useRouter();
@@ -40,16 +41,25 @@ export function MobileGameScreen() {
           </div>
         )}
         overlay={(engineState, handlers) => (
-          <TouchDragInput
-            balls={engineState.balls}
-            onAimChange={handlers.onAimChange}
-            onPowerChange={handlers.onPowerChange}
-            onShoot={handlers.onShoot}
-            onPlaceCueBall={handlers.onPlaceCueBall}
-            ballInHand={handlers.ballInHand}
-            isBreakShot={handlers.isBreakShot}
-            disabled={engineState.ballsMoving || engineState.gameOver || engineState.currentPlayer === 2}
-          />
+          <>
+            <TouchDragInput
+              balls={engineState.balls}
+              onAimChange={handlers.onAimChange}
+              onPowerChange={handlers.onPowerChange}
+              onPlaceCueBall={handlers.onPlaceCueBall}
+              ballInHand={handlers.ballInHand}
+              isBreakShot={handlers.isBreakShot}
+              disabled={engineState.ballsMoving || engineState.gameOver || engineState.currentPlayer === 2}
+            />
+            <div className="absolute right-2 top-1/2 z-30 -translate-y-1/2">
+              <PowerSlider
+                value={Math.round(handlers.power)}
+                onChange={handlers.onPowerChange}
+                onShoot={handlers.onShoot}
+                disabled={engineState.ballsMoving || engineState.gameOver || engineState.currentPlayer === 2 || handlers.ballInHand}
+              />
+            </div>
+          </>
         )}
       />
     </div>

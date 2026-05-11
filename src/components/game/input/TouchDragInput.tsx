@@ -7,7 +7,6 @@ interface TouchDragInputProps {
   balls: Ball[];
   onAimChange: (angle: number) => void;
   onPowerChange: (power: number) => void;
-  onShoot: () => void;
   onPlaceCueBall?: (x: number, y: number) => void;
   ballInHand?: boolean;
   disabled?: boolean;
@@ -18,27 +17,13 @@ const TABLE_LEFT = 28;
 const TABLE_RIGHT = 772;
 const TABLE_TOP = 28;
 const TABLE_BOTTOM = 372;
-const AIM_DEADZONE = 24;
-const POWER_SCALE = 0.34;
 const AIM_SMOOTHING = 0.12;
-const FLEX_AIM_DEADZONE = 18;
 
 function getShotFromPull(cueBall: Ball, pos: { x: number; y: number }) {
   const dx = cueBall.x - pos.x;
   const dy = cueBall.y - pos.y;
-  const dist = Math.sqrt(dx * dx + dy * dy);
   const angle = Math.atan2(dy, dx);
-  const power = Math.min(Math.max((dist - AIM_DEADZONE) * POWER_SCALE, 0), 100);
-  return { angle, power };
-}
-
-function getShotFromDrag(start: { x: number; y: number }, current: { x: number; y: number }) {
-  const dx = start.x - current.x;
-  const dy = start.y - current.y;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  const angle = Math.atan2(dy, dx);
-  const power = Math.min(Math.max((dist - FLEX_AIM_DEADZONE) * POWER_SCALE, 0), 100);
-  return { angle, power };
+  return { angle };
 }
 
 function smoothAngle(previous: number, next: number) {
@@ -52,7 +37,6 @@ export function TouchDragInput({
   balls,
   onAimChange,
   onPowerChange,
-  onShoot,
   onPlaceCueBall,
   ballInHand = false,
   disabled = false,
@@ -62,7 +46,6 @@ export function TouchDragInput({
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingBall, setIsDraggingBall] = useState(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
-  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
   const lastAngleRef = useRef(0);
 
   const getLogicalPos = useCallback(
@@ -121,10 +104,12 @@ export function TouchDragInput({
       const cueBall = balls[0];
       if (!cueBall || cueBall.inPocket) return;
       setIsDragging(true);
-      dragStartRef.current = pos;
       onPowerChange(0);
+      const { angle } = getShotFromPull(cueBall, pos);
+      lastAngleRef.current = angle;
+      onAimChange(angle);
     },
-    [balls, disabled, getLogicalPos, clampToTable, onPowerChange, ballInHand, onPlaceCueBall, isBreakShot]
+    [balls, disabled, getLogicalPos, clampToTable, onAimChange, onPowerChange, ballInHand, onPlaceCueBall, isBreakShot]
   );
 
   const handleMove = useCallback(
@@ -146,16 +131,12 @@ export function TouchDragInput({
       if (!pos) return;
       const cueBall = balls[0];
       if (!cueBall) return;
-      const dragStart = dragStartRef.current;
-      const { angle, power } = dragStart ? getShotFromDrag(dragStart, pos) : getShotFromPull(cueBall, pos);
-      if (power > 0) {
-        const smoothedAngle = smoothAngle(lastAngleRef.current, angle);
-        lastAngleRef.current = smoothedAngle;
-        onAimChange(smoothedAngle);
-      }
-      onPowerChange(power);
+      const { angle } = getShotFromPull(cueBall, pos);
+      const smoothedAngle = smoothAngle(lastAngleRef.current, angle);
+      lastAngleRef.current = smoothedAngle;
+      onAimChange(smoothedAngle);
     },
-    [isDraggingBall, isDragging, balls, getLogicalPos, clampToTable, onAimChange, onPowerChange, isBreakShot]
+    [isDraggingBall, isDragging, balls, getLogicalPos, clampToTable, onAimChange, isBreakShot]
   );
 
   const handleEnd = useCallback(() => {
@@ -170,9 +151,8 @@ export function TouchDragInput({
 
     if (!isDragging) return;
     setIsDragging(false);
-    dragStartRef.current = null;
-    onShoot();
-  }, [isDraggingBall, isDragging, dragPos, onPlaceCueBall, onShoot]);
+    onPowerChange(0);
+  }, [isDraggingBall, isDragging, dragPos, onPlaceCueBall, onPowerChange]);
 
   const handleLeave = useCallback(() => {
     if (isDraggingBall) {
@@ -181,7 +161,6 @@ export function TouchDragInput({
     }
     if (isDragging) {
       setIsDragging(false);
-      dragStartRef.current = null;
       onPowerChange(0);
     }
   }, [isDraggingBall, isDragging, onPowerChange]);

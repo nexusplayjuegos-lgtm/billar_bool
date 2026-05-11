@@ -10,6 +10,7 @@ import { createGameEngine, type EngineState } from '@/lib/engine/gameEngine';
 import { fetchProfile } from '@/lib/supabase/client';
 import { GameScreen } from '@/components/game/GameScreen';
 import { TouchDragInput } from '@/components/game/input/TouchDragInput';
+import { PowerSlider } from './PowerSlider';
 import { GameExitButton } from './GameExitButton';
 import { MultiplayerGameHUD } from './MultiplayerGameHUD';
 import type { Tables } from '@/lib/supabase/client';
@@ -363,16 +364,25 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
           </div>
         )}
         overlay={(engineState, handlers) => (
-          <TouchDragInput
-            balls={engineState.balls}
-            onAimChange={handlers.onAimChange}
-            onPowerChange={handlers.onPowerChange}
-            onShoot={handlers.onShoot}
-            onPlaceCueBall={handlers.onPlaceCueBall}
-            ballInHand={handlers.ballInHand}
-            isBreakShot={handlers.isBreakShot}
-            disabled={engineState.ballsMoving || engineState.gameOver || !hasLocalTurn}
-          />
+          <>
+            <TouchDragInput
+              balls={engineState.balls}
+              onAimChange={handlers.onAimChange}
+              onPowerChange={handlers.onPowerChange}
+              onPlaceCueBall={handlers.onPlaceCueBall}
+              ballInHand={handlers.ballInHand}
+              isBreakShot={handlers.isBreakShot}
+              disabled={engineState.ballsMoving || engineState.gameOver || !hasLocalTurn}
+            />
+            <div className="absolute right-2 top-1/2 z-30 -translate-y-1/2">
+              <PowerSlider
+                value={Math.round(handlers.power)}
+                onChange={handlers.onPowerChange}
+                onShoot={handlers.onShoot}
+                disabled={engineState.ballsMoving || engineState.gameOver || !hasLocalTurn || handlers.ballInHand}
+              />
+            </div>
+          </>
         )}
       />
     </div>

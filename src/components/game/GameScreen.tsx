@@ -18,16 +18,17 @@ const MIN_SHOOT_POWER = 8;
 export interface InputHandlers {
   onAimChange: (angle: number) => void;
   onPowerChange: (power: number) => void;
-  onShoot: () => void;
+  onShoot: (shotPower?: number) => void;
   onPlaceCueBall: (x: number, y: number) => void;
   ballInHand: boolean;
   isBreakShot: boolean;
+  power: number;
 }
 
 interface GameScreenProps {
   header?: (state: EngineState, timeLeft: number) => ReactNode;
   overlay?: (state: EngineState, handlers: InputHandlers) => ReactNode;
-  footer?: (state: EngineState, power: number, setPower: (p: number) => void, onShoot: () => void) => ReactNode;
+  footer?: (state: EngineState, power: number, setPower: (p: number) => void, onShoot: (shotPower?: number) => void) => ReactNode;
   onExit: () => void;
   onShoot?: (power: number, aimAngle: number) => void;
   blockScroll?: boolean;
@@ -206,16 +207,18 @@ export function GameScreen({
     onAimPreview?.(aimAngle, p);
   }, [aimAngle, onAimPreview]);
 
-  const handleShoot = useCallback(() => {
+  const handleShoot = useCallback((shotPower = power) => {
     void unlockAudio();
-    if (power >= MIN_SHOOT_POWER) {
+    if (shotPower >= MIN_SHOOT_POWER) {
       if (customOnShoot) {
-        customOnShoot(power, aimAngle);
+        customOnShoot(shotPower, aimAngle);
       } else {
-        engine.shoot(power, aimAngle, { x: 0, y: 0 });
+        engine.shoot(shotPower, aimAngle, { x: 0, y: 0 });
       }
       setPower(0);
       setTimeLeft(30);
+    } else {
+      setPower(0);
     }
     setIsAiming(false);
   }, [power, aimAngle, customOnShoot, engine]);
@@ -284,6 +287,7 @@ export function GameScreen({
     },
     ballInHand: canPlaceCueBall,
     isBreakShot: engineState.isBreakShot,
+    power,
   };
 
   return (
