@@ -13,15 +13,39 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+// Parse Supabase keys from new JSON dictionary format or fallback to legacy
+function getSupabaseKeys(): { url: string; anonKey: string } {
+  const url = Deno.env.get('SUPABASE_URL') ?? '';
+  const publishableKeysRaw = Deno.env.get('SUPABASE_PUBLISHABLE_KEYS');
+
+  let anonKey = '';
+
+  try {
+    if (publishableKeysRaw) {
+      const keys = JSON.parse(publishableKeysRaw) as Record<string, string>;
+      anonKey = keys.anon || Object.values(keys)[0] || '';
+    }
+  } catch {
+    // Fallback to legacy env var
+  }
+
+  if (!anonKey) anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+
+  return { url, anonKey };
+}
+
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   const authHeader = req.headers.get('Authorization');
   if (!authHeader) return json({ error: 'Não autenticado.' }, 401);
 
-  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+  const { url: supabaseUrl, anonKey: supabaseAnonKey } = getSupabaseKeys();
 
+
+  if (!supabaseAnonKey) {
+    return json({ error: 'Missing Supabase configuration: no publishable keys found' }, 500);
+  }
   const userClient = createClient(supabaseUrl, supabaseAnonKey, {
     global: { headers: { Authorization: authHeader } },
   });

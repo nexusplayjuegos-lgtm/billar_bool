@@ -13,10 +13,34 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-serve(async (_req: Request) => {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+// Parse Supabase keys from new JSON dictionary format or fallback to legacy
+function getSupabaseKeys(): { url: string; anonKey: string } {
+  const url = Deno.env.get('SUPABASE_URL') ?? '';
+  const publishableKeysRaw = Deno.env.get('SUPABASE_PUBLISHABLE_KEYS');
 
+  let anonKey = '';
+
+  try {
+    if (publishableKeysRaw) {
+      const keys = JSON.parse(publishableKeysRaw) as Record<string, string>;
+      anonKey = keys.anon || Object.values(keys)[0] || '';
+    }
+  } catch {
+    // Fallback to legacy env var
+  }
+
+  if (!anonKey) anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+
+  return { url, anonKey };
+}
+
+serve(async (_req: Request) => {
+  const { url: supabaseUrl, anonKey: supabaseAnonKey } = getSupabaseKeys();
+
+
+  if (!supabaseAnonKey) {
+    return json({ error: 'Missing Supabase configuration: no publishable keys found' }, 500);
+  }
   const client = createClient(supabaseUrl, supabaseAnonKey);
 
   const now = new Date().toISOString();

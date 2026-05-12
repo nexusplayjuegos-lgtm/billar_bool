@@ -13,18 +13,45 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+// Parse Supabase keys from new JSON dictionary format or fallback to legacy
+function getSupabaseKeys(): { url: string; anonKey: string; serviceKey: string } {
+  const url = Deno.env.get('SUPABASE_URL') ?? '';
+  const publishableKeysRaw = Deno.env.get('SUPABASE_PUBLISHABLE_KEYS');
+  const secretKeysRaw = Deno.env.get('SUPABASE_SECRET_KEYS');
+
+  let anonKey = '';
+  let serviceKey = '';
+
+  try {
+    if (publishableKeysRaw) {
+      const keys = JSON.parse(publishableKeysRaw) as Record<string, string>;
+      anonKey = keys.anon || Object.values(keys)[0] || '';
+    }
+    if (secretKeysRaw) {
+      const keys = JSON.parse(secretKeysRaw) as Record<string, string>;
+      serviceKey = keys.service_role || Object.values(keys)[0] || '';
+    }
+  } catch {
+    // Fallback to legacy env vars
+  }
+
+  // Final fallback to legacy env vars
+  if (!anonKey) anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+  if (!serviceKey) serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+  return { url, anonKey, serviceKey };
+}
+
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   const authHeader = req.headers.get('Authorization');
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+  const { url: supabaseUrl, serviceKey: serviceRoleKey } = getSupabaseKeys();
 
   // Strict security: only service_role key is accepted
   if (authHeader !== `Bearer ${serviceRoleKey}`) {
     return json({ error: 'Unauthorized. Service role key required.' }, 401);
   }
-
-  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 

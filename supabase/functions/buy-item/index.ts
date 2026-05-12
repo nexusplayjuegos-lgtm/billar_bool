@@ -13,6 +13,35 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+// Parse Supabase keys from new JSON dictionary format or fallback to legacy
+function getSupabaseKeys(): { url: string; anonKey: string; serviceKey: string } {
+  const url = Deno.env.get('SUPABASE_URL') ?? '';
+  const publishableKeysRaw = Deno.env.get('SUPABASE_PUBLISHABLE_KEYS');
+  const secretKeysRaw = Deno.env.get('SUPABASE_SECRET_KEYS');
+
+  let anonKey = '';
+  let serviceKey = '';
+
+  try {
+    if (publishableKeysRaw) {
+      const keys = JSON.parse(publishableKeysRaw) as Record<string, string>;
+      anonKey = keys.anon || Object.values(keys)[0] || '';
+    }
+    if (secretKeysRaw) {
+      const keys = JSON.parse(secretKeysRaw) as Record<string, string>;
+      serviceKey = keys.service_role || Object.values(keys)[0] || '';
+    }
+  } catch {
+    // Fallback to legacy env vars
+  }
+
+  // Final fallback to legacy env vars
+  if (!anonKey) anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+  if (!serviceKey) serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+  return { url, anonKey, serviceKey };
+}
+
 interface BuyBody {
   item_id: string;
   deal_id?: string | null;
@@ -24,10 +53,12 @@ serve(async (req: Request) => {
   const authHeader = req.headers.get('Authorization');
   if (!authHeader) return json({ error: 'Não autenticado.' }, 401);
 
-  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+  const { url: supabaseUrl, anonKey: supabaseAnonKey, serviceKey: supabaseServiceKey } = getSupabaseKeys();
 
+
+  if (!supabaseAnonKey) {
+    return json({ error: 'Missing Supabase configuration: no publishable keys found' }, 500);
+  }
   const userClient = createClient(supabaseUrl, supabaseAnonKey, {
     global: { headers: { Authorization: authHeader } },
   });
