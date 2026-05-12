@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { Play, TrendingUp, Users, Wifi, Plus, LogIn, X, Loader2, Copy, Check } from 'lucide-react';
+import { Play, TrendingUp, Users, Wifi, Plus, LogIn, X, Loader2, Copy, Check, Target } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { GameModeCard } from './GameModeCard';
 import { MOCK_GAME_MODES } from '@/mocks/data';
@@ -12,6 +12,7 @@ import { useMultiplayer } from '@/hooks/useMultiplayer';
 import { GameMode, type GameMode as GameModeType } from '@/types';
 import { cn, getCountryFlag } from '@/lib/utils';
 import { useLocale } from '@/hooks';
+import { useMissions } from '@/hooks/useMissions';
 import { unlockAudio } from '@/lib/audio/gameAudio';
 import type { Room } from '@/lib/multiplayer/types';
 
@@ -20,6 +21,7 @@ type MultiplayerView = 'menu' | 'create' | 'join' | 'waiting';
 export function MobileLobbyScreen() {
   const t = useTranslations();
   const { profile, removeCoins, isGuest } = useUserStore();
+  const { getCompletedCount } = useMissions();
   const { startGame } = useGameStore();
   const router = useRouter();
   const { locale } = useLocale();
@@ -245,8 +247,24 @@ export function MobileLobbyScreen() {
         </div>
       </motion.div>
 
-      {/* FABs — Play + Multiplayer */}
+      {/* FABs — Play + Multiplayer + Missions */}
       <div className="absolute bottom-20 right-4 flex flex-col gap-3 z-20">
+        {/* Missions FAB */}
+        <motion.button
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.15 }}
+          whileTap={{ scale: 0.9 }}
+          onPointerDown={() => router.push(`/${locale}/missions`)}
+          className="relative w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-lg shadow-purple-500/30 border-4 border-slate-900"
+        >
+          <Target className="w-5 h-5 text-white" />
+          {getCompletedCount() > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-slate-900">
+              {getCompletedCount()}
+            </span>
+          )}
+        </motion.button>
         {/* Multiplayer FAB */}
         <motion.button
           initial={{ scale: 0 }}

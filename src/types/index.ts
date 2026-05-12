@@ -166,3 +166,5 @@ export * from './poolPass';
 export * from './victoryBox';
 // Re-export Shop types
 export * from './shop';
+// Re-export Mission types
+export * from './missions';
