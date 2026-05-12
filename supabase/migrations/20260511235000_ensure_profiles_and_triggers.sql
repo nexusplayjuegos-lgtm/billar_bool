@@ -53,13 +53,11 @@ CREATE INDEX IF NOT EXISTS idx_profiles_coins ON public.profiles(coins DESC);
 -- RLS
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Users can view own profile"
-  ON public.profiles FOR SELECT
-  USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT TO authenticated USING (auth.uid() = id);
 
-CREATE POLICY IF NOT EXISTS "Users can update own profile"
-  ON public.profiles FOR UPDATE
-  USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE TO authenticated USING (auth.uid() = id);
 
 -- Trigger: auto-create profile on auth user creation
 CREATE OR REPLACE FUNCTION public.handle_new_user()
