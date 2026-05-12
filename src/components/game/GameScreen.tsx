@@ -9,6 +9,8 @@ import { Share2 } from 'lucide-react';
 import { useLocale } from '@/hooks';
 import { gameEngine, createGameEngine, EngineState } from '@/lib/engine/gameEngine';
 import { useVictoryBoxes } from '@/hooks/useVictoryBoxes';
+import { usePoolPass } from '@/hooks/usePoolPass';
+import { useMissions } from '@/hooks/useMissions';
 import { playTick, unlockAudio } from '@/lib/audio/gameAudio';
 import { useGameStore, useUserStore } from '@/lib/store';
 import { MatchTable } from './MatchTable';
@@ -73,6 +75,14 @@ export function GameScreen({
   const { endGame, startGame, currentMode, modeType, potentialReward, entryFee } = useGameStore();
   const { profile, addCoins, removeCoins, addXP, isGuest, session } = useUserStore();
   const { createBox } = useVictoryBoxes();
+  const { addPoolPoints } = usePoolPass();
+  const { daily, weekly, updateProgress } = useMissions();
+
+  // Refs para evitar re-subscrição do engine quando missões mudam
+  const dailyRef = useRef(daily);
+  const weeklyRef = useRef(weekly);
+  useEffect(() => { dailyRef.current = daily; }, [daily]);
+  useEffect(() => { weeklyRef.current = weekly; }, [weekly]);
 
   const [engineState, setEngineState] = useState<EngineState | null>(null);
   const [aimAngle, setAimAngle] = useState(0);
@@ -97,13 +107,16 @@ export function GameScreen({
         const won = state.winner === localPlayerNumber;
         const reward = won ? potentialReward : Math.floor(potentialReward * 0.1);
         // Atualiza economia e stats
-        if (won) {
-          addCoins(reward);
-          addXP(100);
-          // Ganha Victory Box ao vencer (apenas usuários logados)
-          if (session?.user?.id) {
+        addCoins(reward);
+        addXP(won ? 100 : 25);
+
+        // Sistema de recompensas (apenas usuários logados)
+        if (session?.user?.id) {
+          const gameMode = modeType === 'brazilian' ? 'brazilian' : '8ball';
+
+          if (won) {
+            // Victory Box
             const winStreak = profile?.stats?.currentWinStreak ?? 0;
-            const gameMode = modeType === 'brazilian' ? 'brazilian' : '8ball';
             console.log('[GameScreen] Creating victory box — winStreak:', winStreak, 'mode:', gameMode);
             createBox(null, winStreak, gameMode)
               .then((result) => {
@@ -116,13 +129,46 @@ export function GameScreen({
               .catch((err) => {
                 console.error('[GameScreen] Victory box creation failed:', err);
               });
-          } else {
-            console.log('[GameScreen] Skipping victory box: user not logged in');
+
+            // Pool Pass Points
+            console.log('[GameScreen] Adding Pool Pass points — mode:', gameMode, 'result: win');
+            addPoolPoints(gameMode, 'win').catch((err: Error) => {
+              console.error('[GameScreen] Pool Pass points failed:', err);
+            });
+          }
+
+          // Missões — usa refs para evitar dependência no effect
+          const currentDaily = dailyRef.current;
+          const currentWeekly = weeklyRef.current;
+
+          const relevantTypes = won
+            ? ['win_games', 'play_games']
+            : ['play_games'];
+
+          if (currentDaily) {
+            for (const mission of currentDaily.missions) {
+              if (relevantTypes.includes(mission.type) && !mission.completed) {
+                console.log('[GameScreen] Updating daily mission:', mission.id, mission.type);
+                void updateProgress('daily', mission.id, 1);
+              }
+            }
+          }
+
+          if (currentWeekly) {
+            const weeklyTypes = won
+              ? ['win_games', 'win_streak', 'play_games', 'play_mode', 'earn_coins']
+              : ['play_games', 'play_mode'];
+            for (const challenge of currentWeekly.challenges) {
+              if (weeklyTypes.includes(challenge.type) && !challenge.completed) {
+                console.log('[GameScreen] Updating weekly challenge:', challenge.id, challenge.type);
+                void updateProgress('weekly', challenge.id, 1);
+              }
+            }
           }
         } else {
-          addCoins(reward);
-          addXP(25);
+          console.log('[GameScreen] Skipping rewards: user not logged in');
         }
+
         if (won) {
           setShowWinModal(true);
         } else {

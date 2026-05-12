@@ -67,6 +67,8 @@ serve(async (req: Request) => {
   const { data: { user }, error: authError } = await userClient.auth.getUser();
   if (authError || !user) return json({ error: 'Não autenticado.' }, 401);
 
+  const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
+
   const body = await req.json() as ClaimBody;
   const { season_id, rank, reward_type } = body;
 
@@ -77,14 +79,50 @@ serve(async (req: Request) => {
     return json({ error: 'Tipo de recompensa inválido.' }, 400);
   }
 
-  // Buscar season e progresso
-  const [{ data: season }, { data: progress }] = await Promise.all([
-    userClient.from('season_passes').select('*').eq('id', season_id).single(),
-    userClient.from('player_season_progress').select('*').eq('profile_id', user.id).eq('season_id', season_id).single(),
-  ]);
+  // Buscar season
+  const { data: season, error: seasonError } = await userClient.from('season_passes').select('*').eq('id', season_id).single();
+  if (seasonError || !season) {
+    return json({ error: 'Season não encontrada.' }, 404);
+  }
 
-  if (!season || !progress) {
-    return json({ error: 'Season ou progresso não encontrado.' }, 404);
+  // Buscar ou criar progresso
+  let { data: progress, error: progressError } = await userClient
+    .from('player_season_progress')
+    .select('*')
+    .eq('profile_id', user.id)
+    .eq('season_id', season_id)
+    .single();
+
+  if (progressError && progressError.code === 'PGRST116') {
+    // Progresso não existe, criar automaticamente
+    const { data: newProgress, error: insertError } = await serviceClient
+      .from('player_season_progress')
+      .insert({
+        profile_id: user.id,
+        season_id: season_id,
+        current_rank: 1,
+        pool_points: 0,
+        has_premium: false,
+        has_elite: false,
+        rewards_claimed: [],
+        premium_claimed: [],
+        elite_claimed: [],
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('[claim-reward] Erro ao criar progresso:', insertError);
+      return json({ error: 'Erro ao criar progresso da season.' }, 500);
+    }
+    progress = newProgress;
+  } else if (progressError) {
+    console.error('[claim-reward] Erro ao buscar progresso:', progressError);
+    return json({ error: 'Erro ao buscar progresso.' }, 500);
+  }
+
+  if (!progress) {
+    return json({ error: 'Progresso não encontrado.' }, 404);
   }
 
   // Verificar se o jogador tem acesso ao tipo de recompensa
@@ -126,7 +164,6 @@ serve(async (req: Request) => {
   }
 
   // Atualizar progresso (marcar como coletado)
-  const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
   const newClaimed = [...claimedArray, rank];
 
   const updateField = reward_type === 'free'
