@@ -98,8 +98,16 @@ export const CUE_DESIGNS: CueDesign[] = [
   },
 ];
 
+// Fallback designs por raridade para itens do banco sem design específico
+const RARITY_FALLBACK: Record<string, string> = {
+  common: 'maple-classic',
+  rare: 'venom-striker',
+  epic: 'mezz-ec7',
+  legendary: 'shadow-legend',
+};
+
 // Mapeia cue.id do mock para design.id
-export function getCueDesign(cueId: string): CueDesign | undefined {
+export function getCueDesign(cueId: string, rarity?: string): CueDesign | undefined {
   const map: Record<string, string> = {
     'cue_beginner': 'maple-classic',
     'cue_venom_striker': 'venom-striker',
@@ -109,5 +117,6 @@ export function getCueDesign(cueId: string): CueDesign | undefined {
     'cue_golden_dragon': 'mezz-ec7',
     'cue_shadow_assassin': 'shadow-legend',
   };
-  return CUE_DESIGNS.find(d => d.id === map[cueId]);
+  const designId = map[cueId] || (rarity ? RARITY_FALLBACK[rarity] : undefined);
+  return designId ? CUE_DESIGNS.find(d => d.id === designId) : undefined;
 }

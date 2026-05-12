@@ -113,4 +113,4 @@ backend = "postgres"
 # Configures Postgres storage engine to use OrioleDB (S3) or the default heap storage.
 orioledb_version = ""
 # Configures Sleek GPT. Requires openai_api_key to be set.
-sleek_notes = false
+

@@ -100,7 +100,18 @@ export function normalizeTableDesignId(tableId: string): string {
   return TABLE_ID_ALIASES[tableId] ?? tableId;
 }
 
-export function getTableDesign(tableId: string): TableDesign | undefined {
+// Fallback designs por raridade para itens do banco sem design específico
+const RARITY_FALLBACK: Record<string, string> = {
+  common: 'classic-green',
+  rare: 'midnight-blue',
+  epic: 'carbon-black',
+  legendary: 'galaxy-void',
+};
+
+export function getTableDesign(tableId: string, rarity?: string): TableDesign | undefined {
   const normalizedTableId = normalizeTableDesignId(tableId);
-  return TABLE_DESIGNS.find(d => d.id === normalizedTableId);
+  const design = TABLE_DESIGNS.find(d => d.id === normalizedTableId);
+  if (design) return design;
+  const fallbackId = rarity ? RARITY_FALLBACK[rarity] : undefined;
+  return fallbackId ? TABLE_DESIGNS.find(d => d.id === fallbackId) : undefined;
 }

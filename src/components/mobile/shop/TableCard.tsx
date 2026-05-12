@@ -62,7 +62,7 @@ export function TableCard({ item, index, dealDiscount }: TableCardProps) {
 
       {/* Visual */}
       <div className="h-32 mb-3 relative mt-6 flex items-center justify-center bg-slate-900/70 rounded-xl p-2 border border-white/5">
-        <TableCanvas tableId={item.id} width={220} height={110} />
+        <TableCanvas tableId={item.id} rarity={item.rarity} width={220} height={110} />
 
         {isEquipped && (
           <div className="absolute bottom-2 right-2 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">

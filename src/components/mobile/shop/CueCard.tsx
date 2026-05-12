@@ -81,7 +81,7 @@ export function CueCard({ item, index, onPreview, dealDiscount }: CueCardProps) 
       {/* Visual */}
       <div className="h-28 mb-3 relative mt-6 flex items-center justify-center">
         <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/5 to-transparent" />
-        <CueCanvas cueId={item.id} width={260} height={52} />
+        <CueCanvas cueId={item.id} rarity={item.rarity} width={260} height={52} />
 
         {isEquipped && (
           <div className="absolute bottom-0 right-0 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">

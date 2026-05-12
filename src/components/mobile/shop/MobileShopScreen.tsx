@@ -285,7 +285,7 @@ export function MobileShopScreen() {
             >
               <h3 className="text-xl font-bold text-white mb-4">{previewItem.name}</h3>
               <div className="mb-4 flex h-48 items-center justify-center rounded-xl border border-slate-700/70 bg-slate-950/45 px-3">
-                <CueCanvas cueId={previewItem.id} width={300} height={78} />
+                <CueCanvas cueId={previewItem.id} rarity={previewItem.rarity} width={300} height={78} />
               </div>
               <p className="text-slate-400 text-sm mb-4">{previewItem.description}</p>
               <button onClick={() => setPreviewItem(null)} className="w-full py-3 bg-slate-700 text-white rounded-lg font-medium">
