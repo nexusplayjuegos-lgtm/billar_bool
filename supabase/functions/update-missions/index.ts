@@ -64,14 +64,20 @@ serve(async (req: Request) => {
   });
 
   const { data: { user }, error: authError } = await userClient.auth.getUser();
-  if (authError || !user) return json({ error: 'Não autenticado.' }, 401);
+  if (authError || !user) {
+    console.error('[update-missions] Auth error:', authError?.message);
+    return json({ error: 'Não autenticado.' }, 401);
+  }
 
   const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
   const body = await req.json() as UpdateBody;
   const { action, scope, missionId, amount = 1 } = body;
 
+  console.log('[update-missions] === REQUEST ===', { user_id: user.id, action, scope, missionId, amount });
+
   if (!action || !scope || !missionId) {
+    console.error('[update-missions] Invalid data:', { action, scope, missionId });
     return json({ error: 'Dados inválidos.' }, 400);
   }
 
@@ -85,6 +91,8 @@ serve(async (req: Request) => {
   const column = scope === 'daily' ? 'date' : 'week_start';
   const missionsColumn = scope === 'daily' ? 'missions' : 'challenges';
 
+  console.log('[update-missions] Query params:', { table, column, dateFilter, profile_id: user.id });
+
   // Buscar registro atual
   const { data: record, error: fetchError } = await serviceClient
     .from(table)
@@ -93,28 +101,47 @@ serve(async (req: Request) => {
     .eq(column, dateFilter)
     .single();
 
-  if (fetchError || !record) {
-    return json({ error: 'Missões não encontradas.' }, 404);
+  if (fetchError) {
+    console.error('[update-missions] Fetch error:', fetchError.code, fetchError.message, { table, column, dateFilter, profile_id: user.id });
+    return json({ error: `Missões não encontradas: ${fetchError.message}` }, 404);
   }
 
+  if (!record) {
+    console.error('[update-missions] No record found:', { table, column, dateFilter, profile_id: user.id });
+    return json({ error: 'Missões não encontradas (null).' }, 404);
+  }
+
+  console.log('[update-missions] Record found:', { record_id: record.id });
+
   const missions = record[missionsColumn] || [];
+  console.log('[update-missions] Missions in DB:', JSON.stringify(missions.map((m: { id: string; type: string }) => ({ id: m.id, type: m.type }))));
+  console.log('[update-missions] Looking for missionId:', missionId);
+
   const mission = missions.find((m: { id: string }) => m.id === missionId);
 
   if (!mission) {
-    return json({ error: 'Missão não encontrada.' }, 404);
+    console.error('[update-missions] Mission NOT FOUND in array!', { searchId: missionId, availableIds: missions.map((m: { id: string }) => m.id) });
+    return json({ error: 'Missão não encontrada no array.' }, 404);
   }
+
+  console.log('[update-missions] Mission found:', { id: mission.id, type: mission.type, current: mission.current, target: mission.target, completed: mission.completed, claimed: mission.claimed });
 
   if (action === 'progress') {
     if (mission.completed) {
+      console.log('[update-missions] Mission already completed, skipping.');
       return json({ error: 'Missão já completada.' }, 409);
     }
 
-    mission.current = Math.min(mission.target, mission.current + amount);
+    const newCurrent = Math.min(mission.target, (mission.current || 0) + amount);
+    console.log('[update-missions] Progressing mission:', { old: mission.current, amount, new: newCurrent, target: mission.target });
+    mission.current = newCurrent;
     if (mission.current >= mission.target) {
       mission.completed = true;
+      console.log('[update-missions] Mission COMPLETED!');
     }
 
     const allCompleted = missions.every((m: { completed: boolean }) => m.completed);
+    console.log('[update-missions] allCompleted:', allCompleted);
 
     const { error: updateError } = await serviceClient
       .from(table)
@@ -125,18 +152,21 @@ serve(async (req: Request) => {
       .eq('id', record.id);
 
     if (updateError) {
-      console.error('[update-missions] Erro ao atualizar:', updateError);
+      console.error('[update-missions] Update error:', updateError.code, updateError.message);
       return json({ error: 'Erro ao atualizar progresso.' }, 500);
     }
 
+    console.log('[update-missions] Update SUCCESS');
     return json({ success: true, mission, allCompleted }, 200);
   }
 
   if (action === 'claim') {
     if (!mission.completed) {
+      console.log('[update-missions] Mission not completed, cannot claim.');
       return json({ error: 'Missão não completada.' }, 403);
     }
     if (mission.claimed) {
+      console.log('[update-missions] Reward already claimed.');
       return json({ error: 'Recompensa já coletada.' }, 409);
     }
 
@@ -147,6 +177,7 @@ serve(async (req: Request) => {
     // Aplicar recompensa
     const reward = mission.reward;
     if (reward) {
+      console.log('[update-missions] Applying reward:', reward);
       const { data: profile } = await serviceClient.from('profiles').select('coins, cash, xp, level, xp_to_next').eq('id', user.id).single();
       if (profile) {
         const updates: Record<string, unknown> = {};
@@ -166,6 +197,7 @@ serve(async (req: Request) => {
           updates.xp_to_next = newXPToNext;
         }
         if (Object.keys(updates).length > 0) {
+          console.log('[update-missions] Updating profile with:', updates);
           await serviceClient.from('profiles').update(updates).eq('id', user.id);
         }
       }
@@ -184,6 +216,7 @@ serve(async (req: Request) => {
       return json({ error: 'Erro ao reivindicar recompensa.' }, 500);
     }
 
+    console.log('[update-missions] Claim SUCCESS');
     return json({ success: true, mission, reward, allClaimed }, 200);
   }
 
