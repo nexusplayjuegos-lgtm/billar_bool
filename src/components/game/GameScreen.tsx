@@ -84,6 +84,22 @@ export function GameScreen({
   useEffect(() => { dailyRef.current = daily; }, [daily]);
   useEffect(() => { weeklyRef.current = weekly; }, [weekly]);
 
+  // Helper para encontrar e atualizar missão por tipo
+  const findAndUpdateMission = useCallback(
+    (scope: 'daily' | 'weekly', type: string, amount = 1) => {
+      const missions = scope === 'daily'
+        ? (dailyRef.current?.missions ?? [])
+        : (weeklyRef.current?.challenges ?? []);
+      for (const mission of missions) {
+        if (mission.type === type && !mission.completed) {
+          console.log(`[GameScreen] Updating ${scope} mission:`, mission.id, type, '+', amount);
+          void updateProgress(scope, mission.id, amount);
+        }
+      }
+    },
+    [updateProgress]
+  );
+
   const [engineState, setEngineState] = useState<EngineState | null>(null);
   const [aimAngle, setAimAngle] = useState(0);
   const [power, setPower] = useState(0);
@@ -137,32 +153,28 @@ export function GameScreen({
             });
           }
 
-          // Missões — usa refs para evitar dependência no effect
-          const currentDaily = dailyRef.current;
-          const currentWeekly = weeklyRef.current;
+          // Missões — atualiza progresso com base no resultado da partida
+          // Partidas jogadas (sempre incrementa, vitória ou derrota)
+          findAndUpdateMission('daily', 'play_games', 1);
+          findAndUpdateMission('weekly', 'play_games', 1);
 
-          const relevantTypes = won
-            ? ['win_games', 'play_games']
-            : ['play_games'];
+          // Modo de jogo
+          findAndUpdateMission('weekly', 'play_mode', 1);
 
-          if (currentDaily) {
-            for (const mission of currentDaily.missions) {
-              if (relevantTypes.includes(mission.type) && !mission.completed) {
-                console.log('[GameScreen] Updating daily mission:', mission.id, mission.type);
-                void updateProgress('daily', mission.id, 1);
-              }
+          // Apenas em caso de vitória
+          if (won) {
+            // Vitórias
+            findAndUpdateMission('daily', 'win_games', 1);
+            findAndUpdateMission('weekly', 'win_games', 1);
+
+            // Vitória sem falta
+            if (!state.foul) {
+              findAndUpdateMission('daily', 'win_without_foul', 1);
             }
-          }
 
-          if (currentWeekly) {
-            const weeklyTypes = won
-              ? ['win_games', 'win_streak', 'play_games', 'play_mode', 'earn_coins']
-              : ['play_games', 'play_mode'];
-            for (const challenge of currentWeekly.challenges) {
-              if (weeklyTypes.includes(challenge.type) && !challenge.completed) {
-                console.log('[GameScreen] Updating weekly challenge:', challenge.id, challenge.type);
-                void updateProgress('weekly', challenge.id, 1);
-              }
+            // Moedas ganhas
+            if (reward > 0) {
+              findAndUpdateMission('weekly', 'earn_coins', reward);
             }
           }
         } else {
