@@ -78,11 +78,17 @@ export function GameScreen({
   const { addPoolPoints } = usePoolPass();
   const { daily, weekly, updateProgress } = useMissions();
 
-  // Refs para evitar re-subscrição do engine quando missões mudam
+  // Refs para evitar re-subscrição do engine quando valores mudam
+  const sessionRef = useRef(session);
   const dailyRef = useRef(daily);
   const weeklyRef = useRef(weekly);
+  const profileRef = useRef(profile);
+  const isGuestRef = useRef(isGuest);
+  useEffect(() => { sessionRef.current = session; }, [session]);
   useEffect(() => { dailyRef.current = daily; }, [daily]);
   useEffect(() => { weeklyRef.current = weekly; }, [weekly]);
+  useEffect(() => { profileRef.current = profile; }, [profile]);
+  useEffect(() => { isGuestRef.current = isGuest; }, [isGuest]);
 
   // Helper para encontrar e atualizar missão por tipo
   const findAndUpdateMission = useCallback(
@@ -127,14 +133,17 @@ export function GameScreen({
         addXP(won ? 100 : 25);
 
         // Sistema de recompensas (apenas usuários logados)
-        if (session?.user?.id) {
-          const gameMode = modeType === 'brazilian' ? 'brazilian' : '8ball';
+        const sessionId = sessionRef.current?.user?.id;
+        if (sessionId) {
+          const currentModeType = modeType;
+          const currentGameMode = currentModeType === 'brazilian' ? 'brazilian' : '8ball';
+          const currentProfile = profileRef.current;
 
           if (won) {
             // Victory Box
-            const winStreak = profile?.stats?.currentWinStreak ?? 0;
-            console.log('[GameScreen] Creating victory box — winStreak:', winStreak, 'mode:', gameMode);
-            createBox(null, winStreak, gameMode)
+            const winStreak = currentProfile?.stats?.currentWinStreak ?? 0;
+            console.log('[GameScreen] Creating victory box — winStreak:', winStreak, 'mode:', currentGameMode);
+            createBox(null, winStreak, currentGameMode)
               .then((result) => {
                 if (result) {
                   console.log('[GameScreen] Victory box created:', result);
@@ -147,8 +156,8 @@ export function GameScreen({
               });
 
             // Pool Pass Points
-            console.log('[GameScreen] Adding Pool Pass points — mode:', gameMode, 'result: win');
-            addPoolPoints(gameMode, 'win').catch((err: Error) => {
+            console.log('[GameScreen] Adding Pool Pass points — mode:', currentGameMode, 'result: win');
+            addPoolPoints(currentGameMode, 'win').catch((err: Error) => {
               console.error('[GameScreen] Pool Pass points failed:', err);
             });
           }
@@ -178,9 +187,10 @@ export function GameScreen({
             }
           }
         } else {
-          console.log('[GameScreen] Skipping rewards: user not logged in');
+          console.log('[GameScreen] Skipping rewards: user not logged in, sessionId:', sessionId);
         }
 
+        // Modal de guest (usa ref para isGuest)
         if (won) {
           setShowWinModal(true);
         } else {
