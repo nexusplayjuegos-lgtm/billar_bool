@@ -114,6 +114,7 @@ export function GameScreen({
   const [showWinModal, setShowWinModal] = useState(false);
   const [showLoseModal, setShowLoseModal] = useState(false);
   const [showGuestPopup, setShowGuestPopup] = useState(false);
+  const [pendingResult, setPendingResult] = useState<{ won: boolean; foul: boolean; reward: number } | null>(null);
   const router = useRouter();
   const previousBallsMovingRef = useRef<boolean | null>(null);
   const gameResultHandledRef = useRef(false);
@@ -128,69 +129,12 @@ export function GameScreen({
         gameResultHandledRef.current = true;
         const won = state.winner === localPlayerNumber;
         const reward = won ? potentialReward : Math.floor(potentialReward * 0.1);
-        // Atualiza economia e stats
+        // Guarda resultado pendente para processar quando sessão estiver disponível
+        setPendingResult({ won, foul: state.foul, reward });
+        // Atualiza economia e stats (sempre disponíveis, não dependem de sessão)
         addCoins(reward);
         addXP(won ? 100 : 25);
-
-        // Sistema de recompensas (apenas usuários logados)
-        const sessionId = sessionRef.current?.user?.id;
-        if (sessionId) {
-          const currentModeType = modeType;
-          const currentGameMode = currentModeType === 'brazilian' ? 'brazilian' : '8ball';
-          const currentProfile = profileRef.current;
-
-          if (won) {
-            // Victory Box
-            const winStreak = currentProfile?.stats?.currentWinStreak ?? 0;
-            console.log('[GameScreen] Creating victory box — winStreak:', winStreak, 'mode:', currentGameMode);
-            createBox(null, winStreak, currentGameMode)
-              .then((result) => {
-                if (result) {
-                  console.log('[GameScreen] Victory box created:', result);
-                } else {
-                  console.warn('[GameScreen] Victory box creation returned null');
-                }
-              })
-              .catch((err) => {
-                console.error('[GameScreen] Victory box creation failed:', err);
-              });
-
-            // Pool Pass Points
-            console.log('[GameScreen] Adding Pool Pass points — mode:', currentGameMode, 'result: win');
-            addPoolPoints(currentGameMode, 'win').catch((err: Error) => {
-              console.error('[GameScreen] Pool Pass points failed:', err);
-            });
-          }
-
-          // Missões — atualiza progresso com base no resultado da partida
-          // Partidas jogadas (sempre incrementa, vitória ou derrota)
-          findAndUpdateMission('daily', 'play_games', 1);
-          findAndUpdateMission('weekly', 'play_games', 1);
-
-          // Modo de jogo
-          findAndUpdateMission('weekly', 'play_mode', 1);
-
-          // Apenas em caso de vitória
-          if (won) {
-            // Vitórias
-            findAndUpdateMission('daily', 'win_games', 1);
-            findAndUpdateMission('weekly', 'win_games', 1);
-
-            // Vitória sem falta
-            if (!state.foul) {
-              findAndUpdateMission('daily', 'win_without_foul', 1);
-            }
-
-            // Moedas ganhas
-            if (reward > 0) {
-              findAndUpdateMission('weekly', 'earn_coins', reward);
-            }
-          }
-        } else {
-          console.log('[GameScreen] Skipping rewards: user not logged in, sessionId:', sessionId);
-        }
-
-        // Modal de guest (usa ref para isGuest)
+        // Modal
         if (won) {
           setShowWinModal(true);
         } else {
@@ -201,9 +145,78 @@ export function GameScreen({
     return () => {
       unsubscribe();
       engine.stop();
+      setPendingResult(null);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addCoins, addXP, potentialReward, gameMode, localPlayerNumber]);
+
+  // Processa recompensas quando resultado pendente E sessão disponível
+  useEffect(() => {
+    if (!pendingResult) return;
+    const sessionId = sessionRef.current?.user?.id;
+    if (!sessionId) {
+      console.log('[GameScreen] Pending result but no session yet, waiting... session:', session?.user?.id);
+      return;
+    }
+    const { won, foul, reward } = pendingResult;
+    const currentProfile = profileRef.current;
+
+    console.log('[GameScreen] Processing rewards for', sessionId, 'won:', won);
+
+    const currentGameMode = modeType === 'brazilian' ? 'brazilian' : '8ball';
+
+    if (won) {
+      // Victory Box
+      const winStreak = currentProfile?.stats?.currentWinStreak ?? 0;
+      console.log('[GameScreen] Creating victory box — winStreak:', winStreak, 'mode:', currentGameMode);
+      createBox(null, winStreak, currentGameMode)
+        .then((result) => {
+          if (result) {
+            console.log('[GameScreen] Victory box created:', result);
+          } else {
+            console.warn('[GameScreen] Victory box creation returned null');
+          }
+        })
+        .catch((err) => {
+          console.error('[GameScreen] Victory box creation failed:', err);
+        });
+
+      // Pool Pass Points
+      console.log('[GameScreen] Adding Pool Pass points — mode:', currentGameMode, 'result: win');
+      addPoolPoints(currentGameMode, 'win').catch((err: Error) => {
+        console.error('[GameScreen] Pool Pass points failed:', err);
+      });
+    }
+
+    // Missões — atualiza progresso com base no resultado da partida
+    // Partidas jogadas (sempre incrementa, vitória ou derrota)
+    findAndUpdateMission('daily', 'play_games', 1);
+    findAndUpdateMission('weekly', 'play_games', 1);
+
+    // Modo de jogo
+    findAndUpdateMission('weekly', 'play_mode', 1);
+
+    // Apenas em caso de vitória
+    if (won) {
+      // Vitórias
+      findAndUpdateMission('daily', 'win_games', 1);
+      findAndUpdateMission('weekly', 'win_games', 1);
+
+      // Vitória sem falta
+      if (!foul) {
+        findAndUpdateMission('daily', 'win_without_foul', 1);
+      }
+
+      // Moedas ganhas
+      if (reward > 0) {
+        findAndUpdateMission('weekly', 'earn_coins', reward);
+      }
+    }
+
+    // Limpa pendente para não re-executar
+    setPendingResult(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingResult, createBox, addPoolPoints, findAndUpdateMission, modeType, session?.user?.id]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
