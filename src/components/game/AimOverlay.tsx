@@ -14,6 +14,7 @@ interface AimOverlayProps {
   variant?: 'local' | 'opponent';
   playerType?: 'solid' | 'stripe' | null;
   gameMode?: '8ball' | 'brazilian';
+  cueStrikeActive?: boolean;
 }
 
 interface CollisionInfo {
@@ -344,6 +345,7 @@ export function AimOverlay({
   variant = 'local',
   playerType,
   gameMode = '8ball',
+  cueStrikeActive = false,
 }: AimOverlayProps) {
   const cueBall = balls[0];
   const isVisible = isAiming || showIdleCue;
@@ -524,7 +526,7 @@ export function AimOverlay({
       {/* Cue Stick */}
       <g
         transform={`translate(${cueX}, ${cueY}) rotate(${cueRotation}) scale(-1, 1)`}
-        style={{ transition: 'transform 130ms ease-out' }}
+        style={{ transition: cueStrikeActive ? 'transform 130ms ease-out' : 'none' }}
       >
         {/* Cue shadow */}
         <rect

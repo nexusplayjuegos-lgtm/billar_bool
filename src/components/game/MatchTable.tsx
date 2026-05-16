@@ -12,6 +12,7 @@ interface MatchTableProps {
   power: number;
   isAiming: boolean;
   showIdleCue?: boolean;
+  cueStrikeActive?: boolean;
   isBreakShot?: boolean;
   pocketedBallIds?: number[];
   opponentAim?: { angle: number; power: number } | null;
@@ -28,6 +29,7 @@ export function MatchTable({
   power,
   isAiming,
   showIdleCue,
+  cueStrikeActive = false,
   isBreakShot,
   pocketedBallIds = [],
   opponentAim,
@@ -69,7 +71,7 @@ export function MatchTable({
       <div className="relative" style={{ width: size.width, height: size.height }}>
         <PoolTable balls={balls} className="w-full h-full" tableId={tableId} />
         <PocketedBallRack balls={balls} pocketedBallIds={pocketedBallIds} />
-        <AimOverlay balls={balls} aimAngle={aimAngle} power={power} isAiming={isAiming} showIdleCue={showIdleCue} isBreakShot={isBreakShot} playerType={playerType} gameMode={gameMode} />
+        <AimOverlay balls={balls} aimAngle={aimAngle} power={power} isAiming={isAiming} showIdleCue={showIdleCue} cueStrikeActive={cueStrikeActive} isBreakShot={isBreakShot} playerType={playerType} gameMode={gameMode} />
         {opponentAim && (
           <AimOverlay
             balls={balls}

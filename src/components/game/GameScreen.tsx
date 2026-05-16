@@ -119,6 +119,7 @@ export function GameScreen({
   const [aimAngle, setAimAngle] = useState(0);
   const [power, setPower] = useState(0);
   const [isAiming, setIsAiming] = useState(false);
+  const [cueStrikeActive, setCueStrikeActive] = useState(false);
   const cueStrikeTimeoutRef = useRef<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(30);
   const [showWinModal, setShowWinModal] = useState(false);
@@ -173,6 +174,7 @@ useEffect(() => {
         clearTimeout(cueStrikeTimeoutRef.current);
         cueStrikeTimeoutRef.current = null;
       }
+      setCueStrikeActive(false);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addCoins, addXP, potentialReward, gameMode, localPlayerNumber]);
@@ -367,8 +369,10 @@ useEffect(() => {
       if (cueStrikeTimeoutRef.current) {
         clearTimeout(cueStrikeTimeoutRef.current);
       }
+      setCueStrikeActive(true);
       cueStrikeTimeoutRef.current = window.setTimeout(() => {
         setIsAiming(false);
+        setCueStrikeActive(false);
         cueStrikeTimeoutRef.current = null;
       }, 130);
       return;
@@ -457,6 +461,7 @@ useEffect(() => {
           power={power}
           isAiming={isAiming && canLocalPlayerAct}
           showIdleCue={shouldShowIdleCue}
+          cueStrikeActive={cueStrikeActive}
           isBreakShot={engineState.isBreakShot}
           pocketedBallIds={engineState.pocketedBalls}
           opponentAim={opponentAim}
@@ -745,7 +750,6 @@ useEffect(() => {
     </div>
   );
 }
-
 
 
 
