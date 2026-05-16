@@ -439,25 +439,35 @@ function drawNumberDecal(
   directionY: number
 ) {
   const axis = getRollAxis(directionX, directionY);
-  const surfacePoint = rotateVectorAroundAxis({ x: 0, y: 0, z: 1 }, axis, phase);
-  const decalX = surfacePoint.x * radius * 0.28;
-  const decalY = surfacePoint.y * radius * 0.28;
-  const decalScale = 0.9 + Math.max(0, surfacePoint.z) * 0.1;
+  const decals = [
+    rotateVectorAroundAxis({ x: 0, y: 0, z: 1 }, axis, phase),
+    rotateVectorAroundAxis({ x: 0, y: 0, z: -1 }, axis, phase),
+  ];
 
-  ctx.save();
-  ctx.translate(decalX, decalY);
-  ctx.scale(decalScale, decalScale);
-  ctx.beginPath();
-  ctx.arc(0, 0, radius * 0.43, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
-  ctx.fill();
+  for (const decal of decals) {
+    if (decal.z <= 0.02) continue;
 
-  ctx.fillStyle = '#111111';
-  ctx.font = `bold ${Math.round(radius * 0.6)}px Arial`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(number.toString(), 0, 0);
-  ctx.restore();
+    const visibleDepth = Math.min(1, Math.max(0, decal.z));
+    const decalX = decal.x * radius * 0.58;
+    const decalY = decal.y * radius * 0.58;
+    const decalScale = 0.58 + visibleDepth * 0.42;
+    const decalAlpha = 0.25 + visibleDepth * 0.75;
+
+    ctx.save();
+    ctx.translate(decalX, decalY);
+    ctx.scale(decalScale, decalScale);
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 0.43, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * decalAlpha})`;
+    ctx.fill();
+
+    ctx.fillStyle = `rgba(17, 17, 17, ${decalAlpha})`;
+    ctx.font = `bold ${Math.round(radius * 0.6)}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(number.toString(), 0, 0);
+    ctx.restore();
+  }
 }
 
 interface PocketParticle {
