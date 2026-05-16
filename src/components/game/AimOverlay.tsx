@@ -43,6 +43,7 @@ const FRICTION = 0.97;
 const STOP_THRESHOLD = 0.02;
 const MIN_TARGET_GUIDE_DISTANCE = 8;
 const THIN_CUT_ASSIST_RADIUS = 2;
+const MAX_CUE_POWER_OFFSET = 60;
 const POCKETS = [
   { x: 18, y: 18 },
   { x: 400, y: 18 },
@@ -378,7 +379,7 @@ export function AimOverlay({
 
   // Cue stick position: keep the tip just behind the cue ball at low power,
   // then pull it back visibly as the player charges the shot.
-  const cueTipOffset = 12 + power * 1.05;
+  const cueTipOffset = 12 + (power / 100) * MAX_CUE_POWER_OFFSET;
   const cueDistance = 82 + cueTipOffset;
   const cueX = cueBall.x - Math.cos(aimAngle) * cueDistance;
   const cueY = cueBall.y - Math.sin(aimAngle) * cueDistance;
@@ -523,6 +524,7 @@ export function AimOverlay({
       {/* Cue Stick */}
       <g
         transform={`translate(${cueX}, ${cueY}) rotate(${cueRotation}) scale(-1, 1)`}
+        style={{ transition: 'transform 130ms ease-out' }}
       >
         {/* Cue shadow */}
         <rect

@@ -61,15 +61,23 @@ export function PowerSlider({ value, onChange, onShoot, disabled = false, minSho
     onChange(0);
   }, [minShootPower, onChange, onShoot]);
 
-  const getColor = (v: number) => {
-    if (v < 33) return 'from-green-400 to-green-500';
-    if (v < 66) return 'from-yellow-400 to-yellow-500';
-    return 'from-red-400 to-red-500';
+  const getPowerColor = (v: number): string => {
+    if (v < 30) return '#22c55e';
+    if (v < 70) return '#eab308';
+    return '#ef4444';
   };
+
+  const powerColor = getPowerColor(value);
 
   return (
     <div className={cn('flex flex-col items-center gap-2', disabled && 'opacity-45')}>
-      <span className="text-white/60 text-xs font-medium">FORÇA</span>
+      <motion.span
+        animate={{ scale: isDragging ? 1.12 : 1 }}
+        className="rounded-full border border-slate-700/70 bg-slate-950/85 px-2 py-0.5 text-xs font-black"
+        style={{ color: powerColor }}
+      >
+        {value}%
+      </motion.span>
 
       <div
         ref={trackRef}
@@ -79,7 +87,7 @@ export function PowerSlider({ value, onChange, onShoot, disabled = false, minSho
         aria-valuemax={100}
         aria-valuenow={Math.round(value)}
         className={cn(
-          'relative h-40 w-12 touch-none overflow-hidden rounded-full border border-slate-700 bg-slate-800',
+          'relative h-[150px] w-[30px] touch-none overflow-hidden rounded-lg border border-slate-600/80 bg-[#1a1a2e] shadow-xl shadow-black/30',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer active:scale-95'
         )}
         onPointerDown={handlePointerDown}
@@ -87,38 +95,23 @@ export function PowerSlider({ value, onChange, onShoot, disabled = false, minSho
         onPointerUp={finishDrag}
         onPointerCancel={finishDrag}
       >
-        {/* Barra de fundo */}
-        <div className="absolute inset-x-2 top-2 bottom-2 bg-slate-900 rounded-full" />
+        <div className="absolute inset-1 rounded-md bg-slate-950/70" />
 
-        {/* Barra de poder */}
         <motion.div
-          className={cn(
-            'absolute inset-x-2 bottom-2 rounded-full bg-gradient-to-t',
-            getColor(value)
-          )}
+          className="absolute inset-x-1 bottom-1 rounded-md"
           style={{ height: `${value}%` }}
-          animate={{ height: `${value}%` }}
-          transition={{ type: 'spring', stiffness: 300 }}
+          animate={{
+            height: `${value}%`,
+            background: `linear-gradient(to top, ${powerColor}, rgba(255,255,255,0.88))`,
+            boxShadow: `0 0 16px ${powerColor}66`,
+          }}
+          transition={{ type: 'spring', stiffness: 320, damping: 28 }}
         />
 
-        {/* Marcadores */}
-        <div className="absolute inset-x-0 top-1/4 h-px bg-slate-700/50" />
-        <div className="absolute inset-x-0 top-2/4 h-px bg-slate-700/50" />
-        <div className="absolute inset-x-0 top-3/4 h-px bg-slate-700/50" />
+        <div className="absolute inset-x-0 top-[30%] h-px bg-white/15" />
+        <div className="absolute inset-x-0 top-[70%] h-px bg-white/15" />
+        <div className="absolute inset-x-0 bottom-1 top-1 rounded-lg ring-1 ring-inset ring-white/10" />
       </div>
-
-      {/* Valor */}
-      <motion.span
-        animate={{ scale: isDragging ? 1.2 : 1 }}
-        className={cn(
-          'text-lg font-bold',
-          value < 33 && 'text-green-400',
-          value >= 33 && value < 66 && 'text-yellow-400',
-          value >= 66 && 'text-red-400'
-        )}
-      >
-        {value}%
-      </motion.span>
     </div>
   );
 }

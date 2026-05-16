@@ -119,6 +119,7 @@ export function GameScreen({
   const [aimAngle, setAimAngle] = useState(0);
   const [power, setPower] = useState(0);
   const [isAiming, setIsAiming] = useState(false);
+  const cueStrikeTimeoutRef = useRef<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(30);
   const [showWinModal, setShowWinModal] = useState(false);
   const [showLoseModal, setShowLoseModal] = useState(false);
@@ -168,6 +169,10 @@ useEffect(() => {
       unsubscribe();
       engine.stop();
       setPendingResult(null);
+      if (cueStrikeTimeoutRef.current) {
+        clearTimeout(cueStrikeTimeoutRef.current);
+        cueStrikeTimeoutRef.current = null;
+      }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addCoins, addXP, potentialReward, gameMode, localPlayerNumber]);
@@ -359,6 +364,14 @@ useEffect(() => {
       }
       setPower(0);
       setTimeLeft(30);
+      if (cueStrikeTimeoutRef.current) {
+        clearTimeout(cueStrikeTimeoutRef.current);
+      }
+      cueStrikeTimeoutRef.current = window.setTimeout(() => {
+        setIsAiming(false);
+        cueStrikeTimeoutRef.current = null;
+      }, 130);
+      return;
     } else {
       setPower(0);
     }
@@ -732,8 +745,6 @@ useEffect(() => {
     </div>
   );
 }
-
-
 
 
 
