@@ -164,7 +164,7 @@ export const useUserStore = create<UserState>()(
 
     const { data: progress } = await supabase
       .from('player_season_progress')
-      .select('id, pool_points, current_rank')
+      .select('pool_points, current_rank')
       .eq('profile_id', session.user.id)
       .eq('season_id', seasonId)
       .single();
@@ -177,7 +177,8 @@ export const useUserStore = create<UserState>()(
     await supabase
       .from('player_season_progress')
       .update({ pool_points: newPoints, current_rank: newRank })
-      .eq('id', progress.id);
+      .eq('profile_id', session.user.id)
+      .eq('season_id', seasonId);
   },
 
   updateStats: async (result: 'win' | 'loss', coinsWon: number = 0) => {

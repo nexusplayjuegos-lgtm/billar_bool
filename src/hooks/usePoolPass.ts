@@ -205,7 +205,8 @@ export function usePoolPass() {
             pool_points: newPoints,
             current_rank: newRank,
           })
-          .eq('id', state.progress.id);
+          .eq('profile_id', userId)
+          .eq('season_id', state.season.id);
 
         if (error) {
           console.error('[usePoolPass] Erro ao adicionar PP:', error);

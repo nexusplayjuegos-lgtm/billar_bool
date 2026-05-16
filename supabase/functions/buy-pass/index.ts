@@ -116,7 +116,8 @@ serve(async (req: Request) => {
   const { error: updateError } = await serviceClient
     .from('player_season_progress')
     .update(updates)
-    .eq('id', progress.id);
+    .eq('profile_id', user.id)
+    .eq('season_id', season_id);
 
   if (updateError) {
     console.error('[buy-pass] Erro ao atualizar progresso:', updateError);
