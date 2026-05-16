@@ -118,6 +118,14 @@ export function GameScreen({
   const router = useRouter();
   const previousBallsMovingRef = useRef<boolean | null>(null);
   const gameResultHandledRef = useRef(false);
+	
+
+// Resetar quando nova partida inicia (engineState.gameOver volta a false)
+useEffect(() => {
+  if (engineState && !engineState.gameOver) {
+    gameResultHandledRef.current = false;
+  }
+}, [engineState?.gameOver]);
 
   useEffect(() => {
     gameResultHandledRef.current = false;
@@ -640,3 +648,20 @@ export function GameScreen({
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

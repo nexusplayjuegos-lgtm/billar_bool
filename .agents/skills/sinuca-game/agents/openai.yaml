@@ -1,0 +1,7 @@
+interface:
+  display_name: "Bool Sinuca Premiere"
+  short_description: "Project workflow for the sinuca game"
+  default_prompt: "Use $sinuca-game to work safely on the Bool Sinuca Premiere project."
+
+policy:
+  allow_implicit_invocation: true
