@@ -231,7 +231,7 @@ export function PoolTable({ balls, className, tableId = 'classic-green' }: PoolT
 }
 
 function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
-  const { x, y, radius, color, number, isStriped, vx, vy, rotation } = ball;
+  const { x, y, radius, color, number, isStriped, vx, vy, rotation, rollX = 0, rollY = 0 } = ball;
   const wobble = ball.wobble ?? 0;
   const wobblePhase = ball.wobblePhase ?? 0;
   const drawX = x + Math.sin(wobblePhase) * wobble;
@@ -266,10 +266,8 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
     const dirX = vx / speed;
     const dirY = vy / speed;
     // Ciclo da textura = circunferência da bola (2πr)
-    const circumference = radius * Math.PI * 2;
-    const scrollDist = rotation % circumference;
-    scrollX = dirX * scrollDist;
-    scrollY = dirY * scrollDist;
+    scrollX = rollX * radius * 0.8;
+    scrollY = rollY * radius * 0.8;
   }
 
   ctx.save();
@@ -316,10 +314,7 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   // ── Faixa branca para bolas listradas (rola com o movimento) ──
   if (isStriped && number && number > 8) {
     const circumference = radius * Math.PI * 2;
-    // Offset cíclico da faixa na direcção do movimento
-    const stripeOffset = shouldAnimate
-      ? (rotation % circumference) * (vy / (speed || 1))
-      : 0;
+    const stripeOffset = shouldAnimate ? rollY * radius : 0;
     const stripeH = radius * 0.65;
 
     ctx.fillStyle = '#ffffff';
@@ -352,9 +347,16 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   // ── LAYER 2: Número da bola (rotaciona com o rolamento) ──────────
   ctx.save();
   ctx.translate(drawX, drawY);
-  ctx.rotate(rotation);
 
   if (number && number > 0) {
+    const rollMagnitude = Math.hypot(rollX, rollY);
+    const rollDirection = Math.atan2(rollY, rollX);
+    const labelOrbit = Math.sin(rollMagnitude) * radius * 0.18;
+    const labelX = Math.cos(rollDirection + Math.PI / 2) * labelOrbit;
+    const labelY = Math.sin(rollDirection + Math.PI / 2) * labelOrbit;
+    ctx.translate(labelX, labelY);
+    ctx.rotate(rollX - rollY);
+
     ctx.beginPath();
     ctx.arc(0, 0, radius * 0.5, 0, Math.PI * 2);
     ctx.fillStyle = 'white';

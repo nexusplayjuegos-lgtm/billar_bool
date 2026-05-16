@@ -435,6 +435,7 @@ class GameEngine {
 
     let anyMoving = false;
     let wallHit = false;
+    const frameStartPositions = this.state.balls.map((ball) => ({ x: ball.x, y: ball.y }));
 
     for (let substep = 0; substep < PHYSICS_SUBSTEPS; substep++) {
       const previousPositions = this.state.balls.map((ball) => ({ x: ball.x, y: ball.y }));
@@ -582,7 +583,8 @@ class GameEngine {
       }
     }
 
-    for (const ball of this.state.balls) {
+    for (let index = 0; index < this.state.balls.length; index++) {
+      const ball = this.state.balls[index];
       if (ball.inPocket) continue;
       const speed = Math.hypot(ball.vx, ball.vy);
       if (speed < STOP_THRESHOLD) {
@@ -594,9 +596,14 @@ class GameEngine {
         ball.vy = (ball.vy / speed) * speed * friction;
       }
 
-      const distance = Math.hypot(ball.vx, ball.vy);
-      if (distance > 0.001) {
-        ball.rotation -= distance / ball.radius;
+      const start = frameStartPositions[index];
+      const traveledX = start ? ball.x - start.x : 0;
+      const traveledY = start ? ball.y - start.y : 0;
+      const traveledDistance = Math.hypot(traveledX, traveledY);
+      if (traveledDistance > 0.001) {
+        ball.rollX = (ball.rollX ?? 0) + traveledX / ball.radius;
+        ball.rollY = (ball.rollY ?? 0) + traveledY / ball.radius;
+        ball.rotation = Math.hypot(ball.rollX, ball.rollY);
       }
       if ((ball.wobble ?? 0) > 0.01) {
         ball.wobblePhase = (ball.wobblePhase ?? 0) + 0.35;
