@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Gamepad2, ShoppingCart, Users, Trophy, Crown, Package } from 'lucide-react';
+import { Award, Gamepad2, ShoppingCart, Users, Trophy, Crown, Package } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,7 @@ import { useLocale } from '@/hooks';
 const navItems = [
   { id: 'play', icon: Gamepad2, href: '/', label: 'Play' },
   { id: 'poolpass', icon: Crown, href: '/poolpass', label: 'Pass' },
+  { id: 'achievements', icon: Award, href: '/achievements', label: 'Achiev' },
   { id: 'victorybox', icon: Package, href: '/victorybox', label: 'Boxes' },
   { id: 'shop', icon: ShoppingCart, href: '/shop', label: 'Shop', badge: 3 },
   { id: 'friends', icon: Users, href: '/friends', label: 'Friends', badge: 5 },
@@ -41,7 +42,7 @@ export function MobileBottomNav() {
             <motion.div
               whileTap={{ scale: 0.9 }}
               className={cn(
-                'flex flex-col items-center justify-center w-16 h-14 rounded-xl transition-all',
+                'flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-all',
                 active
                   ? 'bg-gradient-to-br from-blue-600/30 to-purple-600/30 border border-blue-500/30'
                   : 'hover:bg-slate-800/50'

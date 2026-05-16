@@ -168,3 +168,5 @@ export * from './victoryBox';
 export * from './shop';
 // Re-export Mission types
 export * from './missions';
+// Re-export Achievement types
+export * from './achievements';

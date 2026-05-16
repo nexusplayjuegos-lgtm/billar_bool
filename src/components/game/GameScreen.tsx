@@ -5,16 +5,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Share2 } from 'lucide-react';
+import { Award, Share2 } from 'lucide-react';
 import { useLocale } from '@/hooks';
 import { gameEngine, createGameEngine, EngineState } from '@/lib/engine/gameEngine';
 import { useVictoryBoxes } from '@/hooks/useVictoryBoxes';
 import { usePoolPass } from '@/hooks/usePoolPass';
 import { useMissions } from '@/hooks/useMissions';
+import { useAchievements } from '@/hooks/useAchievements';
 import { playTick, unlockAudio } from '@/lib/audio/gameAudio';
 import { useGameStore, useUserStore } from '@/lib/store';
 import { MatchTable } from './MatchTable';
 import { Confetti } from './Confetti';
+import type { AchievementProgress, AchievementUpdateResult } from '@/types';
 
 const MIN_SHOOT_POWER = 8;
 
@@ -77,6 +79,7 @@ export function GameScreen({
   const { createBox } = useVictoryBoxes();
   const { addPoolPoints } = usePoolPass();
   const { daily, weekly, updateProgress } = useMissions();
+  const { updateAchievement, claimAchievement } = useAchievements();
 
   // Refs para evitar re-subscrição do engine quando valores mudam
   const sessionRef = useRef(session);
@@ -106,6 +109,12 @@ export function GameScreen({
     [updateProgress]
   );
 
+  const showUnlockedAchievement = useCallback((result: AchievementUpdateResult | null) => {
+    if (result?.completed && result.achievement) {
+      setUnlockedAchievement((current) => current ?? result.achievement);
+    }
+  }, []);
+
   const [engineState, setEngineState] = useState<EngineState | null>(null);
   const [aimAngle, setAimAngle] = useState(0);
   const [power, setPower] = useState(0);
@@ -114,11 +123,16 @@ export function GameScreen({
   const [showWinModal, setShowWinModal] = useState(false);
   const [showLoseModal, setShowLoseModal] = useState(false);
   const [showGuestPopup, setShowGuestPopup] = useState(false);
+  const [unlockedAchievement, setUnlockedAchievement] = useState<AchievementProgress | null>(null);
   const [pendingResult, setPendingResult] = useState<{ won: boolean; foul: boolean; reward: number } | null>(null);
   const router = useRouter();
   const previousBallsMovingRef = useRef<boolean | null>(null);
   const gameResultHandledRef = useRef(false);
+  const achievementWinStreakRef = useRef(profile.stats?.currentWinStreak ?? 0);
 	
+  useEffect(() => {
+    achievementWinStreakRef.current = profile.stats?.currentWinStreak ?? achievementWinStreakRef.current;
+  }, [profile.stats?.currentWinStreak]);
 
 // Resetar quando nova partida inicia (engineState.gameOver volta a false)
 useEffect(() => {
@@ -194,6 +208,21 @@ useEffect(() => {
       addPoolPoints(currentGameMode, 'win').catch((err: Error) => {
         console.error('[GameScreen] Pool Pass points failed:', err);
       });
+
+      // Conquistas permanentes
+      achievementWinStreakRef.current += 1;
+      const projectedWinStreak = achievementWinStreakRef.current;
+      void updateAchievement('first_win').then(showUnlockedAchievement);
+      void updateAchievement('total_wins_100').then(showUnlockedAchievement);
+      void updateAchievement('total_wins_1000').then(showUnlockedAchievement);
+      void updateAchievement('win_streak_3', { value: projectedWinStreak, mode: 'max' }).then(showUnlockedAchievement);
+      void updateAchievement('win_streak_10', { value: projectedWinStreak, mode: 'max' }).then(showUnlockedAchievement);
+
+      if (!foul) {
+        void updateAchievement('no_foul_win').then(showUnlockedAchievement);
+      }
+    } else {
+      achievementWinStreakRef.current = 0;
     }
 
     // Missões — atualiza progresso com base no resultado da partida
@@ -224,7 +253,7 @@ useEffect(() => {
     // Limpa pendente para não re-executar
     setPendingResult(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingResult, createBox, addPoolPoints, findAndUpdateMission, modeType, session?.user?.id]);
+  }, [pendingResult, createBox, addPoolPoints, findAndUpdateMission, modeType, session?.user?.id, updateAchievement, showUnlockedAchievement]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -325,13 +354,16 @@ useEffect(() => {
       } else {
         engine.shoot(shotPower, aimAngle, { x: 0, y: 0 });
       }
+      if (shotPower >= 100) {
+        void updateAchievement('power_100').then(showUnlockedAchievement);
+      }
       setPower(0);
       setTimeLeft(30);
     } else {
       setPower(0);
     }
     setIsAiming(false);
-  }, [power, aimAngle, customOnShoot, engine]);
+  }, [power, aimAngle, customOnShoot, engine, updateAchievement, showUnlockedAchievement]);
 
   const handlePlaceCueBall = useCallback((x: number, y: number) => {
     void unlockAudio();
@@ -369,6 +401,7 @@ useEffect(() => {
     } else {
       await navigator.clipboard.writeText(text);
     }
+    void updateAchievement('share_result').then(showUnlockedAchievement);
   };
 
   if (!engineState) {
@@ -597,6 +630,57 @@ useEffect(() => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Achievement Unlock Modal */}
+      <AnimatePresence>
+        {unlockedAchievement && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 18 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 18 }}
+              transition={{ type: 'spring', damping: 22, stiffness: 280 }}
+              className="w-full max-w-sm rounded-2xl border border-amber-400/40 bg-slate-900 p-6 text-center shadow-2xl shadow-amber-500/10"
+            >
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/20">
+                <Award className="h-8 w-8 text-amber-300" />
+              </div>
+              <p className="mb-1 text-xs font-black uppercase tracking-wide text-amber-300">
+                Conquista desbloqueada
+              </p>
+              <h2 className="mb-2 text-xl font-black text-white">{unlockedAchievement.title}</h2>
+              <p className="mb-4 text-sm text-slate-400">{unlockedAchievement.description}</p>
+              <div className="mb-5 flex flex-wrap justify-center gap-3 text-xs font-bold">
+                {unlockedAchievement.rewardCoins > 0 && <span className="text-amber-300">+{unlockedAchievement.rewardCoins} moedas</span>}
+                {unlockedAchievement.rewardCash > 0 && <span className="text-cyan-300">+{unlockedAchievement.rewardCash} cash</span>}
+                {unlockedAchievement.rewardXp > 0 && <span className="text-violet-300">+{unlockedAchievement.rewardXp} XP</span>}
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    void claimAchievement(unlockedAchievement.code).finally(() => setUnlockedAchievement(null));
+                  }}
+                  className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-3 text-sm font-black text-white"
+                >
+                  Coletar
+                </button>
+                <button
+                  onClick={() => setUnlockedAchievement(null)}
+                  className="rounded-xl bg-slate-800 px-4 py-3 text-sm font-bold text-slate-300"
+                >
+                  Depois
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Guest Progress Popup */}
       <AnimatePresence>
         {showGuestPopup && (
@@ -648,11 +732,6 @@ useEffect(() => {
     </div>
   );
 }
-
-
-
-
-
 
 
 

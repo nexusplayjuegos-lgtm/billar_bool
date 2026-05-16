@@ -392,7 +392,12 @@ export function AimOverlay({
   const cueColors = getCueColors();
   const isOpponent = variant === 'opponent';
   const whiteLine = isOpponent ? 'rgba(147, 197, 253, 0.75)' : 'url(#aimLineGrad)';
+  const aimTipFill = isOpponent ? 'rgba(147, 197, 253, 0.75)' : 'rgba(255, 255, 255, 0.8)';
+  const aimTipStroke = isOpponent ? 'rgba(191, 219, 254, 0.9)' : 'rgba(255, 255, 255, 0.9)';
   const yellowLine = isOpponent ? 'rgba(96, 165, 250, 0.75)' : 'rgba(255, 196, 45, 0.9)';
+  const cueAimTip = collision.cueSegments.length > 0
+    ? collision.cueSegments[collision.cueSegments.length - 1].to
+    : null;
 
   // Validar se bola alvo é válida (apenas para mira local)
   const isValidTarget = isValidTargetBall(
@@ -502,6 +507,18 @@ export function AimOverlay({
           opacity={segment.isBounce ? '0.68' : '1'}
         />
       ))}
+
+      {/* Aim tip indicator */}
+      {isAiming && cueAimTip && (
+        <circle
+          cx={cueAimTip.x}
+          cy={cueAimTip.y}
+          r={isOpponent ? '6.5' : '8'}
+          fill={aimTipFill}
+          stroke={aimTipStroke}
+          strokeWidth="2"
+        />
+      )}
 
       {/* Cue Stick */}
       <g
