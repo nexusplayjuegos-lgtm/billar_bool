@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { MOCK_USER } from '@/mocks/data';
 
 export const GUEST_ACCOUNT_STORAGE_KEY = 'bool_guest_account';
@@ -89,6 +89,22 @@ function persistGuest(account: GuestAccount): GuestAccount {
   return account;
 }
 
+export function getAuthDisplayName(user: User | null): string {
+  if (!user) return 'Jogador';
+
+  const metadata = user.user_metadata;
+  const metadataName =
+    typeof metadata.full_name === 'string'
+      ? metadata.full_name
+      : typeof metadata.name === 'string'
+        ? metadata.name
+        : typeof metadata.user_name === 'string'
+          ? metadata.user_name
+          : '';
+
+  return metadataName.trim() || user.email || 'Jogador';
+}
+
 export const GuestAccountManager = {
   create(): GuestAccount {
     const existing = this.get();
@@ -136,19 +152,20 @@ export const GuestAccountManager = {
     return this.get() !== null;
   },
 
-  async migrateToAuth(userId: string, supabase: SupabaseClient): Promise<void> {
+  async migrateToAuth(userId: string, supabase: SupabaseClient): Promise<boolean> {
     const guest = this.get();
-    if (!guest) return;
+    if (!guest) return false;
 
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     const email = user?.email ?? `${userId}@guest.bool.local`;
+    const username = getAuthDisplayName(user);
 
     const { error } = await supabase.from('profiles').upsert({
       id: userId,
-      username: guest.username,
+      username,
       email,
       level: guest.level,
       xp: guest.xp,
@@ -169,5 +186,6 @@ export const GuestAccountManager = {
     if (typeof document !== 'undefined') {
       document.cookie = 'bool_guest=; path=/; max-age=0; SameSite=Strict';
     }
+    return true;
   },
 };

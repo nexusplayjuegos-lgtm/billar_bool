@@ -4,7 +4,7 @@ import type { Provider, Session } from '@supabase/supabase-js';
 import type { Price } from '@/types';
 import { supabase, fetchProfile } from '../supabase/client';
 import { MOCK_USER } from '@/mocks/data';
-import { GuestAccountManager, type GuestAccount } from '@/lib/auth/guestAccount';
+import { GuestAccountManager, getAuthDisplayName, type GuestAccount } from '@/lib/auth/guestAccount';
 
 const TABLE_ID_ALIASES: Record<string, string> = {
   table_classic_green: 'classic-green',
@@ -118,6 +118,18 @@ function adaptGuestProfile(guest: GuestAccount): UserProfile {
     social: guest.social,
     settings: guest.settings,
   };
+}
+
+function createAuthFallbackProfile(session: Session): UserProfile {
+  return {
+    ...defaultProfile,
+    id: session.user.id,
+    username: getAuthDisplayName(session.user),
+  };
+}
+
+function isGuestDisplayName(username: string): boolean {
+  return username.startsWith('Jogador#') || username.startsWith('Convidado_');
 }
 
 function persistGuestProfile(profile: UserProfile, isGuest: boolean): void {
@@ -322,7 +334,11 @@ export const useUserStore = create<UserState>()(
           if (data.session?.user.id) {
             await GuestAccountManager.migrateToAuth(data.session.user.id, supabase);
           }
-          set({ session: data.session, isGuest: false });
+          set({
+            session: data.session,
+            isGuest: false,
+            profile: data.session ? createAuthFallbackProfile(data.session) : defaultProfile,
+          });
           if (data.session && typeof window !== 'undefined') {
             document.cookie = 'bool_auth=1; path=/; max-age=604800; SameSite=Strict';
           }
@@ -342,10 +358,11 @@ export const useUserStore = create<UserState>()(
 
           await GuestAccountManager.migrateToAuth(data.user.id, supabase);
           const profile = await fetchProfile(data.user.id);
+          const authFallback = createAuthFallbackProfile(data.session);
           set({
             session: data.session,
             isGuest: false,
-            profile: profile ? adaptProfile(profile) : defaultProfile,
+            profile: profile ? adaptProfile(profile) : authFallback,
           });
           if (typeof window !== 'undefined') {
             document.cookie = 'bool_auth=1; path=/; max-age=604800; SameSite=Strict';
@@ -407,16 +424,25 @@ export const useUserStore = create<UserState>()(
           }
 
           console.log('[userStore] Sessão encontrada, userId:', session.user.id);
-          set({ session, isGuest: false });
+          const authFallback = createAuthFallbackProfile(session);
+          set({ session, isGuest: false, profile: authFallback });
           await GuestAccountManager.migrateToAuth(session.user.id, supabase);
 
           if (typeof window !== 'undefined') {
             document.cookie = 'bool_auth=1; path=/; max-age=604800; SameSite=Strict';
+            document.cookie = 'bool_guest=; path=/; max-age=0; SameSite=Strict';
           }
 
           const profile = await fetchProfile(session.user.id);
           console.log('[userStore] Profile do banco:', profile ? 'encontrado' : 'não encontrado');
-          if (profile) set({ profile: adaptProfile(profile) });
+          if (profile) {
+            const authName = getAuthDisplayName(session.user);
+            const shouldReplaceGuestName = isGuestDisplayName(profile.username) && authName !== 'Jogador';
+            if (shouldReplaceGuestName) {
+              await supabase.from('profiles').update({ username: authName }).eq('id', session.user.id);
+            }
+            set({ profile: adaptProfile({ ...profile, username: shouldReplaceGuestName ? authName : profile.username }) });
+          }
         } catch (err) {
           console.error('[userStore] Erro em loadSession:', err);
         } finally {
@@ -430,8 +456,9 @@ export const useUserStore = create<UserState>()(
         if (!session) return;
         await GuestAccountManager.migrateToAuth(session.user.id, supabase);
         const profile = await fetchProfile(session.user.id);
+        const authFallback = createAuthFallbackProfile(session);
         set({
-          profile: profile ? adaptProfile(profile) : defaultProfile,
+          profile: profile ? adaptProfile(profile) : authFallback,
           isGuest: false,
         });
         if (typeof window !== 'undefined') {

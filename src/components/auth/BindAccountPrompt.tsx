@@ -11,18 +11,18 @@ const BIND_PROMPT_STORAGE_KEY = 'bool_bind_prompted';
 export function BindAccountPrompt() {
   const router = useRouter();
   const { locale } = useLocale();
-  const { isGuest, profile } = useUserStore();
+  const { isGuest, profile, session } = useUserStore();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!isGuest || profile.stats.totalGames < 3) {
+    if (session || !isGuest || profile.stats.totalGames < 3) {
       setVisible(false);
       return;
     }
 
     const prompted = window.localStorage.getItem(BIND_PROMPT_STORAGE_KEY);
     setVisible(prompted !== '1');
-  }, [isGuest, profile.stats.totalGames]);
+  }, [isGuest, profile.stats.totalGames, session]);
 
   const dismiss = () => {
     window.localStorage.setItem(BIND_PROMPT_STORAGE_KEY, '1');

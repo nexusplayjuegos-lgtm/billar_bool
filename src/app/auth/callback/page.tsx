@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { useUserStore } from '@/lib/store/userStore';
+import { GuestAccountManager } from '@/lib/auth/guestAccount';
 
 function getRedirectLocale(): string {
   if (typeof window === 'undefined') return 'pt';
@@ -30,6 +31,15 @@ function AuthCallbackContent() {
           router.replace(`/${locale}/login?error=${encodeURIComponent(error.message)}`);
           return;
         }
+      }
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session?.user.id && GuestAccountManager.exists()) {
+        setMessage('Salvando seu progresso...');
+        await GuestAccountManager.migrateToAuth(session.user.id, supabase);
       }
 
       await loadSession();
