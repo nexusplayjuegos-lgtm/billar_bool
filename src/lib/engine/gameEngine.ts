@@ -603,7 +603,10 @@ class GameEngine {
       if (traveledDistance > 0.001) {
         ball.rollX = (ball.rollX ?? 0) + traveledX / ball.radius;
         ball.rollY = (ball.rollY ?? 0) + traveledY / ball.radius;
-        ball.rotation = Math.hypot(ball.rollX, ball.rollY);
+        ball.rollPhase = (ball.rollPhase ?? 0) + traveledDistance / ball.radius;
+        ball.rollDirX = traveledX / traveledDistance;
+        ball.rollDirY = traveledY / traveledDistance;
+        ball.rotation = ball.rollPhase;
       }
       if ((ball.wobble ?? 0) > 0.01) {
         ball.wobblePhase = (ball.wobblePhase ?? 0) + 0.35;

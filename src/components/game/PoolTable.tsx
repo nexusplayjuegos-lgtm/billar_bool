@@ -231,13 +231,29 @@ export function PoolTable({ balls, className, tableId = 'classic-green' }: PoolT
 }
 
 function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
-  const { x, y, radius, color, number, isStriped, rollX = 0, rollY = 0 } = ball;
+  const {
+    x,
+    y,
+    radius,
+    color,
+    number,
+    isStriped,
+    rollX = 0,
+    rollY = 0,
+    rollPhase,
+    rollDirX,
+    rollDirY,
+  } = ball;
   const wobble = ball.wobble ?? 0;
   const wobblePhase = ball.wobblePhase ?? 0;
   const drawX = x + Math.sin(wobblePhase) * wobble;
   const drawY = y + Math.cos(wobblePhase * 1.3) * wobble;
-  const printX = -Math.sin(rollX) * radius * 0.18;
-  const printY = -Math.sin(rollY) * radius * 0.18;
+  const fallbackRollLength = Math.hypot(rollX, rollY);
+  const phase = rollPhase ?? fallbackRollLength;
+  const dirLength = Math.hypot(rollDirX ?? 0, rollDirY ?? 0);
+  const fallbackDirLength = fallbackRollLength || 1;
+  const directionX = dirLength > 0 ? (rollDirX ?? 1) / dirLength : rollX / fallbackDirLength;
+  const directionY = dirLength > 0 ? (rollDirY ?? 0) / dirLength : rollY / fallbackDirLength;
 
   // ── Sombra ──────────────────────────────────────────────────────
   ctx.save();
@@ -263,8 +279,8 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   if (number === 0) {
     // Bola branca
     const g = ctx.createRadialGradient(
-      printX * 0.25 - radius * 0.2,
-      printY * 0.25 - radius * 0.2,
+      -radius * 0.2,
+      -radius * 0.2,
       0,
       0, 0, radius
     );
@@ -294,42 +310,28 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
 
   // ── Faixa branca para bolas listradas (rola com o movimento) ──
   if (isStriped && number && number > 8) {
-    const stripeCenterY = -Math.sin(rollY) * radius * 0.14;
-    const stripeTilt = -Math.sin(rollX) * 0.14;
-    const stripeHeight = radius * (0.56 + Math.abs(Math.cos(rollY)) * 0.08);
-
-    ctx.save();
-    ctx.rotate(stripeTilt);
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.ellipse(
-      0,
-      stripeCenterY,
-      radius * 1.12,
-      stripeHeight,
-      0,
-      0,
-      Math.PI * 2
-    );
+    ctx.ellipse(0, 0, radius * 1.12, radius * 0.62, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.restore();
   }
 
   if (number && number > 0) {
     ctx.save();
-    ctx.translate(printX, printY);
     ctx.beginPath();
-    ctx.arc(0, 0, radius * 0.46, 0, Math.PI * 2);
+    ctx.arc(0, 0, radius * 0.44, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
     ctx.fill();
 
     ctx.fillStyle = '#111111';
-    ctx.font = `bold ${Math.round(radius * 0.64)}px Arial`;
+    ctx.font = `bold ${Math.round(radius * 0.6)}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(number.toString(), 0, 0);
     ctx.restore();
   }
+
+  drawRollingSurface(ctx, radius, phase, directionX, directionY);
 
   // ── Overlay de sombra esférica (FIXO — dá curvatura 3D) ──
   const sphereShade = ctx.createRadialGradient(
@@ -373,6 +375,68 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   ctx.arc(-radius * 0.33, -radius * 0.33, radius * 0.16, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
   ctx.fill();
+
+  ctx.restore();
+}
+
+function drawRollingSurface(
+  ctx: CanvasRenderingContext2D,
+  radius: number,
+  phase: number,
+  directionX: number,
+  directionY: number
+) {
+  if (phase <= 0) return;
+
+  const bandSpacing = radius * 1.2;
+  const wrapped = ((phase * radius) % bandSpacing + bandSpacing) % bandSpacing;
+  const normalX = -directionY;
+  const normalY = directionX;
+
+  ctx.save();
+  ctx.globalAlpha = 0.16;
+  ctx.lineCap = 'round';
+
+  for (let i = -2; i <= 2; i++) {
+    const offset = i * bandSpacing + wrapped - bandSpacing;
+    const centerX = normalX * offset;
+    const centerY = normalY * offset;
+    const tangentX = directionX * radius * 1.35;
+    const tangentY = directionY * radius * 1.35;
+
+    const gradient = ctx.createLinearGradient(
+      centerX - tangentX,
+      centerY - tangentY,
+      centerX + tangentX,
+      centerY + tangentY
+    );
+    gradient.addColorStop(0, 'rgba(255,255,255,0)');
+    gradient.addColorStop(0.5, 'rgba(255,255,255,0.45)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+
+    ctx.beginPath();
+    ctx.moveTo(centerX - tangentX, centerY - tangentY);
+    ctx.lineTo(centerX + tangentX, centerY + tangentY);
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = radius * 0.12;
+    ctx.stroke();
+  }
+
+  ctx.globalAlpha = 0.1;
+  for (let i = -1; i <= 1; i++) {
+    const offset = i * bandSpacing + wrapped - bandSpacing * 0.5;
+    const centerX = normalX * offset;
+    const centerY = normalY * offset;
+    const tangentX = directionX * radius * 1.1;
+    const tangentY = directionY * radius * 1.1;
+
+    ctx.beginPath();
+    ctx.moveTo(centerX - tangentX, centerY - tangentY);
+    ctx.lineTo(centerX + tangentX, centerY + tangentY);
+    ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+    ctx.lineWidth = radius * 0.08;
+    ctx.stroke();
+  }
 
   ctx.restore();
 }

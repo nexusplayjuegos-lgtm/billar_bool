@@ -147,6 +147,9 @@ export interface Ball {
   rotation: number;
   rollX?: number;
   rollY?: number;
+  rollPhase?: number;
+  rollDirX?: number;
+  rollDirY?: number;
   wobble?: number;
   wobblePhase?: number;
 }
