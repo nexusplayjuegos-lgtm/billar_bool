@@ -23,7 +23,7 @@ export function PowerSlider({ value, onChange, onShoot, disabled = false, minSho
       const track = trackRef.current;
       if (!track) return;
       const rect = track.getBoundingClientRect();
-      const nextValue = Math.round(Math.max(0, Math.min(1, (rect.bottom - clientY) / rect.height)) * 100);
+      const nextValue = Math.round(Math.max(0, Math.min(1, (clientY - rect.top) / rect.height)) * 100);
       liveValueRef.current = nextValue;
       onChange(nextValue);
     },
