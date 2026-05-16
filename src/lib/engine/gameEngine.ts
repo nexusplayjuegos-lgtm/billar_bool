@@ -10,16 +10,18 @@ const WALL_LEFT = 28;
 const WALL_RIGHT = 772;
 const WALL_TOP = 28;
 const WALL_BOTTOM = 372;
-const FRICTION = 0.97;
+const FRICTION = 0.985;
 const WALL_RESTITUTION = 0.80;
 const BALL_RESTITUTION = 0.94;
-const STOP_THRESHOLD = 0.02;
+const STOP_THRESHOLD = 0.15;
 const POCKET_RADIUS = 20;
 const SHOT_SPEED_SCALE = 0.48;
 const COLLISION_PASSES = 2;
 const MIN_COLLISION_SPEED = 0.02;
 const PHYSICS_SUBSTEPS = 2;
 const THIN_CUT_ASSIST_RADIUS = 2;
+const MAX_WOBBLE = 1.5;
+const WOBBLE_DECAY = 0.92;
 
 interface Position {
   x: number;
@@ -446,21 +448,33 @@ class GameEngine {
       for (const ball of this.state.balls) {
         if (ball.inPocket) continue;
         if (ball.x < WALL_LEFT) {
+          const impactForce = Math.abs(ball.vx);
           ball.vx = -ball.vx * WALL_RESTITUTION;
           ball.x = WALL_LEFT;
+          ball.wobble = Math.min(impactForce * 0.12, MAX_WOBBLE);
+          ball.wobblePhase = 0;
           wallHit = true;
         } else if (ball.x > WALL_RIGHT) {
+          const impactForce = Math.abs(ball.vx);
           ball.vx = -ball.vx * WALL_RESTITUTION;
           ball.x = WALL_RIGHT;
+          ball.wobble = Math.min(impactForce * 0.12, MAX_WOBBLE);
+          ball.wobblePhase = 0;
           wallHit = true;
         }
         if (ball.y < WALL_TOP) {
+          const impactForce = Math.abs(ball.vy);
           ball.vy = -ball.vy * WALL_RESTITUTION;
           ball.y = WALL_TOP;
+          ball.wobble = Math.min(impactForce * 0.12, MAX_WOBBLE);
+          ball.wobblePhase = 0;
           wallHit = true;
         } else if (ball.y > WALL_BOTTOM) {
+          const impactForce = Math.abs(ball.vy);
           ball.vy = -ball.vy * WALL_RESTITUTION;
           ball.y = WALL_BOTTOM;
+          ball.wobble = Math.min(impactForce * 0.12, MAX_WOBBLE);
+          ball.wobblePhase = 0;
           wallHit = true;
         }
       }
@@ -583,6 +597,12 @@ class GameEngine {
       const distance = Math.hypot(ball.vx, ball.vy);
       if (distance > 0.001) {
         ball.rotation -= distance / ball.radius;
+      }
+      if ((ball.wobble ?? 0) > 0.01) {
+        ball.wobblePhase = (ball.wobblePhase ?? 0) + 0.35;
+        ball.wobble = (ball.wobble ?? 0) * WOBBLE_DECAY;
+      } else {
+        ball.wobble = 0;
       }
       if (ball.vx === 0 && ball.vy === 0) {
         ball.rotation = Math.round(ball.rotation * 100) / 100;

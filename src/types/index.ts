@@ -145,6 +145,8 @@ export interface Ball {
   isStriped?: boolean;
   inPocket: boolean;
   rotation: number;
+  wobble?: number;
+  wobblePhase?: number;
 }
 
 export interface GameState {

@@ -13,9 +13,11 @@ import { usePoolPass } from '@/hooks/usePoolPass';
 import { useMissions } from '@/hooks/useMissions';
 import { useAchievements } from '@/hooks/useAchievements';
 import { playTick, unlockAudio } from '@/lib/audio/gameAudio';
+import { audioManager } from '@/lib/audio/audioManager';
 import { useGameStore, useUserStore } from '@/lib/store';
 import { MatchTable } from './MatchTable';
 import { Confetti } from './Confetti';
+import { MatchStartAnimation } from './MatchStartAnimation';
 import type { AchievementProgress, AchievementUpdateResult } from '@/types';
 
 const MIN_SHOOT_POWER = 8;
@@ -111,6 +113,7 @@ export function GameScreen({
 
   const showUnlockedAchievement = useCallback((result: AchievementUpdateResult | null) => {
     if (result?.completed && result.achievement) {
+      audioManager.play('achievement');
       setUnlockedAchievement((current) => current ?? result.achievement);
     }
   }, []);
@@ -126,6 +129,8 @@ export function GameScreen({
   const [showLoseModal, setShowLoseModal] = useState(false);
   const [showGuestPopup, setShowGuestPopup] = useState(false);
   const [unlockedAchievement, setUnlockedAchievement] = useState<AchievementProgress | null>(null);
+  const [matchStartKey, setMatchStartKey] = useState(0);
+  const [showBreakFlash, setShowBreakFlash] = useState(false);
   const [pendingResult, setPendingResult] = useState<{ won: boolean; foul: boolean; reward: number } | null>(null);
   const router = useRouter();
   const previousBallsMovingRef = useRef<boolean | null>(null);
@@ -133,6 +138,7 @@ export function GameScreen({
   const achievementWinStreakRef = useRef(profile.stats?.currentWinStreak ?? 0);
 	
   useEffect(() => {
+    audioManager.preload();
     achievementWinStreakRef.current = profile.stats?.currentWinStreak ?? achievementWinStreakRef.current;
   }, [profile.stats?.currentWinStreak]);
 
@@ -160,8 +166,10 @@ useEffect(() => {
         addXP(won ? 100 : 25);
         // Modal
         if (won) {
+          audioManager.play('win');
           setShowWinModal(true);
         } else {
+          audioManager.play('lose');
           setShowLoseModal(true);
         }
       }
@@ -356,6 +364,11 @@ useEffect(() => {
   const handleShoot = useCallback((shotPower = power) => {
     void unlockAudio();
     if (shotPower >= MIN_SHOOT_POWER) {
+      if (engineState?.isBreakShot) {
+        audioManager.play('break_shot');
+        setShowBreakFlash(true);
+        window.setTimeout(() => setShowBreakFlash(false), 150);
+      }
       if (customOnShoot) {
         customOnShoot(shotPower, aimAngle);
       } else {
@@ -380,7 +393,7 @@ useEffect(() => {
       setPower(0);
     }
     setIsAiming(false);
-  }, [power, aimAngle, customOnShoot, engine, updateAchievement, showUnlockedAchievement]);
+  }, [power, aimAngle, customOnShoot, engine, updateAchievement, showUnlockedAchievement, engineState?.isBreakShot]);
 
   const handlePlaceCueBall = useCallback((x: number, y: number) => {
     void unlockAudio();
@@ -388,6 +401,7 @@ useEffect(() => {
   }, [engine]);
 
   const handleRestartGame = useCallback(() => {
+    audioManager.play('ui_click');
     const restartModeType = modeType === 'brazilian' ? 'brazilian' : gameMode;
     const restartMode = currentMode ?? restartModeType;
 
@@ -399,6 +413,7 @@ useEffect(() => {
     setTimeLeft(30);
     setShowWinModal(false);
     setShowLoseModal(false);
+    setMatchStartKey((key) => key + 1);
     engine.reset();
     engine.start();
     startGame(restartMode, restartModeType, entryFee, potentialReward);
@@ -412,6 +427,7 @@ useEffect(() => {
   }, [showWinModal, isGuest]);
 
   const handleShare = async () => {
+    audioManager.play('ui_click');
     const text = 'Ganhei uma partida de sinuca! 🎱 Joga comigo em billar-bool.vercel.app';
     if (navigator.share) {
       await navigator.share({ text });
@@ -473,6 +489,20 @@ useEffect(() => {
           {overlay && overlay(engineState, inputHandlers)}
         </MatchTable>
       </div>
+
+      <MatchStartAnimation key={matchStartKey} />
+
+      <AnimatePresence>
+        {showBreakFlash && (
+          <motion.div
+            initial={{ opacity: 0.75 }}
+            animate={{ opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="pointer-events-none absolute inset-0 z-50 bg-white"
+          />
+        )}
+      </AnimatePresence>
 
       {/* Indicador de ball-in-hand / break shot */}
       {canPlaceCueBall && (
@@ -551,6 +581,7 @@ useEffect(() => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => {
+                    audioManager.play('ui_click');
                     setShowWinModal(false);
                     endGame(true);
                   }}
@@ -681,6 +712,7 @@ useEffect(() => {
               <div className="flex gap-3">
                 <button
                   onClick={() => {
+                    audioManager.play('coins');
                     void claimAchievement(unlockedAchievement.code).finally(() => setUnlockedAchievement(null));
                   }}
                   className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-3 text-sm font-black text-white"
@@ -688,7 +720,10 @@ useEffect(() => {
                   Coletar
                 </button>
                 <button
-                  onClick={() => setUnlockedAchievement(null)}
+                  onClick={() => {
+                    audioManager.play('ui_click');
+                    setUnlockedAchievement(null);
+                  }}
                   className="rounded-xl bg-slate-800 px-4 py-3 text-sm font-bold text-slate-300"
                 >
                   Depois
@@ -725,6 +760,7 @@ useEffect(() => {
               <div className="flex flex-col gap-3">
                 <button
                   onClick={() => {
+                    audioManager.play('ui_click');
                     localStorage.setItem('guest_win_popup_shown', '1');
                     setShowGuestPopup(false);
                     router.push(`/${locale}/login`);
@@ -735,6 +771,7 @@ useEffect(() => {
                 </button>
                 <button
                   onClick={() => {
+                    audioManager.play('ui_click');
                     localStorage.setItem('guest_win_popup_shown', '1');
                     setShowGuestPopup(false);
                   }}
@@ -750,8 +787,6 @@ useEffect(() => {
     </div>
   );
 }
-
-
 
 
 

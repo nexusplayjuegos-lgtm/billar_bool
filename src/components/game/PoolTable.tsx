@@ -14,6 +14,32 @@ interface PoolTableProps {
 export function PoolTable({ balls, className, tableId = 'classic-green' }: PoolTableProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [pocketAnim] = useState(() => new Map<number, number>());
+  const particlesRef = useRef(new PocketParticleSystem());
+  const pocketedRef = useRef(new Set<number>());
+  const animationFrameRef = useRef<number | null>(null);
+  const [, setParticleFrame] = useState(0);
+
+  useEffect(() => {
+    if (animationFrameRef.current !== null || particlesRef.current.isIdle()) return;
+
+    const animate = () => {
+      particlesRef.current.update();
+      setParticleFrame((frame) => frame + 1);
+      if (particlesRef.current.isIdle()) {
+        animationFrameRef.current = null;
+        return;
+      }
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    };
+  }, [balls]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -157,6 +183,10 @@ export function PoolTable({ balls, className, tableId = 'classic-green' }: PoolT
     // === BOLAS ===
     balls.forEach((ball) => {
       if (ball.inPocket) {
+        if (!pocketedRef.current.has(ball.id)) {
+          pocketedRef.current.add(ball.id);
+          particlesRef.current.emit(ball.x, ball.y);
+        }
         const animKey = ball.id;
         let progress = pocketAnim.get(animKey) ?? 0;
         if (progress < 1) {
@@ -177,10 +207,13 @@ export function PoolTable({ balls, className, tableId = 'classic-green' }: PoolT
         return;
       } else {
         pocketAnim.delete(ball.id);
+        pocketedRef.current.delete(ball.id);
       }
 
       drawBall(ctx, ball);
     });
+
+    particlesRef.current.render(ctx);
   }, [balls, pocketAnim, tableId]);
 
   return (
@@ -199,12 +232,22 @@ export function PoolTable({ balls, className, tableId = 'classic-green' }: PoolT
 
 function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   const { x, y, radius, color, number, isStriped, vx, vy, rotation } = ball;
+  const wobble = ball.wobble ?? 0;
+  const wobblePhase = ball.wobblePhase ?? 0;
+  const drawX = x + Math.sin(wobblePhase) * wobble;
+  const drawY = y + Math.cos(wobblePhase * 1.3) * wobble;
 
   // ── Sombra ──────────────────────────────────────────────────────
+  ctx.save();
   ctx.beginPath();
-  ctx.arc(x + 2, y + 3, radius, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+  ctx.shadowColor = 'rgba(0,0,0,0.25)';
+  ctx.shadowBlur = 6;
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 2;
+  ctx.arc(drawX + 1, drawY + 2, radius, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
   ctx.fill();
+  ctx.restore();
 
   // ── LAYER 1: Textura interna com scroll ─────────────────────────
   // Técnica: clip em círculo + deslizar padrão na direcção do movimento
@@ -230,7 +273,7 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   }
 
   ctx.save();
-  ctx.translate(x, y);
+  ctx.translate(drawX, drawY);
 
   // Clip em círculo — mascara tudo o que sai da bola
   ctx.beginPath();
@@ -255,7 +298,18 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
     ctx.fillStyle = '#111111';
     ctx.fillRect(-radius, -radius, radius * 2, radius * 2);
   } else {
-    ctx.fillStyle = color;
+    const bodyGradient = ctx.createRadialGradient(
+      -radius * 0.35,
+      -radius * 0.35,
+      radius * 0.08,
+      0,
+      0,
+      radius
+    );
+    bodyGradient.addColorStop(0, lightenColor(color, 42));
+    bodyGradient.addColorStop(0.35, color);
+    bodyGradient.addColorStop(1, darkenColor(color, 32));
+    ctx.fillStyle = bodyGradient;
     ctx.fillRect(-radius, -radius, radius * 2, radius * 2);
   }
 
@@ -289,9 +343,16 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
 
   ctx.restore(); // remove clip
 
-  // ── LAYER 2: Número da bola (fixo no centro) ────────────────────
+  ctx.beginPath();
+  ctx.arc(drawX, drawY, radius, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(0,0,0,0.16)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // ── LAYER 2: Número da bola (rotaciona com o rolamento) ──────────
   ctx.save();
-  ctx.translate(x, y);
+  ctx.translate(drawX, drawY);
+  ctx.rotate(rotation);
 
   if (number && number > 0) {
     ctx.beginPath();
@@ -311,7 +372,7 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   // ── LAYER 3: Highlight especular fixo (topo esquerdo) ───────────
   // Não se move — ancora visualmente a bola como esfera sob luz
   ctx.save();
-  ctx.translate(x, y);
+  ctx.translate(drawX, drawY);
 
   const highlightGrad = ctx.createRadialGradient(
     -radius * 0.38, -radius * 0.38, 0,
@@ -333,4 +394,81 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   ctx.fill();
 
   ctx.restore();
+}
+
+interface PocketParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  color: string;
+  size: number;
+}
+
+class PocketParticleSystem {
+  private particles: PocketParticle[] = [];
+  private colors = ['#fbbf24', '#f97316', '#ef4444', '#ffffff'];
+
+  emit(x: number, y: number) {
+    for (let i = 0; i < 10; i++) {
+      this.particles.push({
+        x,
+        y,
+        vx: (Math.random() - 0.5) * 4,
+        vy: (Math.random() - 0.8) * 4,
+        life: 1,
+        color: this.colors[Math.floor(Math.random() * this.colors.length)],
+        size: Math.random() * 2.5 + 1.5,
+      });
+    }
+  }
+
+  update() {
+    this.particles = this.particles.filter((particle) => {
+      particle.x += particle.vx;
+      particle.y += particle.vy;
+      particle.vy += 0.12;
+      particle.vx *= 0.98;
+      particle.life -= 0.025;
+      return particle.life > 0;
+    });
+  }
+
+  render(ctx: CanvasRenderingContext2D) {
+    for (const particle of this.particles) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, particle.life);
+      ctx.fillStyle = particle.color;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size * particle.life, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  isIdle() {
+    return this.particles.length === 0;
+  }
+}
+
+function clampColor(value: number) {
+  return Math.max(0, Math.min(255, Math.round(value)));
+}
+
+function adjustColor(hex: string, amount: number) {
+  const clean = hex.replace('#', '');
+  if (clean.length !== 6) return hex;
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  return `#${clampColor(r + amount).toString(16).padStart(2, '0')}${clampColor(g + amount).toString(16).padStart(2, '0')}${clampColor(b + amount).toString(16).padStart(2, '0')}`;
+}
+
+function lightenColor(hex: string, amount: number) {
+  return adjustColor(hex, amount);
+}
+
+function darkenColor(hex: string, amount: number) {
+  return adjustColor(hex, -amount);
 }
