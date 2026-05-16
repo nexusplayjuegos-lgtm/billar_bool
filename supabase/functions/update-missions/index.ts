@@ -124,7 +124,7 @@ serve(async (req: Request) => {
     return json({ error: 'Missão não encontrada no array.' }, 404);
   }
 
-  console.log('[update-missions] Mission found:', { id: mission.id, type: mission.type, current: mission.current, target: mission.target, completed: mission.completed, claimed: mission.claimed });
+  console.log('[update-missions] Mission found:', { id: mission.id, type: mission.type, current: mission.progress, target: mission.target, completed: mission.completed, claimed: mission.claimed });
 
   if (action === 'progress') {
     if (mission.completed) {
@@ -132,10 +132,10 @@ serve(async (req: Request) => {
       return json({ error: 'Missão já completada.' }, 409);
     }
 
-    const newCurrent = Math.min(mission.target, (mission.current || 0) + amount);
-    console.log('[update-missions] Progressing mission:', { old: mission.current, amount, new: newCurrent, target: mission.target });
-    mission.current = newCurrent;
-    if (mission.current >= mission.target) {
+    const newProgress = Math.min(mission.target, (mission.progress || 0) + amount);
+    console.log('[update-missions] Progressing mission:', { old: mission.progress, amount, new: newProgress, target: mission.target });
+    mission.progress = newProgress;
+    if (mission.progress >= mission.target) {
       mission.completed = true;
       console.log('[update-missions] Mission COMPLETED!');
     }
