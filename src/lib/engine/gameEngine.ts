@@ -347,6 +347,10 @@ class GameEngine {
     this.state.foul = true;
     this.state.ballInHand = true;
     this.switchTurn();
+    this.emit();
+    if (!this.state.gameOver && this.state.currentPlayer === 2) {
+      this.scheduleBotPlay();
+    }
   }
 
   setMultiplayerTurn(playerNumber: 1 | 2, options: { ballInHand?: boolean; foul?: boolean } = {}) {

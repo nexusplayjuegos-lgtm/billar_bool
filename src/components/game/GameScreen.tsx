@@ -131,6 +131,7 @@ export function GameScreen({
   const [unlockedAchievement, setUnlockedAchievement] = useState<AchievementProgress | null>(null);
   const [matchStartKey, setMatchStartKey] = useState(0);
   const [showBreakFlash, setShowBreakFlash] = useState(false);
+  const [showTimeoutNotice, setShowTimeoutNotice] = useState(false);
   const [pendingResult, setPendingResult] = useState<{ won: boolean; foul: boolean; reward: number } | null>(null);
   const router = useRouter();
   const previousBallsMovingRef = useRef<boolean | null>(null);
@@ -298,11 +299,18 @@ useEffect(() => {
   useEffect(() => {
     if (externalTimeLeft !== undefined) return;
     if (!engineState || engineState.gameOver || engineState.ballsMoving) return;
+    const isTimedPlayerTurn = engineState.currentPlayer === localPlayerNumber;
+    if (!isTimedPlayerTurn) return;
+
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           if (enableLocalTurnTimer) {
             engine.timeoutTurn();
+            setPower(0);
+            setIsAiming(false);
+            setShowTimeoutNotice(true);
+            window.setTimeout(() => setShowTimeoutNotice(false), 1400);
           }
           return 30;
         }
@@ -313,7 +321,7 @@ useEffect(() => {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [engineState, engine, enableLocalTurnTimer, externalTimeLeft]);
+  }, [engineState, engine, enableLocalTurnTimer, externalTimeLeft, localPlayerNumber]);
 
   // CORREÇÃO LOTE 4: Reseta timer quando turno muda (currentPlayer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -501,6 +509,19 @@ useEffect(() => {
             transition={{ duration: 0.15, ease: 'easeOut' }}
             className="pointer-events-none absolute inset-0 z-50 bg-white"
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showTimeoutNotice && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.96 }}
+            className="pointer-events-none absolute left-1/2 top-20 z-50 -translate-x-1/2 rounded-full border border-red-400/40 bg-red-950/85 px-5 py-2 text-sm font-black uppercase tracking-wide text-red-100 shadow-lg shadow-red-950/30 backdrop-blur"
+          >
+            Tempo esgotado!
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -787,7 +808,6 @@ useEffect(() => {
     </div>
   );
 }
-
 
 
 
