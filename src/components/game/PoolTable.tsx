@@ -308,30 +308,13 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
     ctx.fillRect(-radius, -radius, radius * 2, radius * 2);
   }
 
-  // ── Faixa branca para bolas listradas (rola com o movimento) ──
   if (isStriped && number && number > 8) {
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.ellipse(0, 0, radius * 1.12, radius * 0.62, 0, 0, Math.PI * 2);
-    ctx.fill();
+    drawProjectedStripe(ctx, radius, phase, directionX, directionY);
   }
 
   if (number && number > 0) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(0, 0, radius * 0.44, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
-    ctx.fill();
-
-    ctx.fillStyle = '#111111';
-    ctx.font = `bold ${Math.round(radius * 0.6)}px Arial`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(number.toString(), 0, 0);
-    ctx.restore();
+    drawNumberDecal(ctx, radius, number, phase, directionX, directionY);
   }
-
-  drawRollingSurface(ctx, radius, phase, directionX, directionY);
 
   // ── Overlay de sombra esférica (FIXO — dá curvatura 3D) ──
   const sphereShade = ctx.createRadialGradient(
@@ -379,65 +362,101 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   ctx.restore();
 }
 
-function drawRollingSurface(
+interface Vector3 {
+  x: number;
+  y: number;
+  z: number;
+}
+
+function rotateVectorAroundAxis(vector: Vector3, axis: Vector3, angle: number): Vector3 {
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const dot = vector.x * axis.x + vector.y * axis.y + vector.z * axis.z;
+  const crossX = axis.y * vector.z - axis.z * vector.y;
+  const crossY = axis.z * vector.x - axis.x * vector.z;
+  const crossZ = axis.x * vector.y - axis.y * vector.x;
+
+  return {
+    x: vector.x * cos + crossX * sin + axis.x * dot * (1 - cos),
+    y: vector.y * cos + crossY * sin + axis.y * dot * (1 - cos),
+    z: vector.z * cos + crossZ * sin + axis.z * dot * (1 - cos),
+  };
+}
+
+function getRollAxis(directionX: number, directionY: number): Vector3 {
+  return { x: -directionY, y: directionX, z: 0 };
+}
+
+function drawProjectedStripe(
   ctx: CanvasRenderingContext2D,
   radius: number,
   phase: number,
   directionX: number,
   directionY: number
 ) {
-  if (phase <= 0) return;
-
-  const bandSpacing = radius * 1.2;
-  const wrapped = ((phase * radius) % bandSpacing + bandSpacing) % bandSpacing;
-  const normalX = -directionY;
-  const normalY = directionX;
+  const axis = getRollAxis(directionX, directionY);
+  const stripeHalfWidth = 0.34;
+  const stripeFeather = 0.08;
+  const pixelRadius = Math.ceil(radius);
 
   ctx.save();
-  ctx.globalAlpha = 0.16;
-  ctx.lineCap = 'round';
 
-  for (let i = -2; i <= 2; i++) {
-    const offset = i * bandSpacing + wrapped - bandSpacing;
-    const centerX = normalX * offset;
-    const centerY = normalY * offset;
-    const tangentX = directionX * radius * 1.35;
-    const tangentY = directionY * radius * 1.35;
+  for (let py = -pixelRadius; py <= pixelRadius; py++) {
+    for (let px = -pixelRadius; px <= pixelRadius; px++) {
+      const sphereX = px / radius;
+      const sphereY = py / radius;
+      const distanceSq = sphereX * sphereX + sphereY * sphereY;
+      if (distanceSq > 1) continue;
 
-    const gradient = ctx.createLinearGradient(
-      centerX - tangentX,
-      centerY - tangentY,
-      centerX + tangentX,
-      centerY + tangentY
-    );
-    gradient.addColorStop(0, 'rgba(255,255,255,0)');
-    gradient.addColorStop(0.5, 'rgba(255,255,255,0.45)');
-    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+      const sphereZ = Math.sqrt(1 - distanceSq);
+      const localPoint = rotateVectorAroundAxis(
+        { x: sphereX, y: sphereY, z: sphereZ },
+        axis,
+        -phase
+      );
+      const stripeDistance = Math.abs(localPoint.y);
+      if (stripeDistance > stripeHalfWidth + stripeFeather) continue;
 
-    ctx.beginPath();
-    ctx.moveTo(centerX - tangentX, centerY - tangentY);
-    ctx.lineTo(centerX + tangentX, centerY + tangentY);
-    ctx.strokeStyle = gradient;
-    ctx.lineWidth = radius * 0.12;
-    ctx.stroke();
+      const edgeAlpha =
+        stripeDistance <= stripeHalfWidth
+          ? 1
+          : 1 - (stripeDistance - stripeHalfWidth) / stripeFeather;
+      const lightWrap = 0.72 + sphereZ * 0.28;
+      ctx.fillStyle = `rgba(255,255,255,${edgeAlpha * lightWrap})`;
+      ctx.fillRect(px, py, 1, 1);
+    }
   }
 
-  ctx.globalAlpha = 0.1;
-  for (let i = -1; i <= 1; i++) {
-    const offset = i * bandSpacing + wrapped - bandSpacing * 0.5;
-    const centerX = normalX * offset;
-    const centerY = normalY * offset;
-    const tangentX = directionX * radius * 1.1;
-    const tangentY = directionY * radius * 1.1;
+  ctx.restore();
+}
 
-    ctx.beginPath();
-    ctx.moveTo(centerX - tangentX, centerY - tangentY);
-    ctx.lineTo(centerX + tangentX, centerY + tangentY);
-    ctx.strokeStyle = 'rgba(0,0,0,0.45)';
-    ctx.lineWidth = radius * 0.08;
-    ctx.stroke();
-  }
+function drawNumberDecal(
+  ctx: CanvasRenderingContext2D,
+  radius: number,
+  number: number,
+  phase: number,
+  directionX: number,
+  directionY: number
+) {
+  const axis = getRollAxis(directionX, directionY);
+  const surfacePoint = rotateVectorAroundAxis({ x: 0, y: 0, z: 1 }, axis, phase);
+  const decalX = surfacePoint.x * radius * 0.28;
+  const decalY = surfacePoint.y * radius * 0.28;
+  const decalScale = 0.9 + Math.max(0, surfacePoint.z) * 0.1;
 
+  ctx.save();
+  ctx.translate(decalX, decalY);
+  ctx.scale(decalScale, decalScale);
+  ctx.beginPath();
+  ctx.arc(0, 0, radius * 0.43, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
+  ctx.fill();
+
+  ctx.fillStyle = '#111111';
+  ctx.font = `bold ${Math.round(radius * 0.6)}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(number.toString(), 0, 0);
   ctx.restore();
 }
 
