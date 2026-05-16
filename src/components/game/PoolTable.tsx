@@ -231,11 +231,14 @@ export function PoolTable({ balls, className, tableId = 'classic-green' }: PoolT
 }
 
 function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
-  const { x, y, radius, color, number, isStriped, vx, vy, rotation, rollX = 0, rollY = 0 } = ball;
+  const { x, y, radius, color, number, isStriped, rollX = 0, rollY = 0 } = ball;
   const wobble = ball.wobble ?? 0;
   const wobblePhase = ball.wobblePhase ?? 0;
   const drawX = x + Math.sin(wobblePhase) * wobble;
   const drawY = y + Math.cos(wobblePhase * 1.3) * wobble;
+  const surfaceX = Math.sin(rollX) * radius * 0.42;
+  const surfaceY = Math.sin(rollY) * radius * 0.42;
+  const surfaceDepth = Math.max(0, Math.cos(Math.hypot(rollX, rollY)));
 
   // ── Sombra ──────────────────────────────────────────────────────
   ctx.save();
@@ -249,27 +252,6 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   ctx.fill();
   ctx.restore();
 
-  // ── LAYER 1: Textura interna com scroll ─────────────────────────
-  // Técnica: clip em círculo + deslizar padrão na direcção do movimento
-  // Cria ilusão real de rolamento sem sprite sheet
-  const speed = Math.sqrt(vx * vx + vy * vy);
-  const isMoving = speed > 0.05;
-
-  // scrollX/scrollY: offset acumulado da textura interna
-  // rotation acumula distância percorrida no engine de física
-  const isActuallyStopped = vx === 0 && vy === 0;
-  const shouldAnimate = isMoving && !isActuallyStopped;
-  
-  let scrollX = 0;
-  let scrollY = 0;
-  if (shouldAnimate) {
-    const dirX = vx / speed;
-    const dirY = vy / speed;
-    // Ciclo da textura = circunferência da bola (2πr)
-    scrollX = rollX * radius * 0.8;
-    scrollY = rollY * radius * 0.8;
-  }
-
   ctx.save();
   ctx.translate(drawX, drawY);
 
@@ -282,8 +264,8 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   if (number === 0) {
     // Bola branca
     const g = ctx.createRadialGradient(
-      scrollX * 0.4 - radius * 0.2,
-      scrollY * 0.4 - radius * 0.2,
+      surfaceX * 0.25 - radius * 0.2,
+      surfaceY * 0.25 - radius * 0.2,
       0,
       0, 0, radius
     );
@@ -313,16 +295,25 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
 
   // ── Faixa branca para bolas listradas (rola com o movimento) ──
   if (isStriped && number && number > 8) {
-    const circumference = radius * Math.PI * 2;
-    const stripeOffset = shouldAnimate ? rollY * radius : 0;
-    const stripeH = radius * 0.65;
+    const stripeCenterY = Math.sin(rollY) * radius * 0.48;
+    const stripeTilt = Math.sin(rollX) * 0.35;
+    const stripeHeight = radius * (0.42 + Math.abs(Math.cos(rollY)) * 0.28);
 
+    ctx.save();
+    ctx.rotate(stripeTilt);
     ctx.fillStyle = '#ffffff';
-    // Faixa com wrap cíclico para não "saltar"
-    for (let i = -1; i <= 1; i++) {
-      const sy = stripeOffset + i * circumference;
-      ctx.fillRect(-radius, sy - stripeH / 2, radius * 2, stripeH);
-    }
+    ctx.beginPath();
+    ctx.ellipse(
+      0,
+      stripeCenterY,
+      radius * 1.12,
+      stripeHeight,
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+    ctx.restore();
   }
 
   // ── Overlay de sombra esférica (FIXO — dá curvatura 3D) ──
@@ -349,13 +340,9 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   ctx.translate(drawX, drawY);
 
   if (number && number > 0) {
-    const rollMagnitude = Math.hypot(rollX, rollY);
-    const rollDirection = Math.atan2(rollY, rollX);
-    const labelOrbit = Math.sin(rollMagnitude) * radius * 0.18;
-    const labelX = Math.cos(rollDirection + Math.PI / 2) * labelOrbit;
-    const labelY = Math.sin(rollDirection + Math.PI / 2) * labelOrbit;
-    ctx.translate(labelX, labelY);
-    ctx.rotate(rollX - rollY);
+    const labelScale = 0.82 + surfaceDepth * 0.18;
+    ctx.translate(surfaceX, surfaceY);
+    ctx.scale(labelScale, labelScale);
 
     ctx.beginPath();
     ctx.arc(0, 0, radius * 0.5, 0, Math.PI * 2);
