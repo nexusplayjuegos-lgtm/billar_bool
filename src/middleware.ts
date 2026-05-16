@@ -24,9 +24,9 @@ export default function middleware(req: NextRequest) {
     const hasGuest = req.cookies.has('bool_guest');
     if (!hasAuth && !hasGuest) {
       const locale = LOCALES.find((l) => pathname.startsWith(`/${l}`)) ?? 'pt';
-      const loginUrl = new URL(`/${locale}/login`, req.url);
-      loginUrl.searchParams.set('redirect', `${pathname}${req.nextUrl.search}`);
-      return NextResponse.redirect(loginUrl);
+      const welcomeUrl = new URL(`/${locale}`, req.url);
+      welcomeUrl.searchParams.set('redirect', `${pathname}${req.nextUrl.search}`);
+      return NextResponse.redirect(welcomeUrl);
     }
   }
 

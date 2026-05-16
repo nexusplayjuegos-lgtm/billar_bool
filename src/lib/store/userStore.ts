@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Session } from '@supabase/supabase-js';
+import type { Provider, Session } from '@supabase/supabase-js';
 import type { Price } from '@/types';
 import { supabase, fetchProfile } from '../supabase/client';
 import { MOCK_USER } from '@/mocks/data';
+import { GuestAccountManager, type GuestAccount } from '@/lib/auth/guestAccount';
 
 const TABLE_ID_ALIASES: Record<string, string> = {
   table_classic_green: 'classic-green',
@@ -97,6 +98,44 @@ function adaptProfile(db: DbProfile) {
   };
 }
 
+function adaptGuestProfile(guest: GuestAccount): UserProfile {
+  return {
+    ...defaultProfile,
+    id: guest.id,
+    username: guest.username,
+    level: guest.level,
+    xp: guest.xp,
+    xp_to_next: guest.xp_to_next,
+    rank: guest.rank,
+    currencies: guest.currencies,
+    stats: guest.stats,
+    equipment: {
+      currentCue: guest.equipment.currentCue,
+      ownedCues: guest.equipment.ownedCues,
+      currentTable: normalizeTableId(guest.equipment.currentTable),
+      ownedTables: normalizeTableIds(guest.equipment.ownedTables),
+    },
+    social: guest.social,
+    settings: guest.settings,
+  };
+}
+
+function persistGuestProfile(profile: UserProfile, isGuest: boolean): void {
+  if (!isGuest) return;
+  GuestAccountManager.update({
+    username: profile.username,
+    level: profile.level,
+    xp: profile.xp,
+    xp_to_next: profile.xp_to_next,
+    rank: profile.rank,
+    currencies: profile.currencies,
+    stats: profile.stats,
+    equipment: profile.equipment,
+    social: profile.social,
+    settings: profile.settings,
+  });
+}
+
 interface UserState {
   profile: UserProfile;
   session: Session | null;
@@ -107,9 +146,11 @@ interface UserState {
 
   signUp: (email: string, password: string, username: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithOAuth: (provider: 'google' | 'apple') => Promise<void>;
   signOut: () => Promise<void>;
   loadSession: () => Promise<void>;
   playAsGuest: () => Promise<string | null>;
+  migrateGuestToAuth: () => Promise<void>;
 
   addCoins: (amount: number) => Promise<void>;
   removeCoins: (amount: number) => Promise<void>;
@@ -134,28 +175,14 @@ export const useUserStore = create<UserState>()(
       isGuest: false,
 
       playAsGuest: async () => {
-        const suffix = Math.floor(Math.random() * 9000 + 1000).toString();
-        const guestProfile = {
-          ...defaultProfile,
-          id: `guest_${suffix}`,
-          username: `Convidado_${suffix}`,
-        };
+        const guest = GuestAccountManager.create();
+        const guestProfile = adaptGuestProfile(guest);
 
-        const { data, error } = await supabase.auth.signInAnonymously();
-
-        if (!error && data.session) {
-          set({ isGuest: true, session: data.session, profile: guestProfile });
-          if (typeof window !== 'undefined') {
-            document.cookie = 'bool_guest=1; path=/; max-age=86400; SameSite=Strict';
-          }
-          return data.session.user.id;
-        }
-
-        set({ isGuest: true, session: null, profile: guestProfile });
+        set({ isGuest: true, session: null, profile: guestProfile, isSessionLoaded: true });
         if (typeof window !== 'undefined') {
-          document.cookie = 'bool_guest=1; path=/; max-age=86400; SameSite=Strict';
+          document.cookie = 'bool_guest=1; path=/; max-age=31536000; SameSite=Strict';
         }
-        return null;
+        return guest.id;
       },
 
       addPoolPoints: async (amount: number, seasonId?: string) => {
@@ -182,7 +209,7 @@ export const useUserStore = create<UserState>()(
   },
 
   updateStats: async (result: 'win' | 'loss', coinsWon: number = 0) => {
-        const { profile, session } = get();
+        const { profile, session, isGuest } = get();
         if (!profile) return;
 
         const currentStats = profile.stats || {
@@ -221,7 +248,9 @@ export const useUserStore = create<UserState>()(
           newStats.totalCoinsWon = (profile.stats?.totalCoinsWon || 0) + coinsWon;
         }
 
-        set({ profile: { ...profile, stats: newStats } });
+        const updatedProfile = { ...profile, stats: newStats };
+        set({ profile: updatedProfile });
+        persistGuestProfile(updatedProfile, isGuest);
 
         if (session) {
           await supabase
@@ -232,7 +261,7 @@ export const useUserStore = create<UserState>()(
       },
 
       equipCue: async (cueId: string) => {
-        const { profile, session } = get();
+        const { profile, session, isGuest } = get();
         if (!profile) return;
 
         if (!profile.equipment?.ownedCues?.includes(cueId)) {
@@ -246,6 +275,7 @@ export const useUserStore = create<UserState>()(
         };
 
         set({ profile: updatedProfile });
+        persistGuestProfile(updatedProfile, isGuest);
 
         if (session) {
           const { error } = await supabase
@@ -269,7 +299,10 @@ export const useUserStore = create<UserState>()(
             options: { data: { username } },
           });
           if (error) throw error;
-          set({ session: data.session });
+          if (data.session?.user.id) {
+            await GuestAccountManager.migrateToAuth(data.session.user.id, supabase);
+          }
+          set({ session: data.session, isGuest: false });
           if (data.session && typeof window !== 'undefined') {
             document.cookie = 'bool_auth=1; path=/; max-age=604800; SameSite=Strict';
           }
@@ -287,9 +320,11 @@ export const useUserStore = create<UserState>()(
           });
           if (error) throw error;
 
+          await GuestAccountManager.migrateToAuth(data.user.id, supabase);
           const profile = await fetchProfile(data.user.id);
           set({
             session: data.session,
+            isGuest: false,
             profile: profile ? adaptProfile(profile) : defaultProfile,
           });
           if (typeof window !== 'undefined') {
@@ -300,12 +335,29 @@ export const useUserStore = create<UserState>()(
         }
       },
 
+      signInWithOAuth: async (provider) => {
+        const authProvider: Provider = provider;
+        if (typeof window !== 'undefined') {
+          const locale = window.location.pathname.split('/')[1] || 'pt';
+          window.localStorage.setItem('bool_auth_redirect_locale', locale);
+        }
+
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: authProvider,
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback`,
+          },
+        });
+        if (error) throw error;
+      },
+
       // ── FIX: repor defaultProfile em vez de null + redirecionar ──
       signOut: async () => {
         await supabase.auth.signOut();
         // Repor perfil de demonstração em vez de null
         // Evita crashes em componentes que acedem a profile.username sem guard
         set({ session: null, profile: defaultProfile, isGuest: false });
+        GuestAccountManager.clear();
         if (typeof window !== 'undefined') {
           document.cookie = 'bool_auth=; path=/; max-age=0; SameSite=Strict';
           document.cookie = 'bool_guest=; path=/; max-age=0; SameSite=Strict';
@@ -323,12 +375,20 @@ export const useUserStore = create<UserState>()(
           
           if (!session) {
             console.log('[userStore] Sem sessão no Supabase');
+            const guest = GuestAccountManager.get();
+            if (guest) {
+              set({ profile: adaptGuestProfile(guest), isGuest: true, session: null });
+              if (typeof window !== 'undefined') {
+                document.cookie = 'bool_guest=1; path=/; max-age=31536000; SameSite=Strict';
+              }
+            }
             set({ isSessionLoaded: true });
             return;
           }
 
           console.log('[userStore] Sessão encontrada, userId:', session.user.id);
           set({ session, isGuest: false });
+          await GuestAccountManager.migrateToAuth(session.user.id, supabase);
 
           if (typeof window !== 'undefined') {
             document.cookie = 'bool_auth=1; path=/; max-age=604800; SameSite=Strict';
@@ -345,13 +405,29 @@ export const useUserStore = create<UserState>()(
         }
       },
 
+      migrateGuestToAuth: async () => {
+        const { session } = get();
+        if (!session) return;
+        await GuestAccountManager.migrateToAuth(session.user.id, supabase);
+        const profile = await fetchProfile(session.user.id);
+        set({
+          profile: profile ? adaptProfile(profile) : defaultProfile,
+          isGuest: false,
+        });
+        if (typeof window !== 'undefined') {
+          document.cookie = 'bool_auth=1; path=/; max-age=604800; SameSite=Strict';
+        }
+      },
+
       // ========== ECONOMIA ==========
       addCoins: async (amount) => {
-        const { profile, session } = get();
+        const { profile, session, isGuest } = get();
         if (!profile) return;
 
         const newCoins = profile.currencies.coins + amount;
-        set({ profile: { ...profile, currencies: { ...profile.currencies, coins: newCoins } } });
+        const updatedProfile = { ...profile, currencies: { ...profile.currencies, coins: newCoins } };
+        set({ profile: updatedProfile });
+        persistGuestProfile(updatedProfile, isGuest);
 
         if (session) {
           await supabase
@@ -362,11 +438,13 @@ export const useUserStore = create<UserState>()(
       },
 
       removeCoins: async (amount) => {
-        const { profile, session } = get();
+        const { profile, session, isGuest } = get();
         if (!profile) return;
 
         const newCoins = Math.max(0, profile.currencies.coins - amount);
-        set({ profile: { ...profile, currencies: { ...profile.currencies, coins: newCoins } } });
+        const updatedProfile = { ...profile, currencies: { ...profile.currencies, coins: newCoins } };
+        set({ profile: updatedProfile });
+        persistGuestProfile(updatedProfile, isGuest);
 
         if (session) {
           await supabase
@@ -377,7 +455,7 @@ export const useUserStore = create<UserState>()(
       },
 
       addXP: async (amount) => {
-        const { profile, session } = get();
+        const { profile, session, isGuest } = get();
         if (!profile) return;
 
         let newXP = profile.xp + amount;
@@ -398,6 +476,7 @@ export const useUserStore = create<UserState>()(
         };
 
         set({ profile: updatedProfile });
+        persistGuestProfile(updatedProfile, isGuest);
 
         if (session) {
           await supabase
@@ -409,8 +488,13 @@ export const useUserStore = create<UserState>()(
 
       // ========== PARTIDAS ==========
       saveMatchResult: async (result) => {
-        const { profile, session } = get();
-        if (!session || !profile) return;
+        const { profile, session, isGuest } = get();
+        if (!profile) return;
+        if (!session) {
+          const resultKind = result.result === 'win' ? 'win' : 'loss';
+          await get().updateStats(resultKind, result.coinsWon);
+          return;
+        }
 
         await supabase.from('matches').insert({
           player_id: session.user.id,
@@ -438,12 +522,14 @@ export const useUserStore = create<UserState>()(
           .update({ stats: newStats })
           .eq('id', session.user.id);
 
-        set({ profile: { ...profile, stats: newStats } });
+        const updatedProfile = { ...profile, stats: newStats };
+        set({ profile: updatedProfile });
+        persistGuestProfile(updatedProfile, isGuest);
       },
 
       // ========== LOJA ==========
       buyCue: async (cueId, price) => {
-        const { profile, session } = get();
+        const { profile, session, isGuest } = get();
         if (!profile || profile.currencies.coins < price) return;
 
         const newCoins = profile.currencies.coins - price;
@@ -456,6 +542,14 @@ export const useUserStore = create<UserState>()(
             equipment: { ...profile.equipment, ownedCues: newOwnedCues },
           },
         });
+        persistGuestProfile(
+          {
+            ...profile,
+            currencies: { ...profile.currencies, coins: newCoins },
+            equipment: { ...profile.equipment, ownedCues: newOwnedCues },
+          },
+          isGuest
+        );
 
         if (session) {
           await supabase
@@ -466,7 +560,7 @@ export const useUserStore = create<UserState>()(
       },
 
       buyTable: async (tableId, price) => {
-        const { profile, session } = get();
+        const { profile, session, isGuest } = get();
         if (!profile) return;
         const normalizedTableId = normalizeTableId(tableId);
         if (profile.equipment.ownedTables.includes(normalizedTableId)) return;
@@ -491,6 +585,7 @@ export const useUserStore = create<UserState>()(
         };
 
         set({ profile: updatedProfile });
+        persistGuestProfile(updatedProfile, isGuest);
 
         if (session) {
           await supabase
@@ -506,7 +601,7 @@ export const useUserStore = create<UserState>()(
       },
 
       equipTable: async (tableId) => {
-        const { profile, session } = get();
+        const { profile, session, isGuest } = get();
         if (!profile) return;
         const normalizedTableId = normalizeTableId(tableId);
         if (!profile.equipment.ownedTables.includes(normalizedTableId)) return;
@@ -520,6 +615,7 @@ export const useUserStore = create<UserState>()(
         };
 
         set({ profile: updatedProfile });
+        persistGuestProfile(updatedProfile, isGuest);
 
         if (session) {
           await supabase

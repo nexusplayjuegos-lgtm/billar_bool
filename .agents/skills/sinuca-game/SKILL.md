@@ -53,6 +53,11 @@ Do not mix physics, timer, multiplayer, layout, or Supabase changes in the same 
 Do not casually revert these behaviors:
 
 - Ball-ball collision, substeps, friction, and stop behavior were improved.
+- Ball visual rolling in `PoolTable.tsx` is a protected model:
+  - keep the ball moving with distance-based phase (`distance / radius`, like a tire/wheel);
+  - striped balls use projected spherical markings, not flat stripe scrolling;
+  - number decals use two opposite faces synced at 180/360 degrees, so the number rolls forward instead of moving back and forth;
+  - do not replace this with center sprite rotation, sine wobble, scrolling bands, or static overlay highlights unless explicitly requested.
 - Aim prediction includes first-interference detection, cue line stopping at ball/rail, a short honest yellow target guide, and constants aligned with the engine.
 - Local timer resets when the player changes and when a shot ends.
 - Multiplayer turn/timer was fixed in `validate-shot`.

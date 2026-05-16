@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Loader2 } from 'lucide-react';
+import { Apple, Loader2 } from 'lucide-react';
 import { useUserStore } from '@/lib/store/userStore';
 import { useLocale } from '@/hooks';
 import { motion } from 'framer-motion';
@@ -13,7 +13,7 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { locale } = useLocale();
-  const { signIn, signUp, playAsGuest } = useUserStore();
+  const { signIn, signUp, playAsGuest, signInWithOAuth } = useUserStore();
 
   const redirectTo = searchParams.get('redirect') ?? `/${locale}`;
 
@@ -55,7 +55,7 @@ function LoginPageContent() {
           BOOL SINUCA
         </h1>
         <p className="text-slate-400 text-center mb-8">
-          {isLogin ? t('loginTitle') : t('registerTitle')}
+          {isLogin ? 'Vincule ou entre na sua conta' : t('registerTitle')}
         </p>
 
         {error && (
@@ -119,6 +119,40 @@ function LoginPageContent() {
           </button>
         </form>
 
+        <div className="my-6 flex items-center gap-3">
+          <div className="h-px flex-1 bg-slate-700" />
+          <span className="text-xs text-slate-500">ou entre com</span>
+          <div className="h-px flex-1 bg-slate-700" />
+        </div>
+
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={() => {
+              setError('');
+              void signInWithOAuth('google').catch((err: unknown) => {
+                setError(err instanceof Error ? err.message : 'Nao foi possivel iniciar login social');
+              });
+            }}
+            className="w-full rounded-lg bg-white px-4 py-3 text-sm font-bold text-slate-950 transition hover:bg-slate-100"
+          >
+            Continuar com Google
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setError('');
+              void signInWithOAuth('apple').catch((err: unknown) => {
+                setError(err instanceof Error ? err.message : 'Nao foi possivel iniciar login social');
+              });
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-black px-4 py-3 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-zinc-950"
+          >
+            <Apple className="h-4 w-4" />
+            Continuar com Apple
+          </button>
+        </div>
+
         <div className="mt-6 text-center">
           <button
             onClick={() => setIsLogin(!isLogin)}
@@ -128,12 +162,12 @@ function LoginPageContent() {
           </button>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-slate-700 text-center">
+        <div className="mt-6 pt-6 border-t border-slate-700 text-center">
           <button
             onClick={async () => { await playAsGuest(); router.push(redirectTo); }}
             className="text-slate-500 hover:text-slate-300 text-sm"
           >
-            {t('continueAsGuest')}
+            Jogar agora sem cadastro
           </button>
         </div>
       </motion.div>
