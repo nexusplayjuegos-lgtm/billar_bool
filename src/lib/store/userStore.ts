@@ -136,6 +136,26 @@ function persistGuestProfile(profile: UserProfile, isGuest: boolean): void {
   });
 }
 
+function getSiteUrl(): string {
+  const explicitUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const vercelUrl = process.env.NEXT_PUBLIC_VERCEL_URL;
+
+  if (explicitUrl) {
+    return explicitUrl.endsWith('/') ? explicitUrl : `${explicitUrl}/`;
+  }
+
+  if (vercelUrl) {
+    const normalized = vercelUrl.startsWith('http') ? vercelUrl : `https://${vercelUrl}`;
+    return normalized.endsWith('/') ? normalized : `${normalized}/`;
+  }
+
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/`;
+  }
+
+  return 'http://localhost:3000/';
+}
+
 interface UserState {
   profile: UserProfile;
   session: Session | null;
@@ -345,7 +365,7 @@ export const useUserStore = create<UserState>()(
         const { error } = await supabase.auth.signInWithOAuth({
           provider: authProvider,
           options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
+            redirectTo: `${getSiteUrl()}auth/callback`,
           },
         });
         if (error) throw error;

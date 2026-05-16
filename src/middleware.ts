@@ -19,6 +19,10 @@ const intlMiddleware = createMiddleware({
 export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  if (pathname.startsWith('/auth/callback')) {
+    return NextResponse.next();
+  }
+
   if (isProtected(pathname)) {
     const hasAuth = req.cookies.has('bool_auth');
     const hasGuest = req.cookies.has('bool_guest');
@@ -34,5 +38,5 @@ export default function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next|.*\\..*).*)'],
+  matcher: ['/((?!api|auth/callback|_next|.*\\..*).*)'],
 };
