@@ -236,9 +236,8 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   const wobblePhase = ball.wobblePhase ?? 0;
   const drawX = x + Math.sin(wobblePhase) * wobble;
   const drawY = y + Math.cos(wobblePhase * 1.3) * wobble;
-  const surfaceX = Math.sin(rollX) * radius * 0.42;
-  const surfaceY = Math.sin(rollY) * radius * 0.42;
-  const surfaceDepth = Math.max(0, Math.cos(Math.hypot(rollX, rollY)));
+  const printX = -Math.sin(rollX) * radius * 0.18;
+  const printY = -Math.sin(rollY) * radius * 0.18;
 
   // ── Sombra ──────────────────────────────────────────────────────
   ctx.save();
@@ -264,8 +263,8 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   if (number === 0) {
     // Bola branca
     const g = ctx.createRadialGradient(
-      surfaceX * 0.25 - radius * 0.2,
-      surfaceY * 0.25 - radius * 0.2,
+      printX * 0.25 - radius * 0.2,
+      printY * 0.25 - radius * 0.2,
       0,
       0, 0, radius
     );
@@ -295,9 +294,9 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
 
   // ── Faixa branca para bolas listradas (rola com o movimento) ──
   if (isStriped && number && number > 8) {
-    const stripeCenterY = Math.sin(rollY) * radius * 0.48;
-    const stripeTilt = Math.sin(rollX) * 0.35;
-    const stripeHeight = radius * (0.42 + Math.abs(Math.cos(rollY)) * 0.28);
+    const stripeCenterY = -Math.sin(rollY) * radius * 0.14;
+    const stripeTilt = -Math.sin(rollX) * 0.14;
+    const stripeHeight = radius * (0.56 + Math.abs(Math.cos(rollY)) * 0.08);
 
     ctx.save();
     ctx.rotate(stripeTilt);
@@ -313,6 +312,22 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
       Math.PI * 2
     );
     ctx.fill();
+    ctx.restore();
+  }
+
+  if (number && number > 0) {
+    ctx.save();
+    ctx.translate(printX, printY);
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 0.46, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
+    ctx.fill();
+
+    ctx.fillStyle = '#111111';
+    ctx.font = `bold ${Math.round(radius * 0.64)}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(number.toString(), 0, 0);
     ctx.restore();
   }
 
@@ -334,29 +349,6 @@ function drawBall(ctx: CanvasRenderingContext2D, ball: Ball) {
   ctx.strokeStyle = 'rgba(0,0,0,0.16)';
   ctx.lineWidth = 1;
   ctx.stroke();
-
-  // ── LAYER 2: Número da bola (rotaciona com o rolamento) ──────────
-  ctx.save();
-  ctx.translate(drawX, drawY);
-
-  if (number && number > 0) {
-    const labelScale = 0.82 + surfaceDepth * 0.18;
-    ctx.translate(surfaceX, surfaceY);
-    ctx.scale(labelScale, labelScale);
-
-    ctx.beginPath();
-    ctx.arc(0, 0, radius * 0.5, 0, Math.PI * 2);
-    ctx.fillStyle = 'white';
-    ctx.fill();
-
-    ctx.fillStyle = '#111111';
-    ctx.font = `bold ${Math.round(radius * 0.7)}px Arial`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(number.toString(), 0, 0);
-  }
-
-  ctx.restore();
 
   // ── LAYER 3: Highlight especular fixo (topo esquerdo) ───────────
   // Não se move — ancora visualmente a bola como esfera sob luz
