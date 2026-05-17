@@ -22,11 +22,11 @@ export function MobileGameScreen() {
   }, [endGame, router, locale]);
 
   return (
-    <div ref={containerRef} className="h-dvh h-screen w-full">
+    <div ref={containerRef} className="game-fullscreen">
       <GameScreen
         blockScroll
         onExit={handleExitGame}
-        tableScale={0.78}
+        tableScale={1}
         gameMode={modeType === 'brazilian' ? 'brazilian' : '8ball'}
         header={(engineState, timeLeft) => (
           <div className="shrink-0 h-12 px-3 flex items-center justify-between bg-slate-950/80 backdrop-blur-sm z-20 border-b border-slate-800/50">

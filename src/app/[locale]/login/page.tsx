@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Apple, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useUserStore } from '@/lib/store/userStore';
 import { useLocale } from '@/hooks';
 import { motion } from 'framer-motion';
@@ -137,19 +137,6 @@ function LoginPageContent() {
             className="w-full rounded-lg bg-white px-4 py-3 text-sm font-bold text-slate-950 transition hover:bg-slate-100"
           >
             Continuar com Google
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setError('');
-              void signInWithOAuth('apple').catch((err: unknown) => {
-                setError(err instanceof Error ? err.message : 'Nao foi possivel iniciar login social');
-              });
-            }}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-black px-4 py-3 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-zinc-950"
-          >
-            <Apple className="h-4 w-4" />
-            Continuar com Apple
           </button>
         </div>
 

@@ -1,0 +1,11 @@
+{
+  "name": "Bool Sinuca Premiere",
+  "short_name": "Bool Sinuca",
+  "description": "Jogue 8-Ball e Sinuca Brasileira Online",
+  "start_url": "/pt",
+  "scope": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#020617",
+  "theme_color": "#020617"
+}

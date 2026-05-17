@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Apple, Loader2, Mail, Play } from 'lucide-react';
+import { Loader2, Mail, Play } from 'lucide-react';
 import { useLocale } from '@/hooks';
 import { useUserStore } from '@/lib/store/userStore';
 
@@ -15,7 +15,7 @@ export function WelcomeScreen({ redirectTo }: WelcomeScreenProps) {
   const router = useRouter();
   const { locale } = useLocale();
   const { playAsGuest, signInWithOAuth } = useUserStore();
-  const [loadingAction, setLoadingAction] = useState<'guest' | 'google' | 'apple' | null>(null);
+  const [loadingAction, setLoadingAction] = useState<'guest' | 'google' | null>(null);
   const [error, setError] = useState('');
 
   const getTarget = () => {
@@ -31,11 +31,11 @@ export function WelcomeScreen({ redirectTo }: WelcomeScreenProps) {
     router.replace(getTarget());
   };
 
-  const handleOAuth = async (provider: 'google' | 'apple') => {
-    setLoadingAction(provider);
+  const handleGoogleOAuth = async () => {
+    setLoadingAction('google');
     setError('');
     try {
-      await signInWithOAuth(provider);
+      await signInWithOAuth('google');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Nao foi possivel iniciar login social');
       setLoadingAction(null);
@@ -104,21 +104,12 @@ export function WelcomeScreen({ redirectTo }: WelcomeScreenProps) {
           <div className="space-y-3">
             <button
               type="button"
-              onClick={() => void handleOAuth('google')}
+              onClick={() => void handleGoogleOAuth()}
               disabled={loadingAction !== null}
               className="flex w-full items-center justify-center gap-3 rounded-xl bg-white px-5 py-3.5 text-sm font-bold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {loadingAction === 'google' ? <Loader2 className="h-5 w-5 animate-spin" /> : <span className="text-lg font-black">G</span>}
               Continuar com Google
-            </button>
-            <button
-              type="button"
-              onClick={() => void handleOAuth('apple')}
-              disabled={loadingAction !== null}
-              className="flex w-full items-center justify-center gap-3 rounded-xl bg-zinc-950 px-5 py-3.5 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {loadingAction === 'apple' ? <Loader2 className="h-5 w-5 animate-spin" /> : <Apple className="h-5 w-5" />}
-              Continuar com Apple
             </button>
           </div>
 
