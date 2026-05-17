@@ -14,11 +14,13 @@ import { useMissions } from '@/hooks/useMissions';
 import { useAchievements } from '@/hooks/useAchievements';
 import { playTick, unlockAudio } from '@/lib/audio/gameAudio';
 import { audioManager } from '@/lib/audio/audioManager';
+import { trackEvent, trackFirstGame } from '@/lib/analytics/analytics';
 import { useGameStore, useUserStore } from '@/lib/store';
 import { MatchTable } from './MatchTable';
 import { PocketedBallRack } from './PocketedBallRack';
 import { Confetti } from './Confetti';
 import { MatchStartAnimation } from './MatchStartAnimation';
+import { GameTutorial } from '@/components/tutorial/GameTutorial';
 import type { AchievementProgress, AchievementUpdateResult } from '@/types';
 
 const MIN_SHOOT_POWER = 8;
@@ -116,7 +118,12 @@ export function GameScreen({
       for (const mission of missions) {
         if (mission.type === type && !mission.completed) {
           console.log(`[GameScreen] Updating ${scope} mission:`, mission.id, type, '+', amount);
-          void updateProgress(scope, mission.id, amount);
+          const willComplete = mission.current + amount >= mission.target;
+          void updateProgress(scope, mission.id, amount).then((success) => {
+            if (success && willComplete) {
+              trackEvent('mission_completed', { scope, type, mission_id: mission.id });
+            }
+          });
         }
       }
     },
@@ -126,6 +133,11 @@ export function GameScreen({
   const showUnlockedAchievement = useCallback((result: AchievementUpdateResult | null) => {
     if (result?.completed && result.achievement) {
       audioManager.play('achievement');
+      trackEvent('achievement_unlocked', {
+        code: result.achievement.code,
+        category: result.achievement.category,
+        tier: result.achievement.tier,
+      });
       setUnlockedAchievement((current) => current ?? result.achievement);
     }
   }, []);
@@ -167,12 +179,19 @@ useEffect(() => {
     gameResultHandledRef.current = false;
     engine.setMode(gameMode);
     engine.start();
+    trackEvent('game_started', { mode: gameMode, player: localPlayerNumber });
+    trackFirstGame({ mode: gameMode });
     const unsubscribe = engine.subscribe((state) => {
       setEngineState(state);
       if (state.gameOver && state.winner !== null && !gameResultHandledRef.current) {
         gameResultHandledRef.current = true;
         const won = state.winner === localPlayerNumber;
         const reward = won ? potentialReward : Math.floor(potentialReward * 0.1);
+        trackEvent(won ? 'game_won' : 'game_lost', {
+          mode: gameMode,
+          reward,
+          foul: state.foul,
+        });
         // Guarda resultado pendente para processar quando sessão estiver disponível
         setPendingResult({ won, foul: state.foul, reward });
         // Atualiza economia e stats (sempre disponíveis, não dependem de sessão)
@@ -493,6 +512,7 @@ useEffect(() => {
       {header && header(engineState, externalTimeLeft ?? timeLeft)}
 
       <PocketedBallRack balls={engineState.balls} pocketedBallIds={engineState.pocketedBalls} />
+      <GameTutorial />
 
       <div className="flex-1 min-h-[180px] min-w-0 relative overflow-hidden">
         <MatchTable

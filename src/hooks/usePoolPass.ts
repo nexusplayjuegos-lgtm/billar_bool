@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import { trackEvent } from '@/lib/analytics/analytics';
 import { useUserStore } from '@/lib/store/userStore';
 import type {
   SeasonPass,
@@ -175,6 +176,7 @@ export function usePoolPass() {
 
         // Recarregar dados
         await fetchSeasonData();
+        trackEvent('pool_pass_purchase', { pass_type: passType });
         return true;
       } catch (err) {
         console.error('[usePoolPass] Erro na compra:', err);

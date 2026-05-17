@@ -5,6 +5,7 @@ import { Check, Lock, Coins } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useUserStore } from '@/lib/store';
 import { useShop } from '@/hooks/useShop';
+import { trackEvent } from '@/lib/analytics/analytics';
 import type { ShopItem } from '@/types';
 import { cn } from '@/lib/utils';
 import { getRarityColor, isItemOwned, isItemEquipped, formatPrice, calculateDiscountedPrice } from '@/types/shop';
@@ -33,7 +34,16 @@ export function CueCard({ item, index, onPreview, dealDiscount }: CueCardProps) 
 
   const handleBuy = async () => {
     if (!isOwned && canAfford && !isLocked) {
-      await buyItem(item.id);
+      const result = await buyItem(item.id);
+      if (result.success) {
+        trackEvent('shop_purchase', {
+          item_id: item.id,
+          category: item.category,
+          rarity: item.rarity,
+          coins: price.coins,
+          cash: price.cash,
+        });
+      }
     }
   };
 

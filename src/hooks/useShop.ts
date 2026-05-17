@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useUserStore } from '@/lib/store/userStore';
+import { FALLBACK_SHOP_ITEMS } from '@/lib/shop/fallbackCatalog';
 import type { ShopItem, PlayerInventoryItem, FlashDeal, PurchaseResult, ShopCategory } from '@/types';
 
 interface ShopState {
@@ -91,14 +92,21 @@ export function useShop() {
     try {
       const { data, error } = await supabase.functions.invoke<{ items: Record<string, unknown>[] }>('get-shop-catalog', {});
       if (error) throw error;
+      const remoteItems = (data?.items || []).map(adaptShopItem);
       setState((prev) => ({
         ...prev,
-        items: (data?.items || []).map(adaptShopItem),
+        items: remoteItems.length > 0 ? remoteItems : FALLBACK_SHOP_ITEMS,
         isLoading: false,
       }));
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao buscar catálogo';
-      setState((prev) => ({ ...prev, error: message, isLoading: false }));
+      console.warn('[useShop] Falha ao buscar catálogo remoto, usando fallback local:', message);
+      setState((prev) => ({
+        ...prev,
+        items: FALLBACK_SHOP_ITEMS,
+        error: null,
+        isLoading: false,
+      }));
     }
   }, []);
 
