@@ -83,10 +83,13 @@ export function PowerSlider({
   const isHorizontal = orientation === 'horizontal';
 
   return (
-    <div className={cn(isHorizontal ? 'flex w-full items-center gap-3' : 'flex flex-col items-center gap-2', disabled && 'opacity-45')}>
+    <div className={cn(isHorizontal ? 'flex w-full items-center gap-2' : 'flex flex-col items-center gap-2', disabled && 'opacity-45')}>
       <motion.span
         animate={{ scale: isDragging ? 1.12 : 1 }}
-        className="min-w-12 rounded-full border border-slate-700/70 bg-slate-950/85 px-2 py-0.5 text-center text-xs font-black"
+        className={cn(
+          'rounded-full border border-slate-700/70 bg-slate-950/85 text-center font-black leading-none',
+          isHorizontal ? 'min-w-10 px-1.5 py-1 text-[10px]' : 'min-w-12 px-2 py-0.5 text-xs'
+        )}
         style={{ color: powerColor }}
       >
         {value}%
@@ -101,7 +104,7 @@ export function PowerSlider({
         aria-valuenow={Math.round(value)}
         className={cn(
           'relative touch-none overflow-hidden rounded-lg border border-slate-600/80 bg-[#1a1a2e] shadow-xl shadow-black/30',
-          isHorizontal ? 'h-8 min-w-0 flex-1' : 'h-[150px] w-[30px]',
+          isHorizontal ? 'h-6 min-w-0 flex-1 rounded-md shadow-md' : 'h-[150px] w-[30px]',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer active:scale-95'
         )}
         onPointerDown={handlePointerDown}

@@ -375,7 +375,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
           />
         )}
         footer={(engineState, power, setPower, onShoot) => (
-          <div className="shrink-0 border-t border-slate-800/60 bg-slate-950/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-sm">
+          <div className="shrink-0 border-t border-slate-800/50 bg-slate-950/90 px-3 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1.5 backdrop-blur-sm">
             <PowerSlider
               value={Math.round(power)}
               onChange={setPower}
