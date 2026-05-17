@@ -29,6 +29,7 @@ export interface InputHandlers {
   onPlaceCueBall: (x: number, y: number) => void;
   ballInHand: boolean;
   isBreakShot: boolean;
+  aimAngle: number;
   power: number;
 }
 
@@ -465,6 +466,7 @@ useEffect(() => {
     },
     ballInHand: canPlaceCueBall,
     isBreakShot: engineState.isBreakShot,
+    aimAngle,
     power,
   };
 
@@ -802,5 +804,4 @@ useEffect(() => {
     </div>
   );
 }
-
 

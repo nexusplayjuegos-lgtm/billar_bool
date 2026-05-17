@@ -11,6 +11,7 @@ interface TouchDragInputProps {
   ballInHand?: boolean;
   disabled?: boolean;
   isBreakShot?: boolean;
+  aimAngle?: number;
 }
 
 const TABLE_LEFT = 28;
@@ -18,12 +19,34 @@ const TABLE_RIGHT = 772;
 const TABLE_TOP = 28;
 const TABLE_BOTTOM = 372;
 const AIM_SMOOTHING = 0.32;
+const AIM_LINE_GRAB_WIDTH = 26;
+
+type AimGestureMode = 'pull' | 'direct';
 
 function getShotFromPull(cueBall: Ball, pos: { x: number; y: number }) {
   const dx = cueBall.x - pos.x;
   const dy = cueBall.y - pos.y;
   const angle = Math.atan2(dy, dx);
   return { angle };
+}
+
+function getShotFromPoint(cueBall: Ball, pos: { x: number; y: number }) {
+  return Math.atan2(pos.y - cueBall.y, pos.x - cueBall.x);
+}
+
+function getAimGestureMode(cueBall: Ball, pos: { x: number; y: number }, aimAngle: number): AimGestureMode {
+  const dx = pos.x - cueBall.x;
+  const dy = pos.y - cueBall.y;
+  const forwardX = Math.cos(aimAngle);
+  const forwardY = Math.sin(aimAngle);
+  const projection = dx * forwardX + dy * forwardY;
+  const perpendicular = Math.abs(dx * -forwardY + dy * forwardX);
+
+  return projection > cueBall.radius && perpendicular <= AIM_LINE_GRAB_WIDTH ? 'direct' : 'pull';
+}
+
+function getAimAngle(cueBall: Ball, pos: { x: number; y: number }, mode: AimGestureMode) {
+  return mode === 'direct' ? getShotFromPoint(cueBall, pos) : getShotFromPull(cueBall, pos).angle;
 }
 
 function smoothAngle(previous: number, next: number) {
@@ -41,12 +64,14 @@ export function TouchDragInput({
   ballInHand = false,
   disabled = false,
   isBreakShot = false,
+  aimAngle = 0,
 }: TouchDragInputProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingBall, setIsDraggingBall] = useState(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
   const lastAngleRef = useRef(0);
+  const aimGestureModeRef = useRef<AimGestureMode>('pull');
 
   const getLogicalPos = useCallback(
     (clientX: number, clientY: number) => {
@@ -105,11 +130,13 @@ export function TouchDragInput({
       if (!cueBall || cueBall.inPocket) return;
       setIsDragging(true);
       onPowerChange(0);
-      const { angle } = getShotFromPull(cueBall, pos);
+      const gestureMode = getAimGestureMode(cueBall, pos, aimAngle);
+      aimGestureModeRef.current = gestureMode;
+      const angle = getAimAngle(cueBall, pos, gestureMode);
       lastAngleRef.current = angle;
       onAimChange(angle);
     },
-    [balls, disabled, getLogicalPos, clampToTable, onAimChange, onPowerChange, ballInHand, onPlaceCueBall, isBreakShot]
+    [balls, disabled, getLogicalPos, clampToTable, onAimChange, onPowerChange, ballInHand, onPlaceCueBall, isBreakShot, aimAngle]
   );
 
   const handleMove = useCallback(
@@ -131,7 +158,7 @@ export function TouchDragInput({
       if (!pos) return;
       const cueBall = balls[0];
       if (!cueBall) return;
-      const { angle } = getShotFromPull(cueBall, pos);
+      const angle = getAimAngle(cueBall, pos, aimGestureModeRef.current);
       const smoothedAngle = smoothAngle(lastAngleRef.current, angle);
       lastAngleRef.current = smoothedAngle;
       onAimChange(smoothedAngle);

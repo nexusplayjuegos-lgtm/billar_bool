@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLocale, useImmersiveMatch, useViewportHeight } from '@/hooks';
+import { useLocale, useImmersiveMatch } from '@/hooks';
 import { useGameStore } from '@/lib/store';
 import { useUserStore } from '@/lib/store/userStore';
 import { useMultiplayer } from '@/hooks/useMultiplayer';
@@ -30,8 +30,6 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
   const { locale } = useLocale();
   const { endGame, modeType } = useGameStore();
   const { containerRef } = useImmersiveMatch();
-  const viewportHeight = useViewportHeight();
-  const useCompactControls = viewportHeight > 0 && viewportHeight < 500;
   const engineRef = useRef(createGameEngine(modeType === 'brazilian' ? 'brazilian' : '8ball'));
 
   const {
@@ -373,20 +371,19 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
             onPlaceCueBall={handlers.onPlaceCueBall}
             ballInHand={handlers.ballInHand}
             isBreakShot={handlers.isBreakShot}
+            aimAngle={handlers.aimAngle}
             disabled={engineState.ballsMoving || engineState.gameOver || !hasLocalTurn}
           />
         )}
         footer={(engineState, power, setPower, onShoot) => (
-          <div className={useCompactControls ? 'pointer-events-none absolute left-[calc(env(safe-area-inset-left)+0.5rem)] top-1/2 z-30 -translate-y-1/2' : 'mobile-power-footer shrink-0 border-t border-slate-800/50 bg-slate-950/90 backdrop-blur-sm'}>
-            <div className={useCompactControls ? 'pointer-events-auto rounded-xl border border-slate-700/60 bg-slate-950/55 p-1 shadow-lg shadow-black/20 backdrop-blur-sm' : undefined}>
-              <PowerSlider
-                value={Math.round(power)}
-                onChange={setPower}
-                onShoot={onShoot}
-                orientation={useCompactControls ? 'vertical' : 'horizontal'}
-                disabled={engineState.ballsMoving || engineState.gameOver || !hasLocalTurn || engineState.ballInHand}
-              />
-            </div>
+          <div className="mobile-power-footer shrink-0 border-t border-slate-800/50 bg-slate-950/90 backdrop-blur-sm">
+            <PowerSlider
+              value={Math.round(power)}
+              onChange={setPower}
+              onShoot={onShoot}
+              orientation="horizontal"
+              disabled={engineState.ballsMoving || engineState.gameOver || !hasLocalTurn || engineState.ballInHand}
+            />
           </div>
         )}
       />

@@ -12,6 +12,7 @@ interface MousePullBackInputProps {
   ballInHand?: boolean;
   disabled?: boolean;
   isBreakShot?: boolean;
+  aimAngle?: number;
 }
 
 const TABLE_LEFT = 28;
@@ -21,6 +22,9 @@ const TABLE_BOTTOM = 372;
 const AIM_DEADZONE = 24;
 const POWER_SCALE = 0.34;
 const AIM_SMOOTHING = 0.32;
+const AIM_LINE_GRAB_WIDTH = 26;
+
+type AimGestureMode = 'pull' | 'direct';
 
 function getShotFromPull(cueBall: Ball, pos: { x: number; y: number }) {
   const dx = cueBall.x - pos.x;
@@ -29,6 +33,25 @@ function getShotFromPull(cueBall: Ball, pos: { x: number; y: number }) {
   const angle = Math.atan2(dy, dx);
   const power = Math.min(Math.max((pullDistance - AIM_DEADZONE) * POWER_SCALE, 0), 100);
   return { angle, power };
+}
+
+function getShotFromPoint(cueBall: Ball, pos: { x: number; y: number }) {
+  return Math.atan2(pos.y - cueBall.y, pos.x - cueBall.x);
+}
+
+function getAimGestureMode(cueBall: Ball, pos: { x: number; y: number }, aimAngle: number): AimGestureMode {
+  const dx = pos.x - cueBall.x;
+  const dy = pos.y - cueBall.y;
+  const forwardX = Math.cos(aimAngle);
+  const forwardY = Math.sin(aimAngle);
+  const projection = dx * forwardX + dy * forwardY;
+  const perpendicular = Math.abs(dx * -forwardY + dy * forwardX);
+
+  return projection > cueBall.radius && perpendicular <= AIM_LINE_GRAB_WIDTH ? 'direct' : 'pull';
+}
+
+function getAimAngle(cueBall: Ball, pos: { x: number; y: number }, mode: AimGestureMode) {
+  return mode === 'direct' ? getShotFromPoint(cueBall, pos) : getShotFromPull(cueBall, pos).angle;
 }
 
 function smoothAngle(previous: number, next: number) {
@@ -47,12 +70,14 @@ export function MousePullBackInput({
   ballInHand = false,
   disabled = false,
   isBreakShot = false,
+  aimAngle = 0,
 }: MousePullBackInputProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPulling, setIsPulling] = useState(false);
   const [isDraggingBall, setIsDraggingBall] = useState(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
   const lastAngleRef = useRef(0);
+  const aimGestureModeRef = useRef<AimGestureMode>('pull');
 
   const getLogicalPos = useCallback(
     (clientX: number, clientY: number) => {
@@ -74,7 +99,8 @@ export function MousePullBackInput({
       if (!pos) return;
       const cueBall = balls[0];
       if (!cueBall) return;
-      const { angle, power } = getShotFromPull(cueBall, pos);
+      const { power } = getShotFromPull(cueBall, pos);
+      const angle = getAimAngle(cueBall, pos, aimGestureModeRef.current);
       if (power > 0) {
         const smoothedAngle = smoothAngle(lastAngleRef.current, angle);
         lastAngleRef.current = smoothedAngle;
@@ -124,7 +150,10 @@ export function MousePullBackInput({
 
       const cueBall = balls[0];
       if (!cueBall || cueBall.inPocket) return;
-      const { angle, power } = getShotFromPull(cueBall, pos);
+      const { power } = getShotFromPull(cueBall, pos);
+      const gestureMode = getAimGestureMode(cueBall, pos, aimAngle);
+      aimGestureModeRef.current = gestureMode;
+      const angle = getAimAngle(cueBall, pos, gestureMode);
       setIsPulling(true);
       if (power > 0) {
         lastAngleRef.current = angle;
@@ -132,7 +161,7 @@ export function MousePullBackInput({
       }
       onPowerChange(power);
     },
-    [balls, disabled, getLogicalPos, clampToTable, ballInHand, onPlaceCueBall, isBreakShot, onAimChange, onPowerChange]
+    [balls, disabled, getLogicalPos, clampToTable, ballInHand, onPlaceCueBall, isBreakShot, onAimChange, onPowerChange, aimAngle]
   );
 
   const handleMouseMove = useCallback(
