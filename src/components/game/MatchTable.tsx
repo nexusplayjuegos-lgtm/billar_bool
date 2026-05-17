@@ -47,10 +47,11 @@ export function MatchTable({
     if (!el) return;
 
     const update = () => {
-      const parent = el.parentElement;
-      if (!parent) return;
-      const pw = parent.clientWidth;
-      const ph = parent.clientHeight;
+      const styles = window.getComputedStyle(el);
+      const horizontalPadding = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+      const verticalPadding = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+      const pw = el.clientWidth - horizontalPadding;
+      const ph = el.clientHeight - verticalPadding;
       if (pw <= 0 || ph <= 0) return;
       const baseScale = Math.min(pw / 800, ph / 400) * scale;
       const width = Math.max(1, 800 * baseScale);
@@ -60,15 +61,13 @@ export function MatchTable({
 
     update();
     const ro = new ResizeObserver(update);
-    if (el.parentElement) {
-      ro.observe(el.parentElement);
-    }
+    ro.observe(el);
     return () => ro.disconnect();
   }, [scale]);
 
   return (
-    <div ref={containerRef} className="w-full h-full flex items-center justify-center">
-      <div className="relative" style={{ width: size.width, height: size.height }}>
+    <div ref={containerRef} className="match-table-stage w-full h-full flex items-center justify-center">
+      <div className="match-table-frame relative" style={{ width: size.width, height: size.height }}>
         <PoolTable balls={balls} className="w-full h-full" tableId={tableId} />
         <PocketedBallRack balls={balls} pocketedBallIds={pocketedBallIds} />
         <AimOverlay balls={balls} aimAngle={aimAngle} power={power} isAiming={isAiming} showIdleCue={showIdleCue} cueStrikeActive={cueStrikeActive} isBreakShot={isBreakShot} playerType={playerType} gameMode={gameMode} />

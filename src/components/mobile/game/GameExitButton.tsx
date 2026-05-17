@@ -33,7 +33,7 @@ export function GameExitButton({
         whileTap={{ scale: 0.95 }}
         onClick={() => setShowConfirm(true)}
         className={cn(
-          'flex items-center gap-2 px-3 py-2 rounded-lg',
+          'flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg px-3 py-2',
           'bg-red-500/20 hover:bg-red-500/30',
           'text-red-400 text-sm font-medium',
           'transition-colors border border-red-500/30',
@@ -116,7 +116,7 @@ export function GameExitButton({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setShowConfirm(false)}
-                  className="flex-1 px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium transition-colors"
+                  className="min-h-11 flex-1 px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium transition-colors"
                 >
                   {t('stay')}
                 </motion.button>
@@ -127,6 +127,7 @@ export function GameExitButton({
                   onClick={handleConfirm}
                   className={cn(
                     'flex-1 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
+                    'min-h-11',
                     'bg-red-500 hover:bg-red-600 text-white'
                   )}
                 >

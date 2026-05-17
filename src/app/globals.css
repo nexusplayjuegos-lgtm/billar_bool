@@ -70,6 +70,115 @@ main {
   padding-left: env(safe-area-inset-left);
 }
 
+.mobile-game-header {
+  min-height: clamp(40px, 8.5vh, 52px);
+  padding-inline: clamp(6px, 2.4vw, 12px);
+  font-size: clamp(11px, 2.8vw, 14px);
+}
+
+.mobile-power-footer {
+  padding-inline: clamp(8px, 2.8vw, 16px);
+  padding-top: clamp(4px, 1.4vh, 8px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + clamp(4px, 1.4vh, 8px));
+}
+
+.mobile-power-track-horizontal {
+  height: clamp(22px, 4.8vh, 28px);
+}
+
+.mobile-power-track-vertical {
+  height: clamp(108px, 32vh, 150px);
+}
+
+.match-table-stage {
+  padding-inline: clamp(2px, 1.2vw, 12px);
+  padding-block: clamp(2px, 1vh, 8px);
+}
+
+.match-table-frame {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+@media (max-width: 374px) {
+  .mobile-game-header {
+    min-height: 40px;
+    padding-inline: 6px;
+    font-size: 11px;
+  }
+
+  .mobile-game-header [class*="w-8"][class*="h-8"] {
+    width: 28px;
+    height: 28px;
+    font-size: 10px;
+  }
+
+  .mobile-game-header [class*="text-[10px]"] {
+    font-size: 9px;
+  }
+
+  .mobile-game-header [class*="text-[9px]"] {
+    font-size: 8px;
+  }
+
+  .mobile-power-footer {
+    padding-inline: 8px;
+    padding-top: 4px;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 4px);
+  }
+
+  .match-table-stage {
+    padding-inline: 2px;
+    padding-block: 2px;
+  }
+}
+
+@media (min-width: 375px) and (max-width: 413px) {
+  .mobile-game-header {
+    min-height: 42px;
+  }
+}
+
+@media (min-width: 414px) and (max-width: 767px) {
+  .mobile-game-header {
+    min-height: 46px;
+  }
+}
+
+@media (min-width: 768px) {
+  .mobile-game-header {
+    min-height: 56px;
+    padding-inline: 18px;
+  }
+
+  .mobile-power-footer {
+    padding-inline: 24px;
+    padding-top: 8px;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
+  }
+
+  .match-table-stage {
+    padding-inline: 18px;
+    padding-block: 10px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-game-header {
+    min-height: 60px;
+  }
+}
+
+@media (max-height: 499px) {
+  .mobile-game-header {
+    min-height: clamp(38px, 11vh, 44px);
+  }
+
+  .match-table-stage {
+    padding-block: 2px;
+  }
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

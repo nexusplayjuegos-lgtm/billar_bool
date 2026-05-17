@@ -104,7 +104,7 @@ export function PowerSlider({
         aria-valuenow={Math.round(value)}
         className={cn(
           'relative touch-none overflow-hidden rounded-lg border border-slate-600/80 bg-[#1a1a2e] shadow-xl shadow-black/30',
-          isHorizontal ? 'h-6 min-w-0 flex-1 rounded-md shadow-md' : 'h-[150px] w-[30px]',
+          isHorizontal ? 'mobile-power-track-horizontal min-w-0 flex-1 rounded-md shadow-md' : 'mobile-power-track-vertical w-[30px]',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer active:scale-95'
         )}
         onPointerDown={handlePointerDown}

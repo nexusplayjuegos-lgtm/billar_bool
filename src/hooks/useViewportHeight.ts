@@ -1,13 +1,17 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const APP_HEIGHT_PROPERTY = '--app-height';
 
 export function useViewportHeight() {
+  const [height, setHeight] = useState(0);
+
   useEffect(() => {
     const updateAppHeight = () => {
-      document.documentElement.style.setProperty(APP_HEIGHT_PROPERTY, `${window.innerHeight}px`);
+      const nextHeight = window.innerHeight;
+      document.documentElement.style.setProperty(APP_HEIGHT_PROPERTY, `${nextHeight}px`);
+      setHeight((current) => (current === nextHeight ? current : nextHeight));
     };
 
     updateAppHeight();
@@ -24,4 +28,6 @@ export function useViewportHeight() {
       window.visualViewport?.removeEventListener('scroll', updateAppHeight);
     };
   }, []);
+
+  return height;
 }
