@@ -83,15 +83,18 @@ main {
 
 .mobile-power-footer {
   display: flex;
+  align-items: center;
   justify-content: center;
+  overflow: visible;
   padding-inline: clamp(8px, 2.8vw, 16px);
   padding-top: clamp(4px, 1.4vh, 8px);
-  padding-bottom: calc(env(safe-area-inset-bottom) + clamp(4px, 1.4vh, 8px));
+  padding-bottom: calc(env(safe-area-inset-bottom) + clamp(8px, 2vh, 12px));
 }
 
 .mobile-power-inner {
   max-width: 100%;
   min-width: 0;
+  padding-bottom: 2px;
 }
 
 .mobile-power-track-horizontal {
