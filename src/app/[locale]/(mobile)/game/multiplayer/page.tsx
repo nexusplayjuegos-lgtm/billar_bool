@@ -31,7 +31,7 @@ export default function MultiplayerGamePage() {
   return (
     <Suspense
       fallback={
-        <div className="h-dvh h-screen flex flex-col items-center justify-center bg-slate-950 gap-4">
+        <div className="game-fullscreen flex flex-col items-center justify-center bg-slate-950 gap-4">
           <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
           <span className="text-slate-400 text-sm">A carregar...</span>
         </div>

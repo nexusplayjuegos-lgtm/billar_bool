@@ -52,11 +52,12 @@ export function MobileGameScreen() {
           />
         )}
         footer={(engineState, power, setPower, onShoot) => (
-          <div className="absolute left-8 top-1/2 z-30 -translate-y-1/2">
+          <div className="shrink-0 border-t border-slate-800/60 bg-slate-950/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-sm">
             <PowerSlider
               value={Math.round(power)}
               onChange={setPower}
               onShoot={onShoot}
+              orientation="horizontal"
               disabled={engineState.ballsMoving || engineState.gameOver || engineState.currentPlayer === 2 || engineState.ballInHand}
             />
           </div>

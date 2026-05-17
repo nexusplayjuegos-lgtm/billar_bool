@@ -343,16 +343,10 @@ useEffect(() => {
 
   useEffect(() => {
     if (!blockScroll) return;
-    const originalOverflow = document.body.style.overflow;
-    const originalTouchAction = document.body.style.touchAction;
-    document.body.style.overflow = 'hidden';
-    document.body.style.touchAction = 'none';
-    const preventScroll = (e: TouchEvent) => e.preventDefault();
-    document.addEventListener('touchmove', preventScroll, { passive: false });
+    const originalOverscroll = document.body.style.overscrollBehavior;
+    document.body.style.overscrollBehavior = 'none';
     return () => {
-      document.body.style.overflow = originalOverflow;
-      document.body.style.touchAction = originalTouchAction;
-      document.removeEventListener('touchmove', preventScroll);
+      document.body.style.overscrollBehavior = originalOverscroll;
     };
   }, [blockScroll]);
 
@@ -447,7 +441,7 @@ useEffect(() => {
 
   if (!engineState) {
     return (
-      <div className="h-dvh h-screen flex items-center justify-center bg-slate-950">
+      <div className="game-fullscreen flex items-center justify-center bg-slate-950">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
@@ -475,7 +469,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="h-dvh h-screen w-full flex flex-col bg-slate-950 overflow-hidden relative select-none">
+    <div className="h-full min-h-0 w-full flex flex-col bg-slate-950 overflow-hidden relative select-none">
       {header && header(engineState, externalTimeLeft ?? timeLeft)}
 
       <div className="flex-1 min-h-0 relative overflow-hidden">
@@ -539,7 +533,7 @@ useEffect(() => {
 
       {/* Indicador de vez do bot */}
       {showBotThinking && engineState.currentPlayer === 2 && !engineState.ballsMoving && !engineState.gameOver && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30">
+        <div className={`${footer ? 'bottom-20' : 'bottom-4'} absolute left-1/2 z-30 -translate-x-1/2`}>
           <div className="px-4 py-2 bg-slate-900/90 backdrop-blur-sm rounded-full border border-slate-700/50 flex items-center gap-2">
             <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
             <span className="text-sm text-slate-300 font-medium">{t('botThinking')}</span>
@@ -808,8 +802,6 @@ useEffect(() => {
     </div>
   );
 }
-
-
 
 
 

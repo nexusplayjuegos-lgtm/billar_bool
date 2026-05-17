@@ -288,7 +288,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
 
   if (joining) {
     return (
-      <div className="h-dvh h-screen flex flex-col items-center justify-center bg-slate-950 gap-4">
+      <div className="game-fullscreen flex flex-col items-center justify-center bg-slate-950 gap-4">
         <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
         <span className="text-slate-400 text-sm">A entrar na sala...</span>
       </div>
@@ -297,7 +297,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
 
   if (error) {
     return (
-      <div className="h-dvh h-screen flex flex-col items-center justify-center bg-slate-950 gap-4 px-6">
+      <div className="game-fullscreen flex flex-col items-center justify-center bg-slate-950 gap-4 px-6">
         <span className="text-red-400 text-center">{error}</span>
         <button
           onClick={handleExitGame}
@@ -321,7 +321,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
 
   if (!roomReady) {
     return (
-      <div className="h-dvh h-screen flex flex-col items-center justify-center bg-slate-950 gap-4 px-6">
+      <div className="game-fullscreen flex flex-col items-center justify-center bg-slate-950 gap-4 px-6">
         <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
         <span className="text-slate-300 text-sm text-center">Aguardando os dois jogadores entrarem na mesma sala...</span>
       </div>
@@ -329,12 +329,12 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
   }
 
   return (
-    <div ref={containerRef} className="h-dvh h-screen w-full">
+    <div ref={containerRef} className="game-fullscreen">
       <GameScreen
         blockScroll
         onExit={handleExitGame}
         onShoot={handleShoot}
-        tableScale={0.78}
+        tableScale={1}
         gameMode={modeType === 'brazilian' ? 'brazilian' : '8ball'}
         engine={engineRef.current}
         enableLocalTurnTimer={false}
@@ -375,11 +375,12 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
           />
         )}
         footer={(engineState, power, setPower, onShoot) => (
-          <div className="absolute left-8 top-1/2 z-30 -translate-y-1/2">
+          <div className="shrink-0 border-t border-slate-800/60 bg-slate-950/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-sm">
             <PowerSlider
               value={Math.round(power)}
               onChange={setPower}
               onShoot={onShoot}
+              orientation="horizontal"
               disabled={engineState.ballsMoving || engineState.gameOver || !hasLocalTurn || engineState.ballInHand}
             />
           </div>
