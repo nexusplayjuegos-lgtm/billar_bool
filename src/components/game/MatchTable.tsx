@@ -4,7 +4,6 @@ import { useRef, useLayoutEffect, useState, ReactNode } from 'react';
 import { Ball } from '@/types';
 import { PoolTable } from './PoolTable';
 import { AimOverlay } from './AimOverlay';
-import { PocketedBallRack } from './PocketedBallRack';
 
 interface MatchTableProps {
   balls: Ball[];
@@ -14,7 +13,6 @@ interface MatchTableProps {
   showIdleCue?: boolean;
   cueStrikeActive?: boolean;
   isBreakShot?: boolean;
-  pocketedBallIds?: number[];
   opponentAim?: { angle: number; power: number } | null;
   children: ReactNode;
   scale?: number;
@@ -32,7 +30,6 @@ export function MatchTable({
   showIdleCue,
   cueStrikeActive = false,
   isBreakShot,
-  pocketedBallIds = [],
   opponentAim,
   children,
   scale = 1,
@@ -73,7 +70,6 @@ export function MatchTable({
     <div ref={containerRef} className="match-table-stage w-full h-full flex items-center justify-center">
       <div className="match-table-frame relative" style={{ width: size.width, height: size.height }}>
         <PoolTable balls={balls} className="w-full h-full" tableId={tableId} />
-        <PocketedBallRack balls={balls} pocketedBallIds={pocketedBallIds} />
         <AimOverlay balls={balls} aimAngle={aimAngle} power={power} isAiming={isAiming} showIdleCue={showIdleCue} cueStrikeActive={cueStrikeActive} isBreakShot={isBreakShot} playerType={playerType} gameMode={gameMode} />
         {opponentAim && (
           <AimOverlay

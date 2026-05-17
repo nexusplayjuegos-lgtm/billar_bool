@@ -16,6 +16,7 @@ import { playTick, unlockAudio } from '@/lib/audio/gameAudio';
 import { audioManager } from '@/lib/audio/audioManager';
 import { useGameStore, useUserStore } from '@/lib/store';
 import { MatchTable } from './MatchTable';
+import { PocketedBallRack } from './PocketedBallRack';
 import { Confetti } from './Confetti';
 import { MatchStartAnimation } from './MatchStartAnimation';
 import type { AchievementProgress, AchievementUpdateResult } from '@/types';
@@ -491,6 +492,8 @@ useEffect(() => {
     <div className="h-full min-h-full w-full min-w-0 flex flex-col bg-slate-950 overflow-x-hidden overflow-y-auto relative select-none">
       {header && header(engineState, externalTimeLeft ?? timeLeft)}
 
+      <PocketedBallRack balls={engineState.balls} pocketedBallIds={engineState.pocketedBalls} />
+
       <div className="flex-1 min-h-[180px] min-w-0 relative overflow-hidden">
         <MatchTable
           balls={engineState.balls}
@@ -500,7 +503,6 @@ useEffect(() => {
           showIdleCue={shouldShowIdleCue}
           cueStrikeActive={cueStrikeActive}
           isBreakShot={engineState.isBreakShot}
-          pocketedBallIds={engineState.pocketedBalls}
           opponentAim={opponentAim}
           scale={tableScale}
           playerType={isLocalPlayerTurn ? engineState.player1Type : engineState.player2Type}
