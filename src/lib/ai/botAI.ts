@@ -206,7 +206,7 @@ export function getBotDecision(
   // HARD: raycast + mira em caçapa
   const pocketShot = getBestPocketShot(targets, cueBall, activeBalls, pockets);
   if (pocketShot) {
-    const error = (Math.random() - 0.5) * 0.035; // ±2°
+    const error = (Math.random() - 0.5) * 0.02; // ±1.1°
     return { angle: pocketShot.angle + error, power: pocketShot.power };
   }
 
@@ -214,7 +214,7 @@ export function getBotDecision(
   const validTargets = targets.filter((t) => hasClearPath(cueBall, t, activeBalls));
   const target = validTargets.length > 0 ? getEasiestShot(validTargets, cueBall) : getEasiestShot(targets, cueBall);
   const angle = Math.atan2(target.y - cueBall.y, target.x - cueBall.x);
-  const error = (Math.random() - 0.5) * 0.035;
+  const error = (Math.random() - 0.5) * 0.02;
   const dist = getDistance(cueBall, target);
   const power = Math.min(85, Math.max(30, dist * 0.2 + 25));
   return { angle: angle + error, power };

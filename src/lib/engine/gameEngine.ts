@@ -223,7 +223,7 @@ class GameEngine {
   private yellowBallContact = false; // vermelha encostou na amarela
   private redBallPocketed = false;   // vermelha caiu na caçapa
   private mode: '8ball' | 'brazilian' = '8ball';
-  private botDifficulty: BotDifficulty = 'medium';
+  private botDifficulty: BotDifficulty = 'hard';
   private multiplayerMode = false;
 
   constructor(mode: '8ball' | 'brazilian' = '8ball') {
