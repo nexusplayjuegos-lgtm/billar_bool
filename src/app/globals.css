@@ -86,6 +86,14 @@ main {
   align-items: center;
   justify-content: center;
   overflow: visible;
+  margin-top: clamp(6px, 1.5vh, 10px);
+  border-top-color: rgba(30, 41, 59, 0.2);
+  background: linear-gradient(
+    to bottom,
+    rgba(15, 23, 42, 0.18),
+    rgba(2, 6, 23, 0.82) 42%,
+    rgba(2, 6, 23, 0.94)
+  );
   padding-inline: clamp(8px, 2.8vw, 16px);
   padding-top: clamp(4px, 1.4vh, 8px);
   padding-bottom: calc(env(safe-area-inset-bottom) + clamp(8px, 2vh, 12px));
