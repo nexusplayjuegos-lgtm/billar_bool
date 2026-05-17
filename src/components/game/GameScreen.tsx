@@ -21,6 +21,10 @@ import { MatchStartAnimation } from './MatchStartAnimation';
 import type { AchievementProgress, AchievementUpdateResult } from '@/types';
 
 const MIN_SHOOT_POWER = 8;
+interface TableRenderSize {
+  width: number;
+  height: number;
+}
 
 export interface InputHandlers {
   onAimChange: (angle: number) => void;
@@ -36,7 +40,13 @@ export interface InputHandlers {
 interface GameScreenProps {
   header?: (state: EngineState, timeLeft: number) => ReactNode;
   overlay?: (state: EngineState, handlers: InputHandlers) => ReactNode;
-  footer?: (state: EngineState, power: number, setPower: (p: number) => void, onShoot: (shotPower?: number) => void) => ReactNode;
+  footer?: (
+    state: EngineState,
+    power: number,
+    setPower: (p: number) => void,
+    onShoot: (shotPower?: number) => void,
+    tableSize: TableRenderSize
+  ) => ReactNode;
   onExit: () => void;
   onShoot?: (power: number, aimAngle: number) => void;
   blockScroll?: boolean;
@@ -124,6 +134,7 @@ export function GameScreen({
   const [power, setPower] = useState(0);
   const [isAiming, setIsAiming] = useState(false);
   const [cueStrikeActive, setCueStrikeActive] = useState(false);
+  const [tableSize, setTableSize] = useState<TableRenderSize>({ width: 800, height: 400 });
   const cueStrikeTimeoutRef = useRef<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(30);
   const [showWinModal, setShowWinModal] = useState(false);
@@ -364,6 +375,12 @@ useEffect(() => {
     onAimPreview?.(aimAngle, p);
   }, [aimAngle, onAimPreview]);
 
+  const handleTableSizeChange = useCallback((nextSize: TableRenderSize) => {
+    setTableSize((current) =>
+      current.width === nextSize.width && current.height === nextSize.height ? current : nextSize
+    );
+  }, []);
+
   const handleShoot = useCallback((shotPower = power) => {
     void unlockAudio();
     if (shotPower >= MIN_SHOOT_POWER) {
@@ -489,6 +506,7 @@ useEffect(() => {
           playerType={isLocalPlayerTurn ? engineState.player1Type : engineState.player2Type}
           gameMode={gameMode}
           tableId={profile.equipment.currentTable}
+          onSizeChange={handleTableSizeChange}
         >
           {overlay && overlay(engineState, inputHandlers)}
         </MatchTable>
@@ -543,7 +561,7 @@ useEffect(() => {
         </div>
       )}
 
-      {footer && footer(engineState, power, setPower, handleShoot)}
+      {footer && footer(engineState, power, setPower, handleShoot, tableSize)}
 
       {/* Win Modal */}
       <AnimatePresence>
@@ -804,4 +822,3 @@ useEffect(() => {
     </div>
   );
 }
-

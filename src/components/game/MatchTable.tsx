@@ -21,6 +21,7 @@ interface MatchTableProps {
   playerType?: 'solid' | 'stripe' | null;
   gameMode?: '8ball' | 'brazilian';
   tableId?: string;
+  onSizeChange?: (size: { width: number; height: number }) => void;
 }
 
 export function MatchTable({
@@ -38,6 +39,7 @@ export function MatchTable({
   playerType,
   gameMode,
   tableId,
+  onSizeChange,
 }: MatchTableProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 800, height: 400 });
@@ -56,14 +58,16 @@ export function MatchTable({
       const baseScale = Math.min(pw / 800, ph / 400) * scale;
       const width = Math.max(1, 800 * baseScale);
       const height = Math.max(1, 400 * baseScale);
-      setSize({ width, height });
+      const nextSize = { width, height };
+      setSize((current) => (current.width === width && current.height === height ? current : nextSize));
+      onSizeChange?.(nextSize);
     };
 
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [scale]);
+  }, [scale, onSizeChange]);
 
   return (
     <div ref={containerRef} className="match-table-stage w-full h-full flex items-center justify-center">

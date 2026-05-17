@@ -52,15 +52,17 @@ export function MobileGameScreen() {
             disabled={engineState.ballsMoving || engineState.gameOver || engineState.currentPlayer === 2}
           />
         )}
-        footer={(engineState, power, setPower, onShoot) => (
+        footer={(engineState, power, setPower, onShoot, tableSize) => (
           <div className="mobile-power-footer shrink-0 border-t border-slate-800/50 bg-slate-950/90 backdrop-blur-sm">
-            <PowerSlider
-              value={Math.round(power)}
-              onChange={setPower}
-              onShoot={onShoot}
-              orientation="horizontal"
-              disabled={engineState.ballsMoving || engineState.gameOver || engineState.currentPlayer === 2 || engineState.ballInHand}
-            />
+            <div className="mobile-power-inner" style={{ width: tableSize.width }}>
+              <PowerSlider
+                value={Math.round(power)}
+                onChange={setPower}
+                onShoot={onShoot}
+                orientation="horizontal"
+                disabled={engineState.ballsMoving || engineState.gameOver || engineState.currentPlayer === 2 || engineState.ballInHand}
+              />
+            </div>
           </div>
         )}
       />
