@@ -469,10 +469,10 @@ useEffect(() => {
   };
 
   return (
-    <div className="h-full min-h-0 w-full flex flex-col bg-slate-950 overflow-hidden relative select-none">
+    <div className="h-full min-h-full w-full min-w-0 flex flex-col bg-slate-950 overflow-x-hidden overflow-y-auto relative select-none">
       {header && header(engineState, externalTimeLeft ?? timeLeft)}
 
-      <div className="flex-1 min-h-0 relative overflow-hidden">
+      <div className="flex-1 min-h-[180px] min-w-0 relative overflow-hidden">
         <MatchTable
           balls={engineState.balls}
           aimAngle={aimAngle}
@@ -802,7 +802,5 @@ useEffect(() => {
     </div>
   );
 }
-
-
 
 
