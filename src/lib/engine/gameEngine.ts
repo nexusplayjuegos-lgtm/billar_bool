@@ -656,6 +656,29 @@ class GameEngine {
 
     const cueBall = this.state.balls[0];
     const player = this.state.currentPlayer;
+    const playerGroup = player === 1 ? this.state.player1Type : this.state.player2Type;
+
+    // 8-ball pocketed — must be resolved immediately before any other foul/scratch check.
+    // Premature pocketing (group not cleared) or scratch-while-pocketing = instant loss.
+    const eight = this.state.balls.find((b) => b.number === 8);
+    if (eight && this.pocketedThisTurn.includes(eight.id)) {
+      const groupBallsBeforeShot = this.state.balls.filter(
+        (b) =>
+          b.number !== 8 &&
+          ((playerGroup === 'solid' && b.number && b.number <= 7) ||
+            (playerGroup === 'stripe' && b.number && b.number >= 9)) &&
+          (!b.inPocket || this.pocketedThisTurn.includes(b.id))
+      );
+      const clearedAllGroup = playerGroup !== null && groupBallsBeforeShot.length === 0;
+      if (clearedAllGroup && !cueBall.inPocket) {
+        this.state.winner = player;
+      } else {
+        this.state.winner = player === 1 ? 2 : 1;
+      }
+      this.state.gameOver = true;
+      playWin();
+      return;
+    }
 
     if (cueBall.inPocket) {
       this.state.scratch = true;
@@ -679,7 +702,6 @@ class GameEngine {
 
     if (this.groupsAssigned) {
       const firstBall = this.state.balls.find((b) => b.id === this.firstContact);
-      const playerGroup = player === 1 ? this.state.player1Type : this.state.player2Type;
       if (firstBall && firstBall.number && firstBall.number !== 8 && playerGroup) {
         const isOwnGroup =
           (playerGroup === 'solid' && firstBall.number <= 7) ||
@@ -691,26 +713,6 @@ class GameEngine {
           return;
         }
       }
-    }
-
-    const eight = this.state.balls.find((b) => b.number === 8);
-    if (eight && this.pocketedThisTurn.includes(eight.id)) {
-      const playerGroup = player === 1 ? this.state.player1Type : this.state.player2Type;
-      const unpocketedGroupBallsBeforeShot = this.state.balls.filter(
-        (b) =>
-          b.number !== 8 &&
-          ((playerGroup === 'solid' && b.number && b.number <= 7) ||
-            (playerGroup === 'stripe' && b.number && b.number >= 9)) &&
-          (!b.inPocket || this.pocketedThisTurn.includes(b.id))
-      );
-      if (playerGroup && unpocketedGroupBallsBeforeShot.length === 0) {
-        this.state.winner = player;
-      } else {
-        this.state.winner = player === 1 ? 2 : 1;
-      }
-      this.state.gameOver = true;
-      playWin();
-      return;
     }
 
     if (!this.groupsAssigned) {
@@ -747,13 +749,13 @@ class GameEngine {
       }
     }
 
-    const playerGroup = player === 1 ? this.state.player1Type : this.state.player2Type;
+    const currentPlayerGroup = player === 1 ? this.state.player1Type : this.state.player2Type;
     let keptTurn = false;
-    if (this.groupsAssigned && playerGroup) {
+    if (this.groupsAssigned && currentPlayerGroup) {
       keptTurn = this.pocketedThisTurn.some((id) => {
         const b = this.state.balls.find((x) => x.id === id);
         if (!b || !b.number || b.number === 8) return false;
-        if (playerGroup === 'solid') return b.number <= 7;
+        if (currentPlayerGroup === 'solid') return b.number <= 7;
         return b.number >= 9;
       });
     }
