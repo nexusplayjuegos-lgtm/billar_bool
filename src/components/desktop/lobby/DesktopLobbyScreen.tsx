@@ -11,6 +11,9 @@ import { useMultiplayer } from '@/hooks/useMultiplayer';
 import { formatNumber, getCountryFlag } from '@/lib/utils';
 import { useLocale } from '@/hooks';
 import type { Room } from '@/lib/multiplayer/types';
+import { FakeMatchmakingOverlay } from '@/components/matchmaking';
+import type { FakeOpponent } from '@/lib/store/gameStore';
+import type { GameMode } from '@/types';
 
 type MultiplayerView = 'menu' | 'create' | 'join';
 
@@ -27,6 +30,7 @@ export function DesktopLobbyScreen() {
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [copied, setCopied] = useState(false);
   const [joinCode, setJoinCode] = useState('');
+  const [matchmakingMode, setMatchmakingMode] = useState<GameMode | null>(null);
 
   const { createRoom, joinRoom, listRooms, room, isConnected, error: mpError } = useMultiplayer();
 
@@ -88,6 +92,22 @@ export function DesktopLobbyScreen() {
     setJoinCode('');
   };
 
+  const beginFakeMatchmaking = (mode: GameMode) => {
+    if (profile.currencies.coins < mode.entryFee.coins) return;
+    setShowMultiplayer(false);
+    setMatchmakingMode(mode);
+  };
+
+  const handleFakeMatched = (opponent: FakeOpponent) => {
+    const mode = matchmakingMode;
+    if (!mode) return;
+    removeCoins(mode.entryFee.coins);
+    useGameStore.getState().setOpponent(opponent);
+    startGame(mode.id, mode.type, mode.entryFee.coins, mode.reward.win);
+    setMatchmakingMode(null);
+    router.push(`/${locale}/play/${mode.id}`);
+  };
+
   return (
     <div className="space-y-8">
       {isGuest && (
@@ -122,11 +142,7 @@ export function DesktopLobbyScreen() {
             <button
               onClick={() => {
                 const mode = MOCK_GAME_MODES[0];
-                if (profile.currencies.coins >= mode.entryFee.coins) {
-                  removeCoins(mode.entryFee.coins);
-                  startGame(mode.id, mode.type, mode.entryFee.coins, mode.reward.win);
-                  router.push(`/${locale}/play/${mode.id}`);
-                }
+                beginFakeMatchmaking(mode);
               }}
               className="px-6 py-3 bg-white text-slate-950 font-bold rounded-xl flex items-center gap-2 hover:bg-white/90 transition-colors shadow-lg shadow-white/10"
             >
@@ -134,7 +150,7 @@ export function DesktopLobbyScreen() {
               Jogar Agora
             </button>
             <button
-              onClick={() => { setMpView('menu'); setShowMultiplayer(true); }}
+              onClick={() => beginFakeMatchmaking(MOCK_GAME_MODES[0])}
               className="px-6 py-3 border border-cyan-300/40 text-cyan-200 hover:bg-cyan-500/10 font-bold rounded-xl flex items-center gap-2 transition-colors"
             >
               <Wifi className="w-5 h-5" />
@@ -183,11 +199,7 @@ export function DesktopLobbyScreen() {
               transition={{ delay: i * 0.1 }}
               whileHover={{ scale: 1.02 }}
               onClick={() => {
-                if (profile.currencies.coins >= mode.entryFee.coins) {
-                  removeCoins(mode.entryFee.coins);
-                  startGame(mode.id, mode.type, mode.entryFee.coins, mode.reward.win);
-                  router.push(`/${locale}/play/${mode.id}`);
-                }
+                beginFakeMatchmaking(mode);
               }}
               className="bg-slate-800/60 rounded-xl p-4 cursor-pointer hover:bg-slate-800 transition-colors border border-slate-700/60 shadow-[0_12px_30px_rgba(2,6,23,0.18)]"
               style={{ borderLeft: `4px solid ${mode.color}` }}
@@ -252,6 +264,13 @@ export function DesktopLobbyScreen() {
 
       {/* ── Multiplayer Modal (centered dialog) ── */}
       <AnimatePresence>
+        {matchmakingMode && (
+          <FakeMatchmakingOverlay
+            playerLevel={profile.level}
+            onCancel={() => setMatchmakingMode(null)}
+            onMatched={handleFakeMatched}
+          />
+        )}
         {showMultiplayer && (
           <motion.div
             initial={{ opacity: 0 }}

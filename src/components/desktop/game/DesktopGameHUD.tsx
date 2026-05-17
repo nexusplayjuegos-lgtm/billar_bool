@@ -6,13 +6,15 @@ import { Timer } from 'lucide-react';
 import { useGameStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { EngineState } from '@/lib/engine/gameEngine';
+import type { FakeOpponent } from '@/lib/store/gameStore';
 
 interface DesktopGameHUDProps {
   timeLeft: number;
   engineState: EngineState;
+  opponent?: FakeOpponent | null;
 }
 
-export function DesktopGameHUD({ timeLeft, engineState }: DesktopGameHUDProps) {
+export function DesktopGameHUD({ timeLeft, engineState, opponent }: DesktopGameHUDProps) {
   const t = useTranslations('game');
   const { potentialReward } = useGameStore();
   const isPlayerTurn = engineState.currentPlayer === 1;
@@ -106,7 +108,7 @@ export function DesktopGameHUD({ timeLeft, engineState }: DesktopGameHUDProps) {
       {/* Player 2 (Bot) */}
       <div className="flex items-center gap-3">
         <div className="flex flex-col text-right">
-          <span className="text-white text-sm font-bold">BOT</span>
+          <span className="text-white text-sm font-bold">{opponent?.name ?? 'Rival'}</span>
           {isBrazilian ? (
             <span className="text-red-400 text-xs font-bold">
               {engineState.player2Points} / {engineState.maxPoints}
@@ -125,13 +127,14 @@ export function DesktopGameHUD({ timeLeft, engineState }: DesktopGameHUDProps) {
         <div className="relative">
           <div
             className={cn(
-              'w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm border-2',
+              'w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm border-2 bg-gradient-to-br',
+              opponent?.avatarGradient,
               !isPlayerTurn
                 ? 'bg-gradient-to-br from-red-500 to-red-700 border-white/50 shadow-lg shadow-red-500/30'
                 : 'bg-gradient-to-br from-slate-600 to-slate-800 border-white/20'
             )}
           >
-            🤖
+            {opponent?.initials ?? 'RV'}
           </div>
           {!isPlayerTurn && (
             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-900" />

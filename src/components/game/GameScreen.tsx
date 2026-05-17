@@ -90,7 +90,7 @@ export function GameScreen({
   const engine = customEngine ?? gameEngine;
   const t = useTranslations('game');
   const { locale } = useLocale();
-  const { endGame, startGame, currentMode, modeType, potentialReward, entryFee } = useGameStore();
+  const { endGame, startGame, currentMode, modeType, potentialReward, entryFee, opponent } = useGameStore();
   const { profile, addCoins, removeCoins, addXP, isGuest, session } = useUserStore();
   const { createBox } = useVictoryBoxes();
   const { addPoolPoints } = usePoolPass();
@@ -578,7 +578,9 @@ useEffect(() => {
         <div className={`${footer ? 'bottom-20' : 'bottom-4'} absolute left-1/2 z-30 -translate-x-1/2`}>
           <div className="px-4 py-2 bg-slate-900/90 backdrop-blur-sm rounded-full border border-slate-700/50 flex items-center gap-2">
             <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-            <span className="text-sm text-slate-300 font-medium">{t('botThinking')}</span>
+            <span className="text-sm text-slate-300 font-medium">
+              {opponent ? `${opponent.name} pensando...` : t('botThinking')}
+            </span>
           </div>
         </div>
       )}
@@ -614,11 +616,26 @@ useEffect(() => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="flex items-center justify-center gap-2 mb-6"
+                className="flex items-center justify-center gap-2 mb-3"
               >
                 <div className="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center text-amber-900 font-bold text-sm">$</div>
                 <span className="text-3xl font-bold text-amber-400">+{potentialReward.toLocaleString()}</span>
               </motion.div>
+              {opponent && (
+                <div className="mx-auto mb-5 flex max-w-sm items-center justify-center gap-3 rounded-2xl border border-slate-700 bg-slate-900/85 px-4 py-3">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br ${opponent.avatarGradient} text-sm font-black text-white`}>
+                    {opponent.initials}
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-black text-white">
+                      {opponent.flag} {opponent.name}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Nv. {opponent.level} · {opponent.winRate}% win rate · {opponent.wins} vitorias
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <motion.button
                   initial={{ opacity: 0 }}
@@ -629,7 +646,7 @@ useEffect(() => {
                   onClick={handleRestartGame}
                   className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-xl"
                 >
-                  {t('playAgain')}
+                  {opponent ? 'Revanche' : t('playAgain')}
                 </motion.button>
                 <motion.button
                   initial={{ opacity: 0 }}
@@ -703,10 +720,25 @@ useEffect(() => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
-                className="text-slate-400 mb-6"
+                className="text-slate-400 mb-3"
               >
                 Não desista! Tente novamente.
               </motion.p>
+              {opponent && (
+                <div className="mx-auto mb-5 flex max-w-sm items-center justify-center gap-3 rounded-2xl border border-slate-700 bg-slate-900/85 px-4 py-3">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br ${opponent.avatarGradient} text-sm font-black text-white`}>
+                    {opponent.initials}
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-black text-white">
+                      {opponent.flag} {opponent.name}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Nv. {opponent.level} · {opponent.winRate}% win rate · {opponent.wins} vitorias
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="flex gap-3 justify-center">
                 <motion.button
                   initial={{ opacity: 0 }}
@@ -717,7 +749,7 @@ useEffect(() => {
                   onClick={handleRestartGame}
                   className="px-6 py-3 bg-gradient-to-r from-slate-600 to-slate-700 text-white font-bold rounded-xl"
                 >
-                  {t('tryAgain')}
+                  {opponent ? 'Revanche' : t('tryAgain')}
                 </motion.button>
                 <Link href={`/${locale}`}>
                   <motion.button

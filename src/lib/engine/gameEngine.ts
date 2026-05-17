@@ -854,7 +854,7 @@ class GameEngine {
     if (this.multiplayerMode) return;
     if (this.botTimeout) clearTimeout(this.botTimeout);
     if (this.botSafetyTimeout) clearTimeout(this.botSafetyTimeout);
-    const delay = 1500 + Math.random() * 1500;
+    const delay = 1000 + Math.random() * 3000;
     this.botTimeout = window.setTimeout(() => this.botPlay(), delay);
     // Safety timeout: force a shot if bot hasn't played in 8 seconds
     this.botSafetyTimeout = window.setTimeout(() => {

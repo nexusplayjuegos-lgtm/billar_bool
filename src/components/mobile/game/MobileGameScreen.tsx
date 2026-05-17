@@ -13,7 +13,7 @@ import { PowerSlider } from './PowerSlider';
 export function MobileGameScreen() {
   const router = useRouter();
   const { locale } = useLocale();
-  const { endGame, modeType } = useGameStore();
+  const { endGame, modeType, opponent } = useGameStore();
   const { containerRef } = useImmersiveMatch();
 
   const handleExitGame = useCallback(() => {
@@ -31,7 +31,7 @@ export function MobileGameScreen() {
         header={(engineState, timeLeft) => (
           <div className="mobile-game-header shrink-0 px-3 flex items-center justify-between bg-slate-950/80 backdrop-blur-sm z-20 border-b border-slate-800/50">
             <div className="flex-1 min-w-0">
-              <GameHUD timeLeft={timeLeft} engineState={engineState} />
+              <GameHUD timeLeft={timeLeft} engineState={engineState} opponent={opponent} />
             </div>
             <GameExitButton
               onExit={handleExitGame}

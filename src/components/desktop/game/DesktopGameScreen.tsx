@@ -21,7 +21,7 @@ export function DesktopGameScreen({ modeId }: DesktopGameScreenProps) {
   const t = useTranslations('game');
   const { locale } = useLocale();
   const router = useRouter();
-  const { endGame, modeType } = useGameStore();
+  const { endGame, modeType, opponent } = useGameStore();
 
   const handleExit = useCallback(() => {
     endGame(false);
@@ -45,7 +45,7 @@ export function DesktopGameScreen({ modeId }: DesktopGameScreenProps) {
               <span className="text-sm">{t('back')}</span>
             </motion.button>
           </Link>
-          <DesktopGameHUD timeLeft={timeLeft} engineState={engineState} />
+          <DesktopGameHUD timeLeft={timeLeft} engineState={engineState} opponent={opponent} />
           <div className="flex items-center gap-2 shrink-0">
             <motion.button
               whileHover={{ scale: 1.05 }}

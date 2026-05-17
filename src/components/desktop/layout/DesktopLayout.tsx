@@ -61,10 +61,12 @@ export function DesktopLayout({ children }: DesktopLayoutProps) {
       >
         {/* Logo */}
         <div className="p-6 border-b border-slate-800">
-          <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-            BOOL SINUCA
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">PREMIERE EDITION</p>
+          <Link href={`/${locale}`} className="block rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400/60">
+            <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+              BOOL SINUCA
+            </h1>
+            <p className="text-xs text-slate-500 mt-1">PREMIERE EDITION</p>
+          </Link>
         </div>
 
         {/* User Card - CORRIGIDO */}

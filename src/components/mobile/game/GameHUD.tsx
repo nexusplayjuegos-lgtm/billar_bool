@@ -6,18 +6,21 @@ import { Timer } from 'lucide-react';
 import { useGameStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { EngineState } from '@/lib/engine/gameEngine';
+import type { FakeOpponent } from '@/lib/store/gameStore';
 
 interface GameHUDProps {
   timeLeft: number;
   engineState: EngineState;
+  opponent?: FakeOpponent | null;
 }
 
-function EightBallHUD({ engineState, timeLeft, isPlayerTurn, potentialReward, t }: {
+function EightBallHUD({ engineState, timeLeft, isPlayerTurn, potentialReward, t, opponent }: {
   engineState: EngineState;
   timeLeft: number;
   isPlayerTurn: boolean;
   potentialReward: number;
   t: (key: string) => string;
+  opponent?: FakeOpponent | null;
 }) {
   const p1Balls = engineState.balls.filter((b) => {
     if (!b.number || b.number === 0 || b.number === 8) return false;
@@ -44,7 +47,8 @@ function EightBallHUD({ engineState, timeLeft, isPlayerTurn, potentialReward, t 
         <div className="relative">
           <div
             className={cn(
-              'w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs border-2 shrink-0',
+              'w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs border-2 shrink-0 bg-gradient-to-br',
+              opponent?.avatarGradient,
               isPlayerTurn
                 ? 'bg-gradient-to-br from-blue-500 to-blue-700 border-white/50 shadow-lg shadow-blue-500/30'
                 : 'bg-gradient-to-br from-slate-600 to-slate-800 border-white/20'
@@ -101,7 +105,7 @@ function EightBallHUD({ engineState, timeLeft, isPlayerTurn, potentialReward, t 
       <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end">
         <div className="flex flex-col min-w-0 text-right">
           <span className="text-white text-[10px] font-bold truncate leading-tight">
-            BOT
+            {opponent?.name ?? 'Rival'}
           </span>
           <div className="flex items-center justify-end gap-0.5 mt-0.5">
             {engineState.player2Type ? (
@@ -125,7 +129,7 @@ function EightBallHUD({ engineState, timeLeft, isPlayerTurn, potentialReward, t 
                 : 'bg-gradient-to-br from-slate-600 to-slate-800 border-white/20'
             )}
           >
-            🤖
+            {opponent?.initials ?? 'RV'}
           </div>
           {!isPlayerTurn && (
             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-950" />
@@ -136,12 +140,13 @@ function EightBallHUD({ engineState, timeLeft, isPlayerTurn, potentialReward, t 
   );
 }
 
-function BrazilianHUD({ engineState, timeLeft, isPlayerTurn, potentialReward, t }: {
+function BrazilianHUD({ engineState, timeLeft, isPlayerTurn, potentialReward, t, opponent }: {
   engineState: EngineState;
   timeLeft: number;
   isPlayerTurn: boolean;
   potentialReward: number;
   t: (key: string) => string;
+  opponent?: FakeOpponent | null;
 }) {
   return (
     <>
@@ -150,7 +155,8 @@ function BrazilianHUD({ engineState, timeLeft, isPlayerTurn, potentialReward, t 
         <div className="relative">
           <div
             className={cn(
-              'w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs border-2 shrink-0',
+              'w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs border-2 shrink-0 bg-gradient-to-br',
+              opponent?.avatarGradient,
               isPlayerTurn
                 ? 'bg-gradient-to-br from-blue-500 to-blue-700 border-white/50 shadow-lg shadow-blue-500/30'
                 : 'bg-gradient-to-br from-slate-600 to-slate-800 border-white/20'
@@ -200,7 +206,7 @@ function BrazilianHUD({ engineState, timeLeft, isPlayerTurn, potentialReward, t 
       <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end">
         <div className="flex flex-col min-w-0 text-right">
           <span className="text-white text-[10px] font-bold truncate leading-tight">
-            BOT
+            {opponent?.name ?? 'Rival'}
           </span>
           <div className="flex items-center justify-end gap-0.5 mt-0.5">
             <span className="text-red-400 text-[9px] font-bold">
@@ -217,7 +223,7 @@ function BrazilianHUD({ engineState, timeLeft, isPlayerTurn, potentialReward, t 
                 : 'bg-gradient-to-br from-slate-600 to-slate-800 border-white/20'
             )}
           >
-            🤖
+            {opponent?.initials ?? 'RV'}
           </div>
           {!isPlayerTurn && (
             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-950" />
@@ -228,7 +234,7 @@ function BrazilianHUD({ engineState, timeLeft, isPlayerTurn, potentialReward, t 
   );
 }
 
-export function GameHUD({ timeLeft, engineState }: GameHUDProps) {
+export function GameHUD({ timeLeft, engineState, opponent }: GameHUDProps) {
   const t = useTranslations('game');
   const { potentialReward } = useGameStore();
   const isPlayerTurn = engineState.currentPlayer === 1;
@@ -242,6 +248,7 @@ export function GameHUD({ timeLeft, engineState }: GameHUDProps) {
           isPlayerTurn={isPlayerTurn}
           potentialReward={potentialReward}
           t={t}
+          opponent={opponent}
         />
       ) : (
         <EightBallHUD
@@ -250,6 +257,7 @@ export function GameHUD({ timeLeft, engineState }: GameHUDProps) {
           isPlayerTurn={isPlayerTurn}
           potentialReward={potentialReward}
           t={t}
+          opponent={opponent}
         />
       )}
     </div>

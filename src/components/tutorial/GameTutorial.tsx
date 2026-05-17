@@ -127,7 +127,7 @@ export function GameTutorial() {
   }, [visible, updateRect]);
 
   const cardClassName = useMemo(() => {
-    if (step.placement === 'bottom') return 'bottom-[max(18px,env(safe-area-inset-bottom))]';
+    if (step.placement === 'bottom') return 'bottom-[max(32px,calc(env(safe-area-inset-bottom)+14px))]';
     if (step.placement === 'top') return 'top-[max(18px,env(safe-area-inset-top))]';
     return 'top-1/2 -translate-y-1/2';
   }, [step.placement]);

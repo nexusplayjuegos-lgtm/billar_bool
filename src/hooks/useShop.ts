@@ -86,7 +86,35 @@ export function useShop() {
   });
 
   const { session, isSessionLoaded } = useUserStore();
+  const { profile, isGuest, buyCue, equipCue, buyTable, equipTable } = useUserStore();
   const userId = session?.user?.id ?? null;
+
+  const buildLocalInventory = useCallback(
+    (items: ShopItem[]): PlayerInventoryItem[] => {
+      const localProfile = useUserStore.getState().profile;
+      const now = new Date().toISOString();
+      const cueItems = localProfile.equipment.ownedCues.map((itemId) => ({
+        id: `local-${localProfile.id}-${itemId}`,
+        profileId: localProfile.id,
+        itemId,
+        equipped: localProfile.equipment.currentCue === itemId,
+        purchasedAt: now,
+        expiresAt: null,
+        item: items.find((item) => item.id === itemId),
+      }));
+      const tableItems = localProfile.equipment.ownedTables.map((itemId) => ({
+        id: `local-${localProfile.id}-${itemId}`,
+        profileId: localProfile.id,
+        itemId,
+        equipped: localProfile.equipment.currentTable === itemId,
+        purchasedAt: now,
+        expiresAt: null,
+        item: items.find((item) => item.id === itemId),
+      }));
+      return [...cueItems, ...tableItems];
+    },
+    []
+  );
 
   const fetchCatalog = useCallback(async () => {
     try {
@@ -96,6 +124,7 @@ export function useShop() {
       setState((prev) => ({
         ...prev,
         items: remoteItems.length > 0 ? remoteItems : FALLBACK_SHOP_ITEMS,
+        inventory: !userId && isGuest ? buildLocalInventory(remoteItems.length > 0 ? remoteItems : FALLBACK_SHOP_ITEMS) : prev.inventory,
         isLoading: false,
       }));
     } catch (err) {
@@ -104,13 +133,18 @@ export function useShop() {
       setState((prev) => ({
         ...prev,
         items: FALLBACK_SHOP_ITEMS,
+        inventory: !userId && isGuest ? buildLocalInventory(FALLBACK_SHOP_ITEMS) : prev.inventory,
         error: null,
         isLoading: false,
       }));
     }
-  }, []);
+  }, [buildLocalInventory, isGuest, userId]);
 
   const fetchInventory = useCallback(async () => {
+    if (!userId && isGuest) {
+      setState((prev) => ({ ...prev, inventory: buildLocalInventory(prev.items.length > 0 ? prev.items : FALLBACK_SHOP_ITEMS) }));
+      return;
+    }
     if (!userId) return;
     try {
       const { data, error } = await supabase.functions.invoke<{ inventory: Record<string, unknown>[] }>('get-inventory', {});
@@ -122,7 +156,7 @@ export function useShop() {
     } catch (err) {
       console.error('[useShop] Erro ao buscar inventário:', err);
     }
-  }, [userId]);
+  }, [buildLocalInventory, isGuest, userId]);
 
   const fetchFlashDeals = useCallback(async () => {
     try {
@@ -148,6 +182,37 @@ export function useShop() {
 
   const buyItem = useCallback(
     async (itemId: string, dealId?: string): Promise<PurchaseResult> => {
+      const item = state.items.find((catalogItem) => catalogItem.id === itemId);
+      if (!item) return { success: false, error: 'Item não encontrado.' };
+
+      if (!userId && isGuest) {
+        if (item.priceCoins > 0 && profile.currencies.coins < item.priceCoins) {
+          return { success: false, error: 'Moedas insuficientes.' };
+        }
+        if (item.priceCash > 0 && profile.currencies.cash < item.priceCash) {
+          return { success: false, error: 'Cash insuficiente.' };
+        }
+
+        if (item.category === 'cue') {
+          await buyCue(item.id, item.priceCoins);
+          await equipCue(item.id);
+        } else if (item.category === 'table') {
+          await buyTable(item.id, { coins: item.priceCoins, cash: item.priceCash });
+        }
+
+        setState((prev) => ({
+          ...prev,
+          inventory: buildLocalInventory(prev.items.length > 0 ? prev.items : FALLBACK_SHOP_ITEMS),
+        }));
+
+        return {
+          success: true,
+          item,
+          newCoins: Math.max(0, profile.currencies.coins - item.priceCoins),
+          newCash: Math.max(0, profile.currencies.cash - item.priceCash),
+        };
+      }
+
       if (!userId) return { success: false, error: 'Não autenticado.' };
 
       try {
@@ -167,10 +232,31 @@ export function useShop() {
 
         // Recarregar inventário
         await fetchInventory();
+        const purchasedItem = data.item ? adaptShopItem(data.item) : item;
+        useUserStore.setState((current) => {
+          const newCoins = data.newCoins ?? Math.max(0, current.profile.currencies.coins - purchasedItem.priceCoins);
+          const newCash = data.newCash ?? Math.max(0, current.profile.currencies.cash - purchasedItem.priceCash);
+          const equipment = { ...current.profile.equipment };
+          if (purchasedItem.category === 'cue') {
+            equipment.ownedCues = Array.from(new Set([...equipment.ownedCues, purchasedItem.id]));
+            equipment.currentCue = purchasedItem.id;
+          }
+          if (purchasedItem.category === 'table') {
+            equipment.ownedTables = Array.from(new Set([...equipment.ownedTables, purchasedItem.id]));
+            equipment.currentTable = purchasedItem.id;
+          }
+          return {
+            profile: {
+              ...current.profile,
+              currencies: { ...current.profile.currencies, coins: newCoins, cash: newCash },
+              equipment,
+            },
+          };
+        });
 
         return {
           success: true,
-          item: data.item ? adaptShopItem(data.item) : undefined,
+          item: purchasedItem,
           newCoins: data.newCoins,
           newCash: data.newCash,
         };
@@ -178,11 +264,22 @@ export function useShop() {
         return { success: false, error: err instanceof Error ? err.message : 'Erro desconhecido.' };
       }
     },
-    [userId, fetchInventory]
+    [buildLocalInventory, buyCue, buyTable, equipCue, fetchInventory, isGuest, profile.currencies.cash, profile.currencies.coins, state.items, userId]
   );
 
   const equipItem = useCallback(
     async (itemId: string): Promise<boolean> => {
+      const item = state.items.find((catalogItem) => catalogItem.id === itemId);
+      if (!userId && isGuest && item) {
+        if (item.category === 'cue') await equipCue(itemId);
+        if (item.category === 'table') await equipTable(itemId);
+        setState((prev) => ({
+          ...prev,
+          inventory: buildLocalInventory(prev.items.length > 0 ? prev.items : FALLBACK_SHOP_ITEMS),
+        }));
+        return true;
+      }
+
       if (!userId) return false;
 
       try {
@@ -196,13 +293,21 @@ export function useShop() {
         }
 
         await fetchInventory();
+        if (item) {
+          useUserStore.setState((current) => {
+            const equipment = { ...current.profile.equipment };
+            if (item.category === 'cue') equipment.currentCue = item.id;
+            if (item.category === 'table') equipment.currentTable = item.id;
+            return { profile: { ...current.profile, equipment } };
+          });
+        }
         return true;
       } catch (err) {
         console.error('[useShop] Erro ao equipar:', err);
         return false;
       }
     },
-    [userId, fetchInventory]
+    [buildLocalInventory, equipCue, equipTable, fetchInventory, isGuest, state.items, userId]
   );
 
   const getItemsByCategory = useCallback(

@@ -15,6 +15,8 @@ import { useLocale } from '@/hooks';
 import { useMissions } from '@/hooks/useMissions';
 import { unlockAudio } from '@/lib/audio/gameAudio';
 import type { Room } from '@/lib/multiplayer/types';
+import { FakeMatchmakingOverlay } from '@/components/matchmaking';
+import type { FakeOpponent } from '@/lib/store/gameStore';
 
 type MultiplayerView = 'menu' | 'create' | 'join' | 'waiting';
 
@@ -37,6 +39,7 @@ export function MobileLobbyScreen() {
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [copied, setCopied] = useState(false);
   const [joinCode, setJoinCode] = useState('');
+  const [matchmakingMode, setMatchmakingMode] = useState<GameModeType | null>(null);
 
   const {
     createRoom,
@@ -64,9 +67,7 @@ export function MobileLobbyScreen() {
   const startSelectedGame = (mode: GameModeType) => {
     if (profile.currencies.coins < mode.entryFee.coins) return;
     void unlockAudio();
-    removeCoins(mode.entryFee.coins);
-    startGame(mode.id, mode.type, mode.entryFee.coins, mode.reward.win);
-    router.push(`/${locale}/game/${mode.id}`);
+    setMatchmakingMode(mode);
   };
 
   const handlePlay = (e: React.MouseEvent | React.PointerEvent) => {
@@ -78,8 +79,17 @@ export function MobileLobbyScreen() {
 
   // ── Multiplayer ───────────────────────────────────────────────
   const handleOpenMultiplayer = () => {
-    setMpView('menu');
-    setShowMultiplayer(true);
+    setMatchmakingMode(selectedMode ?? MOCK_GAME_MODES[0]);
+  };
+
+  const handleFakeMatched = (opponent: FakeOpponent) => {
+    const mode = matchmakingMode;
+    if (!mode) return;
+    removeCoins(mode.entryFee.coins);
+    useGameStore.getState().setOpponent(opponent);
+    startGame(mode.id, mode.type, mode.entryFee.coins, mode.reward.win);
+    setMatchmakingMode(null);
+    router.push(`/${locale}/game/${mode.id}`);
   };
 
   const handleCreateRoom = async () => {
@@ -302,6 +312,13 @@ export function MobileLobbyScreen() {
 
       {/* ── Multiplayer Modal ─────────────────────────────────── */}
       <AnimatePresence>
+        {matchmakingMode && (
+          <FakeMatchmakingOverlay
+            playerLevel={profile.level}
+            onCancel={() => setMatchmakingMode(null)}
+            onMatched={handleFakeMatched}
+          />
+        )}
         {showMultiplayer && (
           <motion.div
             initial={{ opacity: 0 }}
