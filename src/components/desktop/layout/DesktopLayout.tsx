@@ -2,7 +2,7 @@
 
 import { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { Gamepad2, ShoppingCart, Users, Trophy, Settings, LogOut } from 'lucide-react';
+import { Gamepad2, Home, ShoppingCart, Users, Trophy, Settings, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -39,6 +39,7 @@ export function DesktopLayout({ children }: DesktopLayoutProps) {
     if (href === '/') return pathname === `/${locale}` || pathname === `/${locale}/`;
     return pathname.startsWith(`/${locale}${href}`);
   };
+  const isLobbyRoute = pathname === `/${locale}` || pathname === `/${locale}/`;
 
   // Em rotas de jogo, renderizar tela cheia sem sidebar/padding
   const isGameRoute = pathname?.includes('/play/');
@@ -154,6 +155,21 @@ export function DesktopLayout({ children }: DesktopLayoutProps) {
           animate={{ opacity: 1, y: 0 }}
           className="p-8"
         >
+          {!isLobbyRoute && (
+            <div className="mb-5 flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/70 px-4 py-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Navegação</p>
+                <p className="text-sm text-slate-300">Voltar para o lobby principal</p>
+              </div>
+              <Link
+                href={`/${locale}`}
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-500"
+              >
+                <Home className="h-4 w-4" />
+                Início
+              </Link>
+            </div>
+          )}
           {children}
         </motion.div>
       </main>

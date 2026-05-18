@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import type { ComponentType } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Volume2,
@@ -17,6 +18,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { usePathname, useRouter } from 'next/navigation';
 import { useUserStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
@@ -24,24 +26,53 @@ interface SettingsScreenProps {
   onClose: () => void;
 }
 
+type LocaleCode = 'pt' | 'en' | 'es';
+
+interface SettingRowProps {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  value: boolean;
+  onToggle: () => void;
+  activeColor?: string;
+}
+
 export function SettingsScreen({ onClose }: SettingsScreenProps) {
   const t = useTranslations('settings');
-  const { profile } = useUserStore() as any;
+  const router = useRouter();
+  const pathname = usePathname();
+  const { profile } = useUserStore();
+  const currentLocale = (pathname?.match(/^\/(pt|en|es)(?=\/|$)/)?.[1] ?? 'pt') as LocaleCode;
 
   const [sound, setSound] = useState(profile?.settings?.sound ?? true);
   const [music, setMusic] = useState(profile?.settings?.music ?? true);
   const [vibration, setVibration] = useState(profile?.settings?.vibration ?? true);
   const [notifications, setNotifications] = useState(profile?.settings?.notifications ?? true);
-  const [language, setLanguage] = useState<'pt' | 'en' | 'es'>((profile?.settings?.language as 'pt' | 'en' | 'es') || 'pt');
+  const [language, setLanguage] = useState<LocaleCode>(currentLocale);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
 
-  const handleLanguageChange = (lang: 'pt' | 'en' | 'es') => {
+  const handleLanguageChange = (lang: LocaleCode) => {
     setLanguage(lang);
     setShowLangMenu(false);
-    const currentPath = window.location.pathname;
-    const newPath = currentPath.replace(/^\/(pt|en|es)/, `/${lang}`);
-    window.location.href = newPath;
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('bool_locale', lang);
+      document.cookie = `NEXT_LOCALE=${lang}; path=/; max-age=31536000; SameSite=Lax`;
+    }
+    useUserStore.setState((state) => ({
+      profile: {
+        ...state.profile,
+        settings: {
+          ...state.profile.settings,
+          language: lang,
+        },
+      },
+    }));
+    const currentPath = pathname || `/${currentLocale}`;
+    const nextPath = currentPath.match(/^\/(pt|en|es)(?=\/|$)/)
+      ? currentPath.replace(/^\/(pt|en|es)(?=\/|$)/, `/${lang}`)
+      : `/${lang}${currentPath.startsWith('/') ? currentPath : `/${currentPath}`}`;
+    router.replace(nextPath);
+    router.refresh();
   };
 
   const handleReset = () => {
@@ -55,13 +86,7 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
     value,
     onToggle,
     activeColor = 'bg-blue-500',
-  }: {
-    icon: any;
-    label: string;
-    value: boolean;
-    onToggle: () => void;
-    activeColor?: string;
-  }) => (
+  }: SettingRowProps) => (
     <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl">
       <div className="flex items-center gap-3">
         <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', value ? 'bg-slate-700' : 'bg-slate-800')}>
