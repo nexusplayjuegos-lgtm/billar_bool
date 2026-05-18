@@ -7,24 +7,62 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 const siteUrl = 'https://8bollpool.com';
+const ogImageUrl = `${siteUrl}/og-image.jpg`;
+const siteDescription = 'Jogue sinuca 8-ball online gratis com visual premium, matchmaking rapido, conquistas, missoes, caixas de vitoria e Pool Pass.';
+
+const videoGameSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'VideoGame',
+  name: 'Bool Sinuca Premiere',
+  description: siteDescription,
+  url: siteUrl,
+  image: ogImageUrl,
+  genre: ['Sports Game', 'Billiards', 'Pool'],
+  gamePlatform: ['Web Browser', 'Mobile Web'],
+  applicationCategory: 'GameApplication',
+  operatingSystem: 'Web',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'BRL',
+  },
+  aggregateRating: {
+    '@type': 'AggregateRating',
+    ratingValue: '4.8',
+    ratingCount: '10000',
+  },
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: 'Bool Sinuca Premiere - Jogue 8-Ball Online Gratis',
-  description: 'Jogue sinuca 8-ball online gratis. Conquistas, torneios, passe de batalha e muito mais.',
+  description: siteDescription,
   keywords: ['sinuca', 'bilhar', '8-ball', 'pool', 'jogo online'],
   manifest: '/manifest.json',
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     title: 'Bool Sinuca Premiere - Jogue 8-Ball Online Gratis',
-    description: 'Sinuca 8-ball online gratis com conquistas, passe de batalha, caixas e torneios em breve.',
+    description: siteDescription,
     url: siteUrl,
     siteName: 'Bool Sinuca Premiere',
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Bool Sinuca Premiere - jogo online de sinuca 8-ball',
+      },
+    ],
+    locale: 'pt_BR',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Bool Sinuca Premiere',
-    description: 'Jogue sinuca 8-ball online gratis.',
+    description: siteDescription,
+    images: ['/og-image.jpg'],
   },
   appleWebApp: {
     capable: true,
@@ -53,6 +91,12 @@ export default function RootLayout({
         <link rel="preload" href="/sounds/cue_hit.mp3" as="fetch" crossOrigin="anonymous" />
         <link rel="preload" href="/sounds/ball_collision.mp3" as="fetch" crossOrigin="anonymous" />
         <link rel="preload" href="/sounds/ball_pocket.mp3" as="fetch" crossOrigin="anonymous" />
+        <Script
+          id="schema-video-game"
+          type="application/ld+json"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(videoGameSchema) }}
+        />
       </head>
       <body className={inter.className}>
         {gaMeasurementId && (

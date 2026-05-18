@@ -46,9 +46,8 @@ body {
 
 .mobile-billiards-bg {
   background:
-    radial-gradient(ellipse at center, rgba(29, 78, 126, 0.18) 0%, rgba(15, 27, 46, 0.52) 28%, rgba(10, 22, 40, 0.88) 58%, rgba(5, 13, 26, 1) 100%),
-    radial-gradient(ellipse at 50% 38%, rgba(34, 211, 238, 0.08) 0%, rgba(34, 211, 238, 0) 42%),
-    linear-gradient(180deg, #0f1b2e 0%, #0a1628 52%, #050d1a 100%);
+    radial-gradient(ellipse at center, #0f1b2e 0%, #0a1628 50%, #050d1a 100%),
+    linear-gradient(180deg, #0f1b2e 0%, #050d1a 100%);
 }
 
 #__next,
