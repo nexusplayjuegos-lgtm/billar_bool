@@ -144,7 +144,7 @@ export function MobileLobbyScreen() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="mobile-billiards-bg h-full flex flex-col">
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />

@@ -479,7 +479,7 @@ useEffect(() => {
 
   if (!engineState) {
     return (
-      <div className="game-fullscreen flex items-center justify-center bg-slate-950">
+      <div className="game-fullscreen mobile-billiards-bg flex items-center justify-center">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
@@ -508,7 +508,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="h-full min-h-full w-full min-w-0 flex flex-col bg-slate-950 overflow-x-hidden overflow-y-auto relative select-none">
+    <div className="mobile-billiards-bg h-full min-h-full w-full min-w-0 flex flex-col overflow-x-hidden overflow-y-auto relative select-none">
       {header && header(engineState, externalTimeLeft ?? timeLeft)}
 
       <PocketedBallRack balls={engineState.balls} pocketedBallIds={engineState.pocketedBalls} />
