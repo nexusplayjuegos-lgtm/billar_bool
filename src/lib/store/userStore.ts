@@ -10,6 +10,7 @@ const TABLE_ID_ALIASES: Record<string, string> = {
   table_classic_green: 'classic-green',
   table_blue_velvet: 'midnight-blue',
 };
+const PRODUCTION_SITE_URL = 'https://8bollpool.com/';
 
 function normalizeTableId(tableId: string): string {
   return TABLE_ID_ALIASES[tableId] ?? tableId;
@@ -165,7 +166,7 @@ function getSiteUrl(): string {
     return `${window.location.origin}/`;
   }
 
-  return 'http://localhost:3000/';
+  return PRODUCTION_SITE_URL;
 }
 
 interface UserState {

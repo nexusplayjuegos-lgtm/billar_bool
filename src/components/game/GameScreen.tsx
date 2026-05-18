@@ -468,7 +468,7 @@ useEffect(() => {
 
   const handleShare = async () => {
     audioManager.play('ui_click');
-    const text = 'Ganhei uma partida de sinuca! 🎱 Joga comigo em billar-bool.vercel.app';
+    const text = 'Ganhei uma partida de sinuca! 🎱 Joga comigo em 8bollpool.com';
     if (navigator.share) {
       await navigator.share({ text });
     } else {

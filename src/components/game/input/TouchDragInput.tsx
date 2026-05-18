@@ -18,8 +18,9 @@ const TABLE_LEFT = 28;
 const TABLE_RIGHT = 772;
 const TABLE_TOP = 28;
 const TABLE_BOTTOM = 372;
-const AIM_SMOOTHING = 0.32;
-const AIM_LINE_GRAB_WIDTH = 26;
+const AIM_SMOOTHING = 0.16;
+const AIM_LINE_GRAB_WIDTH = 18;
+const AIM_MIN_TOUCH_DISTANCE = 42;
 
 type AimGestureMode = 'pull' | 'direct';
 
@@ -47,6 +48,10 @@ function getAimGestureMode(cueBall: Ball, pos: { x: number; y: number }, aimAngl
 
 function getAimAngle(cueBall: Ball, pos: { x: number; y: number }, mode: AimGestureMode) {
   return mode === 'direct' ? getShotFromPoint(cueBall, pos) : getShotFromPull(cueBall, pos).angle;
+}
+
+function isStableAimPoint(cueBall: Ball, pos: { x: number; y: number }) {
+  return Math.hypot(pos.x - cueBall.x, pos.y - cueBall.y) >= AIM_MIN_TOUCH_DISTANCE;
 }
 
 function smoothAngle(previous: number, next: number) {
@@ -132,7 +137,7 @@ export function TouchDragInput({
       onPowerChange(0);
       const gestureMode = getAimGestureMode(cueBall, pos, aimAngle);
       aimGestureModeRef.current = gestureMode;
-      const angle = getAimAngle(cueBall, pos, gestureMode);
+      const angle = isStableAimPoint(cueBall, pos) ? getAimAngle(cueBall, pos, gestureMode) : aimAngle;
       lastAngleRef.current = angle;
       onAimChange(angle);
     },
@@ -158,6 +163,7 @@ export function TouchDragInput({
       if (!pos) return;
       const cueBall = balls[0];
       if (!cueBall) return;
+      if (!isStableAimPoint(cueBall, pos)) return;
       const angle = getAimAngle(cueBall, pos, aimGestureModeRef.current);
       const smoothedAngle = smoothAngle(lastAngleRef.current, angle);
       lastAngleRef.current = smoothedAngle;

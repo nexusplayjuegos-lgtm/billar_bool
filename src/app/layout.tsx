@@ -6,8 +6,10 @@ import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+const siteUrl = 'https://8bollpool.com';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: 'Bool Sinuca Premiere - Jogue 8-Ball Online Gratis',
   description: 'Jogue sinuca 8-ball online gratis. Conquistas, torneios, passe de batalha e muito mais.',
   keywords: ['sinuca', 'bilhar', '8-ball', 'pool', 'jogo online'],
@@ -15,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Bool Sinuca Premiere - Jogue 8-Ball Online Gratis',
     description: 'Sinuca 8-ball online gratis com conquistas, passe de batalha, caixas e torneios em breve.',
-    url: 'https://billar-bool.vercel.app',
+    url: siteUrl,
     siteName: 'Bool Sinuca Premiere',
     type: 'website',
   },
