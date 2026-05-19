@@ -6,6 +6,7 @@ import { Ball } from '@/types';
 interface PocketedBallRackProps {
   balls: Ball[];
   pocketedBallIds: number[];
+  variant?: 'flow' | 'overlay';
 }
 
 function PocketBall({ ball, index }: { ball: Ball; index: number }) {
@@ -36,7 +37,7 @@ function PocketBall({ ball, index }: { ball: Ball; index: number }) {
   );
 }
 
-export function PocketedBallRack({ balls, pocketedBallIds }: PocketedBallRackProps) {
+export function PocketedBallRack({ balls, pocketedBallIds, variant = 'flow' }: PocketedBallRackProps) {
   const orderedBalls = pocketedBallIds
     .filter((id) => id !== 0)
     .map((id) => balls.find((ball) => ball.id === id && ball.number !== 0))
@@ -45,7 +46,13 @@ export function PocketedBallRack({ balls, pocketedBallIds }: PocketedBallRackPro
   if (orderedBalls.length === 0) return null;
 
   return (
-    <div className="pointer-events-none w-full flex items-center justify-center px-3 py-1.5 bg-slate-950/70 backdrop-blur-sm border-b border-cyan-100/15 shadow-[inset_0_-2px_8px_rgba(0,0,0,0.35),0_1px_0_rgba(125,211,252,0.08)]">
+    <div
+      className={
+        variant === 'overlay'
+          ? 'pointer-events-none mx-auto flex w-fit max-w-full items-center justify-center rounded-full border border-cyan-100/10 bg-slate-950/45 px-2 py-0.5 shadow-lg shadow-black/20 backdrop-blur-sm'
+          : 'pointer-events-none w-full flex items-center justify-center px-3 py-1.5 bg-slate-950/70 backdrop-blur-sm border-b border-cyan-100/15 shadow-[inset_0_-2px_8px_rgba(0,0,0,0.35),0_1px_0_rgba(125,211,252,0.08)]'
+      }
+    >
       <div className="flex items-center gap-1 flex-wrap justify-center">
         <AnimatePresence initial={false}>
           {orderedBalls.map((ball, index) => (

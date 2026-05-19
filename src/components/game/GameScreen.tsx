@@ -43,6 +43,7 @@ export interface InputHandlers {
 interface GameScreenProps {
   header?: (state: EngineState, timeLeft: number) => ReactNode;
   overlay?: (state: EngineState, handlers: InputHandlers) => ReactNode;
+  pocketedRackVariant?: 'flow' | 'overlay' | 'hidden';
   footer?: (
     state: EngineState,
     power: number,
@@ -73,6 +74,7 @@ declare global {
 export function GameScreen({
   header,
   overlay,
+  pocketedRackVariant = 'flow',
   footer,
   onExit,
   onShoot: customOnShoot,
@@ -511,7 +513,14 @@ useEffect(() => {
     <div className="mobile-billiards-bg h-full min-h-full w-full min-w-0 flex flex-col overflow-hidden relative select-none">
       {header && header(engineState, externalTimeLeft ?? timeLeft)}
 
-      <PocketedBallRack balls={engineState.balls} pocketedBallIds={engineState.pocketedBalls} />
+      {pocketedRackVariant === 'flow' && (
+        <PocketedBallRack balls={engineState.balls} pocketedBallIds={engineState.pocketedBalls} />
+      )}
+      {pocketedRackVariant === 'overlay' && (
+        <div className="absolute left-1/2 top-[calc(var(--safe-top)+42px)] z-30 w-full -translate-x-1/2 px-2">
+          <PocketedBallRack balls={engineState.balls} pocketedBallIds={engineState.pocketedBalls} variant="overlay" />
+        </div>
+      )}
       <GameTutorial />
 
       <div className="flex-1 min-h-[180px] min-w-0 relative overflow-hidden">

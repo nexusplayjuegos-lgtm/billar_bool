@@ -99,9 +99,45 @@ main {
 }
 
 .mobile-game-header {
-  min-height: clamp(40px, 8.5dvh, 52px);
+  position: absolute;
+  left: var(--safe-left);
+  right: var(--safe-right);
+  top: var(--safe-top);
+  z-index: 40;
+  min-height: 36px;
+  max-height: 40px;
   padding-inline: clamp(6px, 2.4vw, 12px);
-  font-size: clamp(11px, 2.8vw, 14px);
+  font-size: clamp(10px, 2.6vw, 12px);
+  background: rgba(2, 6, 23, 0.48) !important;
+  backdrop-filter: blur(8px);
+}
+
+.mobile-game-header [class*="leading-tight"] {
+  display: none;
+}
+
+.mobile-game-header [class*="w-8"][class*="h-8"] {
+  width: 24px;
+  height: 24px;
+  font-size: 9px;
+}
+
+.mobile-game-header [class*="text-[9px]"] {
+  font-size: 10px;
+}
+
+.mobile-game-header [class*="text-[10px]"] {
+  font-size: 10px;
+}
+
+.mobile-game-header button {
+  min-width: 36px;
+  min-height: 36px;
+  padding-inline: 8px !important;
+}
+
+.mobile-game-header button span {
+  display: none !important;
 }
 
 .mobile-power-footer {
@@ -141,9 +177,9 @@ main {
 .match-table-stage {
   min-width: 0;
   min-height: 0;
-  padding-inline: clamp(2px, 1.2vw, 12px);
-  padding-block: clamp(2px, 1dvh, 8px);
-  overflow: hidden;
+  padding-inline: clamp(4px, 1.4vw, 14px);
+  padding-block: clamp(8px, 2dvh, 14px);
+  overflow: visible;
   touch-action: none;
 }
 
@@ -167,9 +203,9 @@ main {
 
 @media (max-width: 374px) {
   .mobile-game-header {
-    min-height: 40px;
+    min-height: 34px;
     padding-inline: 6px;
-    font-size: 11px;
+    font-size: 10px;
   }
 
   .mobile-game-header [class*="w-8"][class*="h-8"] {
@@ -194,26 +230,26 @@ main {
   }
 
   .match-table-stage {
-    padding-inline: 2px;
-    padding-block: 2px;
+    padding-inline: 4px;
+    padding-block: 8px;
   }
 }
 
 @media (min-width: 375px) and (max-width: 413px) {
   .mobile-game-header {
-    min-height: 42px;
+    min-height: 36px;
   }
 }
 
 @media (min-width: 414px) and (max-width: 767px) {
   .mobile-game-header {
-    min-height: 46px;
+    min-height: 38px;
   }
 }
 
 @media (min-width: 768px) {
   .mobile-game-header {
-    min-height: 56px;
+    min-height: 42px;
     padding-inline: 18px;
   }
 
@@ -250,13 +286,13 @@ html[data-low-end-device="true"] .game-fullscreen * {
 
 @media (min-width: 1024px) {
   .mobile-game-header {
-    min-height: 60px;
+    min-height: 44px;
   }
 }
 
 @media (max-height: 499px) {
   .mobile-game-header {
-    min-height: clamp(38px, 11vh, 44px);
+    min-height: 34px;
   }
 
   .match-table-stage {

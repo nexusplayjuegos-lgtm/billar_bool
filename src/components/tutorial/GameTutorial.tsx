@@ -37,17 +37,17 @@ const steps: TutorialStep[] = [
   {
     id: 'power',
     title: 'Puxe a forca',
-    body: 'Arraste o controle para baixo como estilingue. A barra sobe e o taco afasta da bola branca.',
-    selector: '.mobile-power-footer',
-    placement: 'bottom',
+    body: 'Toque na mesa ou no taco, arraste para ajustar direcao e distancia. Quanto maior o arrasto, maior a forca.',
+    selector: '.match-table-stage',
+    placement: 'middle',
     icon: Hand,
   },
   {
     id: 'release',
     title: 'Solte para bater',
     body: 'Quando estiver pronto, solte o gesto. O taco avanca rapido e a fisica assume a jogada.',
-    selector: '.mobile-power-footer',
-    placement: 'bottom',
+    selector: '.match-table-stage',
+    placement: 'middle',
     icon: MousePointer2,
   },
   {

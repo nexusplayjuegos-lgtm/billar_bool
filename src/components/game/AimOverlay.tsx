@@ -426,7 +426,7 @@ export function AimOverlay({
       )}
       viewBox="0 0 800 400"
       preserveAspectRatio="none"
-      style={{ zIndex: 10 }}
+      style={{ zIndex: 10, overflow: 'visible' }}
     >
       {/* DEFS - Gradients and filters */}
       <defs>
