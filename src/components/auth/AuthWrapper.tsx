@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 import { useUserStore } from '@/lib/store/userStore';
-import { useViewportHeight } from '@/hooks';
 import { WelcomeScreen } from './WelcomeScreen';
 import { BindAccountPrompt } from './BindAccountPrompt';
 
@@ -34,7 +33,6 @@ interface AuthWrapperProps {
 export function AuthWrapper({ children }: AuthWrapperProps) {
   const pathname = usePathname();
   const { loadSession, isSessionLoaded, session, isGuest } = useUserStore();
-  useViewportHeight();
 
   useEffect(() => {
     void loadSession();

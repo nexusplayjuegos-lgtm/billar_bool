@@ -508,7 +508,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="mobile-billiards-bg h-full min-h-full w-full min-w-0 flex flex-col overflow-x-hidden overflow-y-auto relative select-none">
+    <div className="mobile-billiards-bg h-full min-h-full w-full min-w-0 flex flex-col overflow-hidden relative select-none">
       {header && header(engineState, externalTimeLeft ?? timeLeft)}
 
       <PocketedBallRack balls={engineState.balls} pocketedBallIds={engineState.pocketedBalls} />

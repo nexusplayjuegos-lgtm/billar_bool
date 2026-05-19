@@ -59,6 +59,12 @@ Do not casually revert these behaviors:
   - number decals use two opposite faces synced at 180/360 degrees, so the number rolls forward instead of moving back and forth;
   - do not replace this with center sprite rotation, sine wobble, scrolling bands, or static overlay highlights unless explicitly requested.
 - Aim prediction includes first-interference detection, cue line stopping at ball/rail, a short honest yellow target guide, and constants aligned with the engine.
+- Mobile cue touch behavior in `TouchDragInput.tsx` is protected:
+  - touching the cue or dashed aim line must not rotate the cue immediately;
+  - the cue only rotates after a real drag gesture starts;
+  - cue touches use behind-cue-ball geometry (`cue` mode), while aim-line/table touches use direct aim geometry;
+  - keep cue touch behavior consistent with the dashed aim line unless the user explicitly asks to change it.
+- Target-ball aim guide in `AimOverlay.tsx` must keep a small visible line segment beyond the target ball after contact, matching the reference-style short direction cue.
 - Local timer resets when the player changes and when a shot ends.
 - Multiplayer turn/timer was fixed in `validate-shot`.
 

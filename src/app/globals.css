@@ -7,17 +7,24 @@
   --background-start-rgb: 2, 6, 23;
   --background-end-rgb: 15, 23, 42;
   --app-height: 100vh;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
 }
 
 * {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html,
 body {
   width: 100%;
+  height: 100vh;
+  height: 100dvh;
   min-width: 100%;
   min-height: var(--app-height);
   max-width: 100%;
@@ -59,30 +66,40 @@ main {
   width: 100%;
   max-width: 100%;
   height: var(--app-height);
+  height: 100dvh;
   min-height: var(--app-height);
   overflow-x: hidden;
   overflow-y: auto;
-  padding-top: env(safe-area-inset-top);
-  padding-right: env(safe-area-inset-right);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
+  overscroll-behavior: none;
+  padding-top: var(--safe-top);
+  padding-right: var(--safe-right);
+  padding-bottom: var(--safe-bottom);
+  padding-left: var(--safe-left);
 }
 
 .game-fullscreen {
+  position: fixed;
+  inset: 0;
   width: 100%;
   max-width: 100%;
   height: var(--app-height);
+  height: 100dvh;
   min-height: var(--app-height);
+  max-height: var(--app-height);
   overflow-x: hidden;
-  overflow-y: auto;
-  padding-top: env(safe-area-inset-top);
-  padding-right: env(safe-area-inset-right);
-  padding-bottom: 0;
-  padding-left: env(safe-area-inset-left);
+  overflow-y: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  padding-top: var(--safe-top);
+  padding-right: var(--safe-right);
+  padding-bottom: var(--safe-bottom);
+  padding-left: var(--safe-left);
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .mobile-game-header {
-  min-height: clamp(40px, 8.5vh, 52px);
+  min-height: clamp(40px, 8.5dvh, 52px);
   padding-inline: clamp(6px, 2.4vw, 12px);
   font-size: clamp(11px, 2.8vw, 14px);
 }
@@ -102,7 +119,7 @@ main {
   );
   padding-inline: clamp(8px, 2.8vw, 16px);
   padding-top: clamp(4px, 1.4vh, 8px);
-  padding-bottom: calc(env(safe-area-inset-bottom) + clamp(8px, 2vh, 12px));
+  padding-bottom: calc(var(--safe-bottom) + clamp(8px, 2dvh, 12px));
 }
 
 .mobile-power-inner {
@@ -112,23 +129,40 @@ main {
 }
 
 .mobile-power-track-horizontal {
-  height: clamp(22px, 4.8vh, 28px);
+  height: clamp(28px, 5.2dvh, 34px);
+  min-height: 28px;
 }
 
 .mobile-power-track-vertical {
-  height: clamp(108px, 32vh, 150px);
+  height: clamp(108px, 32dvh, 150px);
+  min-width: 44px;
 }
 
 .match-table-stage {
   min-width: 0;
+  min-height: 0;
   padding-inline: clamp(2px, 1.2vw, 12px);
-  padding-block: clamp(2px, 1vh, 8px);
+  padding-block: clamp(2px, 1dvh, 8px);
+  overflow: hidden;
+  touch-action: none;
 }
 
 .match-table-frame {
   min-width: 0;
   max-width: 100%;
   max-height: 100%;
+  touch-action: none;
+}
+
+.game-fullscreen button,
+.game-fullscreen a,
+.game-fullscreen [role="button"],
+.game-fullscreen [role="slider"] {
+  min-width: 44px;
+  min-height: 44px;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 @media (max-width: 374px) {
@@ -155,7 +189,8 @@ main {
   .mobile-power-footer {
     padding-inline: 8px;
     padding-top: 4px;
-    padding-bottom: calc(env(safe-area-inset-bottom) + 4px);
+    padding-bottom: calc(var(--safe-bottom) + 6px);
+    box-shadow: none;
   }
 
   .match-table-stage {
@@ -185,12 +220,31 @@ main {
   .mobile-power-footer {
     padding-inline: 24px;
     padding-top: 8px;
-    padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
+    padding-bottom: calc(var(--safe-bottom) + 8px);
   }
 
   .match-table-stage {
     padding-inline: 18px;
     padding-block: 10px;
+  }
+}
+
+html[data-low-end-device="true"] .game-fullscreen * {
+  text-shadow: none !important;
+}
+
+@media (max-width: 400px) {
+  .game-fullscreen * {
+    text-shadow: none !important;
+  }
+
+  .mobile-billiards-bg {
+    background: #071225;
+  }
+
+  .mobile-power-footer,
+  .mobile-game-header {
+    backdrop-filter: none;
   }
 }
 

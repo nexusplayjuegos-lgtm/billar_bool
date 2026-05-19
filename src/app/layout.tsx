@@ -1,7 +1,8 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import { Inter } from 'next/font/google';
 import { AnalyticsProvider } from '@/components/analytics/AnalyticsProvider';
+import { AppViewport } from '@/components/platform/AppViewport';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -74,6 +75,15 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+  themeColor: '#020617',
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -82,12 +92,15 @@ export default function RootLayout({
   return (
     <html lang="pt">
       <head>
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1"
-        />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <link rel="apple-touch-icon" href="/og-image.jpg" />
+        <link
+          rel="apple-touch-startup-image"
+          href="/og-image.jpg"
+          media="(orientation: landscape)"
+        />
         <link rel="preload" href="/sounds/cue_hit.mp3" as="fetch" crossOrigin="anonymous" />
         <link rel="preload" href="/sounds/ball_collision.mp3" as="fetch" crossOrigin="anonymous" />
         <link rel="preload" href="/sounds/ball_pocket.mp3" as="fetch" crossOrigin="anonymous" />
@@ -113,6 +126,7 @@ export default function RootLayout({
             </Script>
           </>
         )}
+        <AppViewport />
         <AnalyticsProvider measurementId={gaMeasurementId} />
         {children}
       </body>
