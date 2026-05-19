@@ -20,6 +20,7 @@ const TABLE_TOP = 28;
 const TABLE_BOTTOM = 372;
 const AIM_SMOOTHING = 0.16;
 const AIM_MIN_TOUCH_DISTANCE = 42;
+const AIM_DRAG_START_DISTANCE = 16;
 
 function getShotFromPoint(cueBall: Ball, pos: { x: number; y: number }) {
   return Math.atan2(pos.y - cueBall.y, pos.x - cueBall.x);
@@ -51,6 +52,8 @@ export function TouchDragInput({
   const [isDraggingBall, setIsDraggingBall] = useState(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
   const lastAngleRef = useRef(0);
+  const aimStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const hasStartedAimDragRef = useRef(false);
 
   const getLogicalPos = useCallback(
     (clientX: number, clientY: number) => {
@@ -110,6 +113,8 @@ export function TouchDragInput({
       setIsDragging(true);
       onPowerChange(0);
       lastAngleRef.current = aimAngle;
+      aimStartPosRef.current = pos;
+      hasStartedAimDragRef.current = false;
     },
     [balls, disabled, getLogicalPos, clampToTable, onPowerChange, ballInHand, onPlaceCueBall, isBreakShot, aimAngle]
   );
@@ -134,6 +139,13 @@ export function TouchDragInput({
       const cueBall = balls[0];
       if (!cueBall) return;
       if (!isStableAimPoint(cueBall, pos)) return;
+      if (!hasStartedAimDragRef.current) {
+        const startPos = aimStartPosRef.current;
+        if (!startPos) return;
+        const dragDistance = Math.hypot(pos.x - startPos.x, pos.y - startPos.y);
+        if (dragDistance < AIM_DRAG_START_DISTANCE) return;
+        hasStartedAimDragRef.current = true;
+      }
       const angle = getShotFromPoint(cueBall, pos);
       const smoothedAngle = smoothAngle(lastAngleRef.current, angle);
       lastAngleRef.current = smoothedAngle;
@@ -154,6 +166,8 @@ export function TouchDragInput({
 
     if (!isDragging) return;
     setIsDragging(false);
+    aimStartPosRef.current = null;
+    hasStartedAimDragRef.current = false;
     onPowerChange(0);
   }, [isDraggingBall, isDragging, dragPos, onPlaceCueBall, onPowerChange]);
 
@@ -164,6 +178,8 @@ export function TouchDragInput({
     }
     if (isDragging) {
       setIsDragging(false);
+      aimStartPosRef.current = null;
+      hasStartedAimDragRef.current = false;
       onPowerChange(0);
     }
   }, [isDraggingBall, isDragging, onPowerChange]);

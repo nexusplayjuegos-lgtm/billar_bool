@@ -43,6 +43,7 @@ const BALL_RESTITUTION = 0.94;
 const FRICTION = 0.97;
 const STOP_THRESHOLD = 0.02;
 const MIN_TARGET_GUIDE_DISTANCE = 8;
+const MIN_TARGET_GUIDE_VISIBLE_DISTANCE = 24;
 const THIN_CUT_ASSIST_RADIUS = 2;
 const MAX_CUE_POWER_OFFSET = 60;
 const POCKETS = [
@@ -363,12 +364,15 @@ export function AimOverlay({
       ? (() => {
           const targetSpeed = getTargetInitialSpeed(power, aimAngle, collision.targetDirection);
           // Limit target preview to short direction only - no long trajectory
-          const shortDistance = Math.min(getTravelDistance(targetSpeed) * 0.3, 100); // Max 100 units or 30% of full distance
+          const shortDistance = Math.max(
+            MIN_TARGET_GUIDE_VISIBLE_DISTANCE,
+            Math.min(getTravelDistance(targetSpeed) * 0.3, 100)
+          );
           const targetStart = {
             x: collision.targetBall.x + collision.targetDirection.x * collision.targetBall.radius,
             y: collision.targetBall.y + collision.targetDirection.y * collision.targetBall.radius,
           };
-          const guideDistance = shortDistance - collision.targetBall.radius;
+          const guideDistance = shortDistance;
           if (guideDistance < MIN_TARGET_GUIDE_DISTANCE) return [];
           return traceRailSegments(
             targetStart,
