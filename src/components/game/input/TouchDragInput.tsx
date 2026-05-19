@@ -109,11 +109,9 @@ export function TouchDragInput({
       if (!cueBall || cueBall.inPocket) return;
       setIsDragging(true);
       onPowerChange(0);
-      const angle = isStableAimPoint(cueBall, pos) ? getShotFromPoint(cueBall, pos) : aimAngle;
-      lastAngleRef.current = angle;
-      onAimChange(angle);
+      lastAngleRef.current = aimAngle;
     },
-    [balls, disabled, getLogicalPos, clampToTable, onAimChange, onPowerChange, ballInHand, onPlaceCueBall, isBreakShot, aimAngle]
+    [balls, disabled, getLogicalPos, clampToTable, onPowerChange, ballInHand, onPlaceCueBall, isBreakShot, aimAngle]
   );
 
   const handleMove = useCallback(
