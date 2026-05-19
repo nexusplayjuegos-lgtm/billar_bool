@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { Play, TrendingUp, Users, Star, Wifi, Plus, LogIn, X, Loader2, Copy, Check } from 'lucide-react';
+import { Play, TrendingUp, Users, Star, Wifi, Plus, LogIn, X, Loader2, Copy, Check, MessageCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { MOCK_GAME_MODES, MOCK_LEADERBOARD } from '@/mocks/data';
 import { useUserStore, useGameStore } from '@/lib/store';
@@ -14,6 +14,7 @@ import type { Room } from '@/lib/multiplayer/types';
 import { FakeMatchmakingOverlay } from '@/components/matchmaking';
 import type { FakeOpponent } from '@/lib/store/gameStore';
 import type { GameMode } from '@/types';
+import { getWhatsAppInviteUrl } from '@/lib/multiplayer/invite';
 
 type MultiplayerView = 'menu' | 'create' | 'join';
 
@@ -150,7 +151,10 @@ export function DesktopLobbyScreen() {
               Jogar Agora
             </button>
             <button
-              onClick={() => beginFakeMatchmaking(MOCK_GAME_MODES[0])}
+              onClick={() => {
+                setShowMultiplayer(true);
+                setMpView('menu');
+              }}
               className="px-6 py-3 border border-cyan-300/40 text-cyan-200 hover:bg-cyan-500/10 font-bold rounded-xl flex items-center gap-2 transition-colors"
             >
               <Wifi className="w-5 h-5" />
@@ -379,12 +383,13 @@ export function DesktopLobbyScreen() {
                         }
                       </button>
                       <a
-                        href={`https://wa.me/?text=${encodeURIComponent(`Joga sinuca comigo! ${window.location.origin}/${locale}/join?room=${room.id}`)}`}
+                        href={getWhatsAppInviteUrl(locale, room.id)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-2 w-full bg-green-600/20 border border-green-500/30 rounded-xl px-4 py-3 text-green-400 hover:bg-green-600/30 transition-colors text-sm font-semibold"
                       >
-                        💬 Convidar pelo WhatsApp
+                        <MessageCircle className="h-4 w-4" />
+                        Convidar pelo WhatsApp
                       </a>
                       <p className="text-xs text-slate-500">A sala expira em 10 minutos</p>
                     </div>

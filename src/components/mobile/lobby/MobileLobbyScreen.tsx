@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { Play, TrendingUp, Users, Wifi, Plus, LogIn, X, Loader2, Copy, Check, Target } from 'lucide-react';
+import { Play, TrendingUp, Users, Wifi, Plus, LogIn, X, Loader2, Copy, Check, Target, MessageCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { GameModeCard } from './GameModeCard';
 import { MOCK_GAME_MODES } from '@/mocks/data';
@@ -17,6 +17,7 @@ import { unlockAudio } from '@/lib/audio/gameAudio';
 import type { Room } from '@/lib/multiplayer/types';
 import { FakeMatchmakingOverlay } from '@/components/matchmaking';
 import type { FakeOpponent } from '@/lib/store/gameStore';
+import { getWhatsAppInviteUrl } from '@/lib/multiplayer/invite';
 
 type MultiplayerView = 'menu' | 'create' | 'join' | 'waiting';
 
@@ -79,7 +80,8 @@ export function MobileLobbyScreen() {
 
   // ── Multiplayer ───────────────────────────────────────────────
   const handleOpenMultiplayer = () => {
-    setMatchmakingMode(selectedMode ?? MOCK_GAME_MODES[0]);
+    setShowMultiplayer(true);
+    setMpView('menu');
   };
 
   const handleFakeMatched = (opponent: FakeOpponent) => {
@@ -439,12 +441,13 @@ export function MobileLobbyScreen() {
                       </button>
 
                       <a
-                        href={`https://wa.me/?text=${encodeURIComponent(`Joga sinuca comigo! ${window.location.origin}/${locale}/join?room=${room.id}`)}`}
+                        href={getWhatsAppInviteUrl(locale, room.id)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-2 w-full bg-green-600/20 border border-green-500/30 rounded-xl px-4 py-3 text-green-400 active:scale-95 transition-transform text-sm font-semibold"
                       >
-                        💬 Convidar pelo WhatsApp
+                        <MessageCircle className="h-4 w-4" />
+                        Convidar pelo WhatsApp
                       </a>
 
                       <p className="text-xs text-slate-500">
