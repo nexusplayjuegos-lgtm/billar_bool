@@ -12,6 +12,7 @@ import { GameScreen } from '@/components/game/GameScreen';
 import { TouchDragInput } from '@/components/game/input/TouchDragInput';
 import { GameExitButton } from './GameExitButton';
 import { MultiplayerGameHUD } from './MultiplayerGameHUD';
+import { PowerSlider } from './PowerSlider';
 import type { Tables } from '@/lib/supabase/client';
 
 interface MultiplayerGameScreenProps {
@@ -368,13 +369,25 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
             balls={engineState.balls}
             onAimChange={handlers.onAimChange}
             onPowerChange={handlers.onPowerChange}
-            onShoot={handlers.onShoot}
             onPlaceCueBall={handlers.onPlaceCueBall}
             ballInHand={handlers.ballInHand}
             isBreakShot={handlers.isBreakShot}
             aimAngle={handlers.aimAngle}
             disabled={engineState.ballsMoving || engineState.gameOver || !hasLocalTurn}
           />
+        )}
+        footer={(engineState, power, setPower, onShoot, tableSize) => (
+          <div className="mobile-power-footer shrink-0 border-t border-slate-800/50 bg-slate-950/90 backdrop-blur-sm">
+            <div className="mobile-power-inner" style={{ width: tableSize.width }}>
+              <PowerSlider
+                value={Math.round(power)}
+                onChange={setPower}
+                onShoot={onShoot}
+                orientation="horizontal"
+                disabled={engineState.ballsMoving || engineState.gameOver || !hasLocalTurn || engineState.ballInHand}
+              />
+            </div>
+          </div>
         )}
       />
     </div>
