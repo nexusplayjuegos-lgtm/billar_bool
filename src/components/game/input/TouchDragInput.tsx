@@ -21,13 +21,40 @@ const TABLE_BOTTOM = 372;
 const AIM_SMOOTHING = 0.16;
 const AIM_MIN_TOUCH_DISTANCE = 42;
 const AIM_DRAG_START_DISTANCE = 16;
+const CUE_GRAB_WIDTH = 34;
+const CUE_GRAB_BACK_DISTANCE = 260;
+
+type AimGestureMode = 'direct' | 'cue';
 
 function getShotFromPoint(cueBall: Ball, pos: { x: number; y: number }) {
   return Math.atan2(pos.y - cueBall.y, pos.x - cueBall.x);
 }
 
+function getShotFromCue(cueBall: Ball, pos: { x: number; y: number }) {
+  return Math.atan2(cueBall.y - pos.y, cueBall.x - pos.x);
+}
+
 function isStableAimPoint(cueBall: Ball, pos: { x: number; y: number }) {
   return Math.hypot(pos.x - cueBall.x, pos.y - cueBall.y) >= AIM_MIN_TOUCH_DISTANCE;
+}
+
+function getAimGestureMode(cueBall: Ball, pos: { x: number; y: number }, aimAngle: number): AimGestureMode {
+  const dx = pos.x - cueBall.x;
+  const dy = pos.y - cueBall.y;
+  const forwardX = Math.cos(aimAngle);
+  const forwardY = Math.sin(aimAngle);
+  const projection = dx * forwardX + dy * forwardY;
+  const perpendicular = Math.abs(dx * -forwardY + dy * forwardX);
+
+  return projection < -cueBall.radius &&
+    projection > -CUE_GRAB_BACK_DISTANCE &&
+    perpendicular <= CUE_GRAB_WIDTH
+    ? 'cue'
+    : 'direct';
+}
+
+function getAimAngle(cueBall: Ball, pos: { x: number; y: number }, mode: AimGestureMode) {
+  return mode === 'cue' ? getShotFromCue(cueBall, pos) : getShotFromPoint(cueBall, pos);
 }
 
 function smoothAngle(previous: number, next: number) {
@@ -54,6 +81,7 @@ export function TouchDragInput({
   const lastAngleRef = useRef(0);
   const aimStartPosRef = useRef<{ x: number; y: number } | null>(null);
   const hasStartedAimDragRef = useRef(false);
+  const aimGestureModeRef = useRef<AimGestureMode>('direct');
 
   const getLogicalPos = useCallback(
     (clientX: number, clientY: number) => {
@@ -115,6 +143,7 @@ export function TouchDragInput({
       lastAngleRef.current = aimAngle;
       aimStartPosRef.current = pos;
       hasStartedAimDragRef.current = false;
+      aimGestureModeRef.current = getAimGestureMode(cueBall, pos, aimAngle);
     },
     [balls, disabled, getLogicalPos, clampToTable, onPowerChange, ballInHand, onPlaceCueBall, isBreakShot, aimAngle]
   );
@@ -146,7 +175,7 @@ export function TouchDragInput({
         if (dragDistance < AIM_DRAG_START_DISTANCE) return;
         hasStartedAimDragRef.current = true;
       }
-      const angle = getShotFromPoint(cueBall, pos);
+      const angle = getAimAngle(cueBall, pos, aimGestureModeRef.current);
       const smoothedAngle = smoothAngle(lastAngleRef.current, angle);
       lastAngleRef.current = smoothedAngle;
       onAimChange(smoothedAngle);
