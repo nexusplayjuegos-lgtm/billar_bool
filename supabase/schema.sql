@@ -193,7 +193,7 @@ begin
   new.updated_at = timezone('utc'::text, now());
   return new;
 end;
-$$ language plpgsql;
+$$ language plpgsql security definer;
 
 create trigger update_profiles_updated_at
   before update on profiles
@@ -201,14 +201,56 @@ create trigger update_profiles_updated_at
   execute function update_updated_at_column();
 
 -- Trigger: criar perfil automaticamente após signup
+create or replace function generate_profile_username(
+  user_id uuid,
+  user_email text,
+  user_metadata jsonb
+)
+returns text as $$
+declare
+  base_username text;
+  profile_username text;
+  suffix integer := 0;
+begin
+  base_username := coalesce(
+    nullif(btrim(user_metadata->>'username'), ''),
+    nullif(btrim(user_metadata->>'name'), ''),
+    nullif(btrim(user_metadata->>'full_name'), ''),
+    nullif(btrim(split_part(coalesce(user_email, ''), '@', 1)), ''),
+    'user_' || substr(user_id::text, 1, 8)
+  );
+
+  base_username := lower(regexp_replace(base_username, '[^[:alnum:]_]+', '_', 'g'));
+  base_username := btrim(regexp_replace(base_username, '_+', '_', 'g'), '_');
+  base_username := coalesce(nullif(base_username, ''), 'user_' || substr(user_id::text, 1, 8));
+  profile_username := base_username;
+
+  while exists (
+    select 1
+    from profiles
+    where username = profile_username
+  ) loop
+    suffix := suffix + 1;
+    profile_username := base_username || '_' || substr(user_id::text, 1, 4);
+
+    if suffix > 1 then
+      profile_username := profile_username || '_' || suffix::text;
+    end if;
+  end loop;
+
+  return profile_username;
+end;
+$$ language plpgsql security definer;
+
 create or replace function handle_new_user()
 returns trigger as $$
 begin
-  insert into profiles (id, username, email)
+  insert into profiles (id, username, email, avatar_url)
   values (
     new.id,
-    new.raw_user_meta_data->>'username',
-    new.email
+    generate_profile_username(new.id, new.email, new.raw_user_meta_data),
+    coalesce(new.email, new.id::text || '@auth.local'),
+    new.raw_user_meta_data->>'avatar_url'
   );
   return new;
 end;
