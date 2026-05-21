@@ -7,7 +7,7 @@ import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
-const siteUrl = 'https://8bollpool.com';
+const siteUrl = 'https://www.8bollpool.com';
 const ogImageUrl = `${siteUrl}/og-image.jpg`;
 const siteDescription = 'Jogue sinuca 8-ball online gratis com visual premium, matchmaking rapido, conquistas, missoes, caixas de vitoria e Pool Pass.';
 
@@ -40,9 +40,6 @@ export const metadata: Metadata = {
   description: siteDescription,
   keywords: ['sinuca', 'bilhar', '8-ball', 'pool', 'jogo online'],
   manifest: '/manifest.json',
-  alternates: {
-    canonical: '/',
-  },
   openGraph: {
     title: 'Bool Sinuca Premiere - Jogue 8-Ball Online Gratis',
     description: siteDescription,

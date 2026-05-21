@@ -2,6 +2,7 @@ import createMiddleware from 'next-intl/middleware';
 import { NextRequest, NextResponse } from 'next/server';
 
 const LOCALES = ['en', 'es', 'pt'] as const;
+const PUBLIC_STATIC_PATHS = ['/privacy', '/terms', '/robots.txt', '/sitemap.xml'] as const;
 
 const PROTECTED_SEGMENTS = ['/play', '/friends', '/leaderboard', '/profile'];
 
@@ -20,6 +21,10 @@ export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (pathname.startsWith('/auth/callback')) {
+    return NextResponse.next();
+  }
+
+  if (PUBLIC_STATIC_PATHS.includes(pathname as (typeof PUBLIC_STATIC_PATHS)[number])) {
     return NextResponse.next();
   }
 

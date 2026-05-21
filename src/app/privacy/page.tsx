@@ -1,4 +1,13 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Privacidade - Bool Sinuca Premiere',
+  description: 'Politica de privacidade do Bool Sinuca Premiere.',
+  alternates: {
+    canonical: '/privacy',
+  },
+};
 
 export default function PrivacyPage() {
   return (

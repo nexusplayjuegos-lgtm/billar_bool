@@ -1,4 +1,13 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Termos - Bool Sinuca Premiere',
+  description: 'Termos de uso do Bool Sinuca Premiere.',
+  alternates: {
+    canonical: '/terms',
+  },
+};
 
 export default function TermsPage() {
   return (
