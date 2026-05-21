@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ShieldCheck } from 'lucide-react';
 import { useLocale } from '@/hooks';
 import { useUserStore } from '@/lib/store/userStore';
@@ -10,19 +10,21 @@ const BIND_PROMPT_STORAGE_KEY = 'bool_bind_prompted';
 
 export function BindAccountPrompt() {
   const router = useRouter();
+  const pathname = usePathname();
   const { locale } = useLocale();
   const { isGuest, profile, session } = useUserStore();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (session || !isGuest || profile.stats.totalGames < 3) {
+    const isGameRoute = pathname?.includes('/game/');
+    if (session || !isGuest || isGameRoute || profile.stats.totalGames < 3) {
       setVisible(false);
       return;
     }
 
     const prompted = window.localStorage.getItem(BIND_PROMPT_STORAGE_KEY);
     setVisible(prompted !== '1');
-  }, [isGuest, profile.stats.totalGames, session]);
+  }, [isGuest, pathname, profile.stats.totalGames, session]);
 
   const dismiss = () => {
     window.localStorage.setItem(BIND_PROMPT_STORAGE_KEY, '1');

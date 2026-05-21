@@ -127,9 +127,9 @@ export function GameTutorial() {
   }, [visible, updateRect]);
 
   const cardClassName = useMemo(() => {
-    if (step.placement === 'bottom') return 'bottom-[max(32px,calc(env(safe-area-inset-bottom)+14px))]';
-    if (step.placement === 'top') return 'top-[max(18px,env(safe-area-inset-top))]';
-    return 'top-1/2 -translate-y-1/2';
+    if (step.placement === 'bottom') return 'game-tutorial-bottom';
+    if (step.placement === 'top') return 'game-tutorial-top';
+    return 'game-tutorial-middle';
   }, [step.placement]);
 
   if (!visible || !rect) return null;
@@ -158,7 +158,7 @@ export function GameTutorial() {
           initial={{ opacity: 0, y: 12, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           className={cn(
-            'absolute left-1/2 w-[min(92vw,380px)] -translate-x-1/2 rounded-2xl border border-emerald-300/30 bg-slate-950/95 p-4 text-white shadow-2xl shadow-emerald-950/40',
+            'game-tutorial-card absolute w-[min(92vw,380px)] rounded-2xl border border-emerald-300/30 bg-slate-950/95 p-4 text-white shadow-2xl shadow-emerald-950/40',
             cardClassName
           )}
         >

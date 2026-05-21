@@ -523,7 +523,7 @@ useEffect(() => {
       )}
       <GameTutorial />
 
-      <div className="flex-1 min-h-[180px] min-w-0 relative overflow-hidden">
+      <div className="flex-1 min-h-0 min-w-0 relative overflow-visible">
         <MatchTable
           balls={engineState.balls}
           aimAngle={aimAngle}
