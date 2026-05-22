@@ -52,7 +52,7 @@ export function MatchTable({
       const pw = el.clientWidth - horizontalPadding;
       const ph = el.clientHeight - verticalPadding;
       if (pw <= 0 || ph <= 0) return;
-      const baseScale = Math.min(pw / 800, ph / 400) * scale;
+      const baseScale = Math.min(pw / 800, ph / 400);
       const width = Math.max(1, 800 * baseScale);
       const height = Math.max(1, 400 * baseScale);
       const nextSize = { width, height };
@@ -64,11 +64,19 @@ export function MatchTable({
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [scale, onSizeChange]);
+  }, [onSizeChange]);
 
   return (
     <div ref={containerRef} className="match-table-stage w-full h-full flex items-center justify-center">
-      <div className="match-table-frame relative" style={{ width: size.width, height: size.height }}>
+      <div
+        className="match-table-frame relative"
+        style={{
+          width: size.width,
+          height: size.height,
+          transform: `scale(${scale})`,
+          transformOrigin: 'center center',
+        }}
+      >
         <PoolTable balls={balls} className="w-full h-full" tableId={tableId} />
         <AimOverlay balls={balls} aimAngle={aimAngle} power={power} isAiming={isAiming} showIdleCue={showIdleCue} cueStrikeActive={cueStrikeActive} isBreakShot={isBreakShot} playerType={playerType} gameMode={gameMode} />
         {opponentAim && (
