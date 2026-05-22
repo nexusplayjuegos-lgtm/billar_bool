@@ -203,7 +203,7 @@ main {
 }
 
 .game-fullscreen .match-table-stage {
-  padding-left: clamp(78px, 10vw, 98px);
+  padding-left: clamp(92px, 11.5vw, 112px);
   padding-right: clamp(14px, 3vw, 28px);
   padding-top: clamp(4px, 1.2dvh, 8px);
   padding-bottom: clamp(4px, 1.4dvh, 10px);
@@ -325,7 +325,7 @@ main {
   }
 
   .game-fullscreen .match-table-stage {
-    padding-left: 76px;
+    padding-left: 88px;
     padding-right: 12px;
     padding-top: 4px;
     padding-bottom: 4px;
@@ -362,7 +362,7 @@ main {
   }
 
   .game-fullscreen .match-table-stage {
-    padding-left: 104px;
+    padding-left: 118px;
     padding-right: 22px;
     padding-top: 6px;
     padding-bottom: 8px;
@@ -405,7 +405,7 @@ html[data-low-end-device="true"] .game-fullscreen * {
   }
 
   .game-fullscreen .match-table-stage {
-    padding-left: clamp(72px, 9vw, 88px);
+    padding-left: clamp(84px, 10.5vw, 98px);
     padding-right: clamp(10px, 2.8vw, 18px);
     padding-top: 3px;
     padding-bottom: 4px;

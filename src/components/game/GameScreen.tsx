@@ -164,6 +164,12 @@ export function GameScreen({
   const previousBallsMovingRef = useRef<boolean | null>(null);
   const gameResultHandledRef = useRef(false);
   const achievementWinStreakRef = useRef(profile.stats?.currentWinStreak ?? 0);
+  const timeoutHandledTurnRef = useRef<string | null>(null);
+  const hasEngineState = engineState !== null;
+  const engineGameOver = engineState?.gameOver ?? false;
+  const engineBallsMoving = engineState?.ballsMoving ?? false;
+  const engineCurrentPlayer = engineState?.currentPlayer ?? null;
+  const engineTurn = engineState?.turn ?? null;
 	
   useEffect(() => {
     audioManager.preload();
@@ -172,10 +178,10 @@ export function GameScreen({
 
 // Resetar quando nova partida inicia (engineState.gameOver volta a false)
 useEffect(() => {
-  if (engineState && !engineState.gameOver) {
+  if (hasEngineState && !engineGameOver) {
     gameResultHandledRef.current = false;
   }
-}, [engineState?.gameOver]);
+}, [hasEngineState, engineGameOver]);
 
   useEffect(() => {
     gameResultHandledRef.current = false;
@@ -332,14 +338,16 @@ useEffect(() => {
 
   useEffect(() => {
     if (externalTimeLeft !== undefined) return;
-    if (!engineState || engineState.gameOver || engineState.ballsMoving) return;
-    const isTimedPlayerTurn = engineState.currentPlayer === localPlayerNumber;
-    if (!isTimedPlayerTurn) return;
+    if (!hasEngineState || engineGameOver || engineBallsMoving) return;
+    const isTimedPlayerTurn = engineCurrentPlayer === localPlayerNumber;
+    if (!isTimedPlayerTurn || engineCurrentPlayer === null || engineTurn === null) return;
+    const timeoutTurnKey = `${engineTurn}:${engineCurrentPlayer}`;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          if (enableLocalTurnTimer) {
+          if (enableLocalTurnTimer && timeoutHandledTurnRef.current !== timeoutTurnKey) {
+            timeoutHandledTurnRef.current = timeoutTurnKey;
             engine.timeoutTurn();
             setPower(0);
             setIsAiming(false);
@@ -355,25 +363,37 @@ useEffect(() => {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [engineState, engine, enableLocalTurnTimer, externalTimeLeft, localPlayerNumber]);
+  }, [
+    engine,
+    engineBallsMoving,
+    engineCurrentPlayer,
+    engineGameOver,
+    engineTurn,
+    enableLocalTurnTimer,
+    externalTimeLeft,
+    hasEngineState,
+    localPlayerNumber,
+  ]);
 
   // CORREÇÃO LOTE 4: Reseta timer quando turno muda (currentPlayer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (!engineState || externalTimeLeft !== undefined) return;
+    if (!hasEngineState || externalTimeLeft !== undefined) return;
+    timeoutHandledTurnRef.current = null;
     setTimeLeft(30);
-  }, [engineState?.currentPlayer, externalTimeLeft]);
+  }, [engineCurrentPlayer, engineTurn, externalTimeLeft, hasEngineState]);
 
   // CORREÇÃO LOTE 4: Reseta timer quando jogada termina (ballsMoving transição)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (!engineState || externalTimeLeft !== undefined) return;
+    if (!hasEngineState || externalTimeLeft !== undefined) return;
     const wasMoving = previousBallsMovingRef.current;
-    previousBallsMovingRef.current = engineState.ballsMoving;
-    if (wasMoving === true && engineState.ballsMoving === false && !engineState.gameOver) {
+    previousBallsMovingRef.current = engineBallsMoving;
+    if (wasMoving === true && !engineBallsMoving && !engineGameOver) {
+      timeoutHandledTurnRef.current = null;
       setTimeLeft(30);
     }
-  }, [engineState?.ballsMoving, externalTimeLeft]);
+  }, [engineBallsMoving, engineGameOver, externalTimeLeft, hasEngineState]);
 
   useEffect(() => {
     if (!blockScroll) return;
@@ -449,6 +469,7 @@ useEffect(() => {
 
     gameResultHandledRef.current = false;
     previousBallsMovingRef.current = null;
+    timeoutHandledTurnRef.current = null;
     setAimAngle(0);
     setPower(0);
     setIsAiming(false);

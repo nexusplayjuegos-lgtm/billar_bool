@@ -204,8 +204,9 @@ export function PowerSlider({
             />
             <motion.div
               aria-hidden="true"
-              className="absolute left-[49%] top-[9%] z-20 h-[72%] w-5 -translate-x-1/2 bg-contain bg-center bg-no-repeat drop-shadow-[0_3px_7px_rgba(0,0,0,0.65)]"
+              className="absolute top-[8%] z-20 h-[76%] w-6 bg-contain bg-center bg-no-repeat drop-shadow-[0_3px_7px_rgba(0,0,0,0.65)]"
               style={{
+                left: 'calc(50% - 12px)',
                 backgroundImage: 'url(/power-cue.svg)',
               }}
               animate={{
@@ -213,12 +214,6 @@ export function PowerSlider({
                 filter: isDragging ? 'brightness(1.18)' : 'brightness(1)',
               }}
               transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-            />
-            <motion.div
-              className="absolute left-1/2 z-30 h-3 w-9 -translate-x-1/2 rounded border border-white/40 bg-white/85 shadow-md shadow-black/40"
-              style={{ top: cuePosition }}
-              animate={{ top: cuePosition, scale: isDragging ? 1.08 : 1 }}
-              transition={{ type: 'spring', stiffness: 420, damping: 30 }}
             />
           </>
         )}
