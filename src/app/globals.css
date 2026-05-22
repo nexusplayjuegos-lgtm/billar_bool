@@ -152,7 +152,7 @@ main {
 
 .mobile-power-footer {
   position: absolute;
-  left: calc(var(--safe-left) + clamp(10px, 2.4vw, 22px));
+  left: calc(var(--safe-left) + clamp(16px, 3vw, 26px));
   top: 50%;
   z-index: 35;
   display: flex;
@@ -203,7 +203,7 @@ main {
 }
 
 .game-fullscreen .match-table-stage {
-  padding-left: clamp(50px, 7vw, 76px);
+  padding-left: clamp(78px, 10vw, 98px);
   padding-right: clamp(14px, 3vw, 28px);
   padding-top: clamp(4px, 1.2dvh, 8px);
   padding-bottom: clamp(4px, 1.4dvh, 10px);
@@ -313,7 +313,7 @@ main {
   }
 
   .mobile-power-footer {
-    left: calc(var(--safe-left) + 8px);
+    left: calc(var(--safe-left) + 12px);
     width: 58px;
     padding: 7px 5px;
     box-shadow: none;
@@ -325,7 +325,7 @@ main {
   }
 
   .game-fullscreen .match-table-stage {
-    padding-left: 54px;
+    padding-left: 76px;
     padding-right: 12px;
     padding-top: 4px;
     padding-bottom: 4px;
@@ -351,7 +351,7 @@ main {
   }
 
   .mobile-power-footer {
-    left: calc(var(--safe-left) + 18px);
+    left: calc(var(--safe-left) + 22px);
     width: 78px;
     padding: 9px 8px;
   }
@@ -362,7 +362,7 @@ main {
   }
 
   .game-fullscreen .match-table-stage {
-    padding-left: 78px;
+    padding-left: 104px;
     padding-right: 22px;
     padding-top: 6px;
     padding-bottom: 8px;
@@ -405,7 +405,7 @@ html[data-low-end-device="true"] .game-fullscreen * {
   }
 
   .game-fullscreen .match-table-stage {
-    padding-left: clamp(50px, 7vw, 68px);
+    padding-left: clamp(72px, 9vw, 88px);
     padding-right: clamp(10px, 2.8vw, 18px);
     padding-top: 3px;
     padding-bottom: 4px;
