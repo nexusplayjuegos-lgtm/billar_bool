@@ -495,7 +495,6 @@ useEffect(() => {
   const canLocalPlayerAct = isLocalPlayerTurn && !engineState.ballsMoving && !engineState.gameOver;
   const canPlaceCueBall = canLocalPlayerAct && engineState.ballInHand;
   const shouldShowIdleCue = canLocalPlayerAct && !engineState.ballInHand && !isAiming;
-  const hasPocketedBalls = engineState.pocketedBalls.some((id) => id !== 0);
 
   const inputHandlers: InputHandlers = {
     onAimChange: handleAimChange,
@@ -516,11 +515,6 @@ useEffect(() => {
 
       {pocketedRackVariant === 'flow' && (
         <PocketedBallRack balls={engineState.balls} pocketedBallIds={engineState.pocketedBalls} />
-      )}
-      {pocketedRackVariant === 'overlay' && hasPocketedBalls && (
-        <div className="pointer-events-none z-20 flex shrink-0 justify-center px-2 py-1">
-          <PocketedBallRack balls={engineState.balls} pocketedBallIds={engineState.pocketedBalls} variant="overlay" />
-        </div>
       )}
       <GameTutorial />
 

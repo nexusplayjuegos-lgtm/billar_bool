@@ -56,14 +56,14 @@ export function MobileGameScreen() {
             onTableZoomChange={setTableZoom}
           />
         )}
-        footer={(engineState, power, setPower, onShoot, tableSize) => (
-          <div className="mobile-power-footer shrink-0 border-t border-slate-800/50 bg-slate-950/90 backdrop-blur-sm">
-            <div className="mobile-power-inner" style={{ width: tableSize.width }}>
+        footer={(engineState, power, setPower, onShoot) => (
+          <div className="mobile-power-footer">
+            <div className="mobile-power-inner">
               <PowerSlider
                 value={Math.round(power)}
                 onChange={setPower}
                 onShoot={onShoot}
-                orientation="horizontal"
+                orientation="vertical"
                 disabled={engineState.ballsMoving || engineState.gameOver || engineState.currentPlayer === 2 || engineState.ballInHand}
               />
             </div>

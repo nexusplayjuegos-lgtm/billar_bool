@@ -14,6 +14,42 @@ interface GameHUDProps {
   opponent?: FakeOpponent | null;
 }
 
+function HudPocketBall({ color, number, striped }: { color: string; number: number; striped?: boolean }) {
+  return (
+    <span
+      className="relative grid h-3.5 w-3.5 shrink-0 place-items-center rounded-full border border-white/35 shadow-sm shadow-black/50"
+      style={{
+        background: striped
+          ? `linear-gradient(180deg, #f8fafc 0 30%, ${color} 30% 70%, #f8fafc 70% 100%)`
+          : number === 8
+            ? '#111827'
+            : color,
+      }}
+    >
+      <span className="grid h-1.5 min-w-1.5 place-items-center rounded-full bg-white px-px text-[3.5px] font-black leading-none text-slate-950">
+        {number}
+      </span>
+    </span>
+  );
+}
+
+function HudPocketedBalls({ balls, align = 'left' }: { balls: EngineState['balls']; align?: 'left' | 'right' }) {
+  if (balls.length === 0) return null;
+
+  return (
+    <div className={cn('flex max-w-[96px] flex-wrap gap-0.5', align === 'right' ? 'justify-end' : 'justify-start')}>
+      {balls.map((ball) => (
+        <HudPocketBall
+          key={ball.id}
+          color={ball.color}
+          number={ball.number ?? ball.id}
+          striped={ball.isStriped}
+        />
+      ))}
+    </div>
+  );
+}
+
 function EightBallHUD({ engineState, timeLeft, isPlayerTurn, potentialReward, t, opponent }: {
   engineState: EngineState;
   timeLeft: number;
@@ -29,6 +65,7 @@ function EightBallHUD({ engineState, timeLeft, isPlayerTurn, potentialReward, t,
     return b.number >= 9;
   });
   const p1Pocketed = p1Balls.filter((b) => b.inPocket).length;
+  const p1PocketedBalls = p1Balls.filter((b) => b.inPocket);
   const p1Total = p1Balls.length;
 
   const p2Balls = engineState.balls.filter((b) => {
@@ -38,6 +75,7 @@ function EightBallHUD({ engineState, timeLeft, isPlayerTurn, potentialReward, t,
     return b.number >= 9;
   });
   const p2Pocketed = p2Balls.filter((b) => b.inPocket).length;
+  const p2PocketedBalls = p2Balls.filter((b) => b.inPocket);
   const p2Total = p2Balls.length;
 
   return (
@@ -77,6 +115,7 @@ function EightBallHUD({ engineState, timeLeft, isPlayerTurn, potentialReward, t,
             )}
           </div>
         </div>
+        <HudPocketedBalls balls={p1PocketedBalls} />
       </div>
 
       {/* Center Info */}
@@ -103,6 +142,7 @@ function EightBallHUD({ engineState, timeLeft, isPlayerTurn, potentialReward, t,
 
       {/* Player 2 (Bot) */}
       <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end">
+        <HudPocketedBalls balls={p2PocketedBalls} align="right" />
         <div className="flex flex-col min-w-0 text-right">
           <span className="text-white text-[10px] font-bold truncate leading-tight">
             {opponent?.name ?? 'Rival'}

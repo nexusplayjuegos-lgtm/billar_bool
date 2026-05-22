@@ -33,7 +33,7 @@ export function PowerSlider({
       const rect = track.getBoundingClientRect();
       const rawValue =
         orientation === 'horizontal'
-          ? (clientX - rect.left) / rect.width
+          ? (rect.right - clientX) / rect.width
           : (clientY - rect.top) / rect.height;
       const nextValue = Math.round(Math.max(0, Math.min(1, rawValue)) * 100);
       liveValueRef.current = nextValue;
@@ -81,15 +81,29 @@ export function PowerSlider({
 
   const powerColor = getPowerColor(value);
   const isHorizontal = orientation === 'horizontal';
-  const cuePosition = `${value}%`;
+  const cuePosition = isHorizontal ? `${100 - value}%` : `${10 + value * 0.78}%`;
+  const cueAssetOffset = `${value * 0.12}%`;
+  const meterFillStyle = isHorizontal
+    ? {
+        width: `${value}%`,
+        right: '4px',
+        background: `linear-gradient(to left, ${powerColor}, rgba(255,255,255,0.88))`,
+        boxShadow: `0 0 16px ${powerColor}66`,
+      }
+    : {
+        height: `${value}%`,
+        top: '4px',
+        background: `linear-gradient(to bottom, ${powerColor}, rgba(255,255,255,0.88))`,
+        boxShadow: `0 0 16px ${powerColor}66`,
+      };
 
   return (
-    <div className={cn(isHorizontal ? 'flex w-full items-center gap-1.5' : 'flex flex-col items-center gap-2', disabled && 'opacity-45')}>
+    <div className={cn(isHorizontal ? 'flex w-full items-center gap-2' : 'flex flex-col items-center gap-2', disabled && 'opacity-45')}>
       <motion.span
         animate={{ scale: isDragging ? 1.12 : 1 }}
         className={cn(
-          'rounded-full border border-slate-700/70 bg-slate-950/85 text-center font-black leading-none',
-          isHorizontal ? 'min-w-9 px-1 py-0.5 text-[9px]' : 'min-w-12 px-2 py-0.5 text-xs'
+          'rounded border border-blue-200/30 bg-[#1b2b54] text-center font-black leading-none shadow-inner shadow-black/40',
+          isHorizontal ? 'min-w-11 px-1.5 py-1 text-[10px]' : 'min-w-12 px-2 py-0.5 text-xs'
         )}
         style={{ color: powerColor }}
       >
@@ -104,8 +118,8 @@ export function PowerSlider({
         aria-valuemax={100}
         aria-valuenow={Math.round(value)}
         className={cn(
-          'relative touch-none overflow-hidden border border-slate-600/80 bg-[#101827] shadow-xl shadow-black/30',
-          isHorizontal ? 'mobile-power-track-horizontal min-w-0 flex-1 rounded-full shadow-md' : 'mobile-power-track-vertical w-[30px] rounded-lg',
+          'relative touch-none overflow-hidden border border-[#61709b] bg-[#111b35] shadow-xl shadow-black/40',
+          isHorizontal ? 'mobile-power-track-horizontal min-w-0 flex-1 rounded shadow-md' : 'mobile-power-track-vertical w-[48px] rounded-lg',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer active:scale-95'
         )}
         onPointerDown={handlePointerDown}
@@ -113,11 +127,21 @@ export function PowerSlider({
         onPointerUp={finishDrag}
         onPointerCancel={finishDrag}
       >
-        <div className={cn('absolute bg-slate-950/80', isHorizontal ? 'inset-x-1 inset-y-[5px] rounded-full' : 'inset-1 rounded-md')} />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.08),transparent_18%,transparent_82%,rgba(255,255,255,0.08))]" />
+        <div className={cn('absolute bg-[#081126] shadow-inner shadow-black/60', isHorizontal ? 'inset-x-1 inset-y-1 rounded-sm' : 'inset-1 rounded-sm')} />
+        <motion.div
+          className={cn('absolute rounded-sm', isHorizontal ? 'inset-y-1' : 'inset-x-1')}
+          style={meterFillStyle}
+          animate={meterFillStyle}
+          transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+        />
+        <div className={cn('absolute opacity-80', isHorizontal ? 'inset-y-1 right-1 w-1 bg-red-500' : 'inset-x-1 bottom-1 h-1 bg-red-500')} />
+        <div className={cn('absolute opacity-80', isHorizontal ? 'inset-y-1 right-[33%] w-px bg-yellow-300/70' : 'inset-x-1 top-[66%] h-px bg-yellow-300/70')} />
+        <div className={cn('absolute opacity-80', isHorizontal ? 'inset-y-1 right-[66%] w-px bg-green-300/70' : 'inset-x-1 top-[33%] h-px bg-green-300/70')} />
 
         {isHorizontal ? (
           <motion.div
-            className="absolute top-1/2 h-3.5 w-16 rounded-full"
+            className="absolute top-1/2 h-4 w-20 rounded-full"
             style={{ left: cuePosition }}
             animate={{
               left: cuePosition,
@@ -128,11 +152,11 @@ export function PowerSlider({
           >
             <div
               className="absolute inset-0 -translate-y-1/2"
-              style={{ transform: `translate(-${value}%, -50%)` }}
+              style={{ transform: 'translate(-50%, -50%)' }}
             >
               <svg
                 aria-hidden="true"
-                className="absolute inset-0 h-full w-full drop-shadow-[0_0_8px_rgba(251,191,36,0.35)]"
+                className="absolute inset-0 h-full w-full drop-shadow-[0_0_8px_rgba(251,191,36,0.45)]"
                 viewBox="0 0 80 14"
                 preserveAspectRatio="none"
               >
@@ -160,20 +184,46 @@ export function PowerSlider({
           </motion.div>
         ) : (
           <motion.div
-            className="absolute inset-x-1 bottom-1 rounded-md"
+            className="absolute inset-x-1 rounded-sm"
             style={{ height: `${value}%` }}
             animate={{
               height: `${value}%`,
-              background: `linear-gradient(to top, ${powerColor}, rgba(255,255,255,0.88))`,
+              top: '4px',
+              background: `linear-gradient(to bottom, ${powerColor}, rgba(255,255,255,0.88))`,
               boxShadow: `0 0 16px ${powerColor}66`,
             }}
             transition={{ type: 'spring', stiffness: 320, damping: 28 }}
           />
         )}
 
-        <div className={cn('absolute bg-white/15', isHorizontal ? 'inset-y-0 left-[30%] w-px' : 'inset-x-0 top-[30%] h-px')} />
-        <div className={cn('absolute bg-white/15', isHorizontal ? 'inset-y-0 left-[70%] w-px' : 'inset-x-0 top-[70%] h-px')} />
-        <div className={cn('absolute ring-1 ring-inset ring-white/10', isHorizontal ? 'inset-x-1 inset-y-[5px] rounded-full' : 'inset-x-0 bottom-1 top-1 rounded-lg')} />
+        {!isHorizontal && (
+          <>
+            <motion.div
+              className="absolute left-1/2 top-[10%] z-10 h-[80%] w-7 -translate-x-1/2 rounded-full border border-white/20 bg-black/25 shadow-inner shadow-black/70"
+              animate={{ boxShadow: isDragging ? `inset 0 0 12px ${powerColor}55, 0 0 16px ${powerColor}33` : 'inset 0 0 12px rgba(0,0,0,0.7)' }}
+            />
+            <motion.div
+              aria-hidden="true"
+              className="absolute left-[49%] top-[9%] z-20 h-[72%] w-5 -translate-x-1/2 bg-contain bg-center bg-no-repeat drop-shadow-[0_3px_7px_rgba(0,0,0,0.65)]"
+              style={{
+                backgroundImage: 'url(/power-cue.svg)',
+              }}
+              animate={{
+                y: cueAssetOffset,
+                filter: isDragging ? 'brightness(1.18)' : 'brightness(1)',
+              }}
+              transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+            />
+            <motion.div
+              className="absolute left-1/2 z-30 h-3 w-9 -translate-x-1/2 rounded border border-white/40 bg-white/85 shadow-md shadow-black/40"
+              style={{ top: cuePosition }}
+              animate={{ top: cuePosition, scale: isDragging ? 1.08 : 1 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 30 }}
+            />
+          </>
+        )}
+
+        <div className={cn('absolute ring-1 ring-inset ring-white/15', isHorizontal ? 'inset-x-1 inset-y-1 rounded-sm' : 'inset-x-0 bottom-1 top-1 rounded-sm')} />
       </div>
     </div>
   );

@@ -77,6 +77,11 @@ export function MatchTable({
           transformOrigin: 'center center',
         }}
       >
+        <div className="match-table-chrome pointer-events-none absolute inset-[-10px] z-[-1]" />
+        <div className="match-table-corner match-table-corner-tl" />
+        <div className="match-table-corner match-table-corner-tr" />
+        <div className="match-table-corner match-table-corner-bl" />
+        <div className="match-table-corner match-table-corner-br" />
         <PoolTable balls={balls} className="w-full h-full" tableId={tableId} />
         <AimOverlay balls={balls} aimAngle={aimAngle} power={power} isAiming={isAiming} showIdleCue={showIdleCue} cueStrikeActive={cueStrikeActive} isBreakShot={isBreakShot} playerType={playerType} gameMode={gameMode} />
         {opponentAim && (
