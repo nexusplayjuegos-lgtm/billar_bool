@@ -8,10 +8,12 @@ interface TouchDragInputProps {
   onAimChange: (angle: number) => void;
   onPowerChange: (power: number) => void;
   onPlaceCueBall?: (x: number, y: number) => void;
+  onTableZoomChange?: (zoom: number) => void;
   ballInHand?: boolean;
   disabled?: boolean;
   isBreakShot?: boolean;
   aimAngle?: number;
+  tableZoom?: number;
 }
 
 const TABLE_LEFT = 28;
@@ -23,8 +25,21 @@ const AIM_MIN_TOUCH_DISTANCE = 42;
 const AIM_DRAG_START_DISTANCE = 16;
 const CUE_GRAB_WIDTH = 34;
 const CUE_GRAB_BACK_DISTANCE = 260;
+const MIN_TABLE_ZOOM = 1;
+const MAX_TABLE_ZOOM = 1.2;
 
 type AimGestureMode = 'direct' | 'cue';
+
+interface TouchPoint {
+  clientX: number;
+  clientY: number;
+}
+
+interface TouchCollection {
+  length: number;
+  item: (index: number) => TouchPoint | null;
+  [index: number]: TouchPoint;
+}
 
 function getShotFromPoint(cueBall: Ball, pos: { x: number; y: number }) {
   return Math.atan2(pos.y - cueBall.y, pos.x - cueBall.x);
@@ -57,6 +72,17 @@ function getAimAngle(cueBall: Ball, pos: { x: number; y: number }, mode: AimGest
   return mode === 'cue' ? getShotFromCue(cueBall, pos) : getShotFromPoint(cueBall, pos);
 }
 
+function clampTableZoom(value: number) {
+  return Math.max(MIN_TABLE_ZOOM, Math.min(MAX_TABLE_ZOOM, value));
+}
+
+function getTouchDistance(touches: TouchCollection) {
+  const first = touches.item(0) ?? touches[0];
+  const second = touches.item(1) ?? touches[1];
+  if (!first || !second) return 0;
+  return Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
+}
+
 function smoothAngle(previous: number, next: number) {
   let delta = next - previous;
   while (delta > Math.PI) delta -= Math.PI * 2;
@@ -69,10 +95,12 @@ export function TouchDragInput({
   onAimChange,
   onPowerChange,
   onPlaceCueBall,
+  onTableZoomChange,
   ballInHand = false,
   disabled = false,
   isBreakShot = false,
   aimAngle = 0,
+  tableZoom = 1,
 }: TouchDragInputProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -82,6 +110,43 @@ export function TouchDragInput({
   const aimStartPosRef = useRef<{ x: number; y: number } | null>(null);
   const hasStartedAimDragRef = useRef(false);
   const aimGestureModeRef = useRef<AimGestureMode>('direct');
+  const isPinchingRef = useRef(false);
+  const pinchStartDistanceRef = useRef(0);
+  const pinchStartZoomRef = useRef(1);
+
+  const resetAimDrag = useCallback(() => {
+    setIsDragging(false);
+    setIsDraggingBall(false);
+    setDragPos(null);
+    aimStartPosRef.current = null;
+    hasStartedAimDragRef.current = false;
+  }, []);
+
+  const startPinchZoom = useCallback(
+    (touches: TouchCollection) => {
+      if (!onTableZoomChange) return false;
+      const distance = getTouchDistance(touches);
+      if (distance <= 0) return false;
+      resetAimDrag();
+      isPinchingRef.current = true;
+      pinchStartDistanceRef.current = distance;
+      pinchStartZoomRef.current = tableZoom;
+      return true;
+    },
+    [onTableZoomChange, resetAimDrag, tableZoom]
+  );
+
+  const updatePinchZoom = useCallback(
+    (touches: TouchCollection) => {
+      if (!isPinchingRef.current || !onTableZoomChange) return false;
+      const distance = getTouchDistance(touches);
+      const startDistance = pinchStartDistanceRef.current;
+      if (distance <= 0 || startDistance <= 0) return false;
+      onTableZoomChange(clampTableZoom(pinchStartZoomRef.current * (distance / startDistance)));
+      return true;
+    },
+    [onTableZoomChange]
+  );
 
   const getLogicalPos = useCallback(
     (clientX: number, clientY: number) => {
@@ -184,6 +249,12 @@ export function TouchDragInput({
   );
 
   const handleEnd = useCallback(() => {
+    if (isPinchingRef.current) {
+      isPinchingRef.current = false;
+      pinchStartDistanceRef.current = 0;
+      return;
+    }
+
     if (isDraggingBall) {
       setIsDraggingBall(false);
       if (dragPos && onPlaceCueBall) {
@@ -218,6 +289,13 @@ export function TouchDragInput({
 
     const handleDocumentMove = (event: TouchEvent) => {
       event.preventDefault();
+      if (isPinchingRef.current || event.touches.length >= 2) {
+        if (!isPinchingRef.current) {
+          startPinchZoom(event.touches);
+        }
+        updatePinchZoom(event.touches);
+        return;
+      }
       const touch = event.touches[0];
       if (!touch) return;
       handleMove(touch.clientX, touch.clientY);
@@ -236,7 +314,7 @@ export function TouchDragInput({
       document.removeEventListener('touchend', handleDocumentEnd);
       document.removeEventListener('touchcancel', handleDocumentEnd);
     };
-  }, [isDragging, isDraggingBall, handleMove, handleEnd]);
+  }, [isDragging, isDraggingBall, handleMove, handleEnd, startPinchZoom, updatePinchZoom]);
 
   const cursorClass = ballInHand && !disabled
     ? isDraggingBall ? 'cursor-grabbing' : 'cursor-grab'
@@ -265,10 +343,25 @@ export function TouchDragInput({
         onMouseUp={handleEnd}
         onMouseLeave={handleLeave}
         onTouchStart={(e) => {
+          if (e.touches.length >= 2 && startPinchZoom(e.touches)) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
           const touch = e.touches[0];
           handleStart(touch.clientX, touch.clientY);
         }}
         onTouchMove={(e) => {
+          if (isPinchingRef.current || e.touches.length >= 2) {
+            if (!isPinchingRef.current) {
+              startPinchZoom(e.touches);
+            }
+            if (updatePinchZoom(e.touches)) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+            return;
+          }
           const touch = e.touches[0];
           handleMove(touch.clientX, touch.clientY);
         }}

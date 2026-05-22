@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useImmersiveMatch } from '@/hooks';
 import { useGameStore } from '@/lib/store';
@@ -15,6 +15,7 @@ export function MobileGameScreen() {
   const { locale } = useLocale();
   const { endGame, modeType, opponent } = useGameStore();
   const { containerRef } = useImmersiveMatch();
+  const [tableZoom, setTableZoom] = useState(1);
 
   const handleExitGame = useCallback(() => {
     endGame(false);
@@ -26,7 +27,7 @@ export function MobileGameScreen() {
       <GameScreen
         blockScroll
         onExit={handleExitGame}
-        tableScale={1}
+        tableScale={tableZoom}
         pocketedRackVariant="overlay"
         gameMode={modeType === 'brazilian' ? 'brazilian' : '8ball'}
         header={(engineState, timeLeft) => (
@@ -51,6 +52,8 @@ export function MobileGameScreen() {
             isBreakShot={handlers.isBreakShot}
             aimAngle={handlers.aimAngle}
             disabled={engineState.ballsMoving || engineState.gameOver || engineState.currentPlayer === 2}
+            tableZoom={tableZoom}
+            onTableZoomChange={setTableZoom}
           />
         )}
         footer={(engineState, power, setPower, onShoot, tableSize) => (

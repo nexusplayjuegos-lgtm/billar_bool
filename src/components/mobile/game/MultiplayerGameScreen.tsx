@@ -62,6 +62,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
   const [syncedTimeLeft, setSyncedTimeLeft] = useState(30);
   const [ballsMoving, setBallsMoving] = useState(false);
   const [awaitingShotSync, setAwaitingShotSync] = useState(false);
+  const [tableZoom, setTableZoom] = useState(1);
   const hasJoinedRef = useRef(false);
   const pendingShotRef = useRef<PendingShot | null>(null);
   const timeoutHandledTurnRef = useRef<string | null>(null);
@@ -334,7 +335,7 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
         blockScroll
         onExit={handleExitGame}
         onShoot={handleShoot}
-        tableScale={1}
+        tableScale={tableZoom}
         pocketedRackVariant="overlay"
         gameMode={modeType === 'brazilian' ? 'brazilian' : '8ball'}
         engine={engineRef.current}
@@ -374,6 +375,8 @@ export function MultiplayerGameScreen({ roomId }: MultiplayerGameScreenProps) {
             isBreakShot={handlers.isBreakShot}
             aimAngle={handlers.aimAngle}
             disabled={engineState.ballsMoving || engineState.gameOver || !hasLocalTurn}
+            tableZoom={tableZoom}
+            onTableZoomChange={setTableZoom}
           />
         )}
         footer={(engineState, power, setPower, onShoot, tableSize) => (
