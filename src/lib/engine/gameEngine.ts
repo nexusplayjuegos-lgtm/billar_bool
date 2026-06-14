@@ -207,7 +207,7 @@ function getSweptBallCollision(
   return { nx, ny, contactA, contactB };
 }
 
-class GameEngine {
+export class GameEngine {
   private state: EngineState;
   private listeners: EngineListener[] = [];
   private running = false;
@@ -694,8 +694,8 @@ class GameEngine {
     }
 
     if (this.firstContact === null) {
-      this.state.foul = false;
-      this.state.ballInHand = false;
+      this.state.foul = true;
+      this.state.ballInHand = true;
       this.switchTurn();
       return;
     }
@@ -725,25 +725,27 @@ class GameEngine {
         return b && b.number && b.number >= 9 && b.number <= 15;
       });
       if (pocketedSolid || pocketedStripe) {
+        const assign = (currentGets: 'solid' | 'stripe') => {
+          const other = currentGets === 'solid' ? 'stripe' : 'solid';
+          if (player === 1) {
+            this.state.player1Type = currentGets;
+            this.state.player2Type = other;
+          } else {
+            this.state.player2Type = currentGets;
+            this.state.player1Type = other;
+          }
+        };
         if (pocketedSolid && !pocketedStripe) {
-          this.state.player1Type = 'solid';
-          this.state.player2Type = 'stripe';
+          assign('solid');
         } else if (pocketedStripe && !pocketedSolid) {
-          this.state.player1Type = 'stripe';
-          this.state.player2Type = 'solid';
+          assign('stripe');
         } else {
           const first = this.pocketedThisTurn.find((id) => {
             const b = this.state.balls.find((x) => x.id === id);
             return b && b.number && b.number !== 8;
           });
           const b = this.state.balls.find((x) => x.id === first);
-          if (b && b.number && b.number <= 7) {
-            this.state.player1Type = 'solid';
-            this.state.player2Type = 'stripe';
-          } else {
-            this.state.player1Type = 'stripe';
-            this.state.player2Type = 'solid';
-          }
+          assign(b && b.number && b.number <= 7 ? 'solid' : 'stripe');
         }
         this.groupsAssigned = true;
       }
@@ -929,10 +931,7 @@ class GameEngine {
   }
 }
 
-// Singleton legado para singleplayer (mantido para compatibilidade)
-export const gameEngine = new GameEngine('8ball');
-
-// Factory function — cria uma nova instância a cada partida (multiplayer)
+// Factory function — cria uma nova instância a cada partida
 export function createGameEngine(mode: '8ball' | 'brazilian' = '8ball'): GameEngine {
   return new GameEngine(mode);
 }

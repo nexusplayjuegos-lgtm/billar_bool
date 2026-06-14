@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Award, Share2 } from 'lucide-react';
 import { useLocale } from '@/hooks';
-import { gameEngine, createGameEngine, EngineState } from '@/lib/engine/gameEngine';
+import { GameEngine, createGameEngine, EngineState } from '@/lib/engine/gameEngine';
 import { useVictoryBoxes } from '@/hooks/useVictoryBoxes';
 import { usePoolPass } from '@/hooks/usePoolPass';
 import { useMissions } from '@/hooks/useMissions';
@@ -56,7 +56,7 @@ interface GameScreenProps {
   blockScroll?: boolean;
   tableScale?: number;
   gameMode?: '8ball' | 'brazilian';
-  engine?: typeof gameEngine;
+  engine?: GameEngine;
   enableLocalTurnTimer?: boolean;
   showBotThinking?: boolean;
   externalTimeLeft?: number;
@@ -89,7 +89,11 @@ export function GameScreen({
   opponentAim,
   onAimPreview,
 }: GameScreenProps) {
-  const engine = customEngine ?? gameEngine;
+  const localEngineRef = useRef<GameEngine | null>(null);
+  if (!localEngineRef.current) {
+    localEngineRef.current = createGameEngine(gameMode);
+  }
+  const engine = customEngine ?? localEngineRef.current;
   const t = useTranslations('game');
   const { locale } = useLocale();
   const { endGame, startGame, currentMode, modeType, potentialReward, entryFee, opponent } = useGameStore();
