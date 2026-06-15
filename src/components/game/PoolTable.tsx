@@ -125,30 +125,30 @@ export function PoolTable({ balls, className, tableId = 'classic-green' }: PoolT
     });
 
     const pockets = [
-      { x: borderWidth + 2, y: borderWidth + 2 },
-      { x: 400, y: borderWidth + 2 },
-      { x: 800 - borderWidth - 2, y: borderWidth + 2 },
-      { x: borderWidth + 2, y: 400 - borderWidth - 2 },
-      { x: 400, y: 400 - borderWidth - 2 },
-      { x: 800 - borderWidth - 2, y: 400 - borderWidth - 2 },
+      { x: borderWidth, y: borderWidth },
+      { x: 400, y: borderWidth },
+      { x: 800 - borderWidth, y: borderWidth },
+      { x: borderWidth, y: 400 - borderWidth },
+      { x: 400, y: 400 - borderWidth },
+      { x: 800 - borderWidth, y: 400 - borderWidth },
     ];
 
     pockets.forEach((pocket) => {
       ctx.beginPath();
-      ctx.arc(pocket.x + 1, pocket.y + 1, 18, 0, Math.PI * 2);
+      ctx.arc(pocket.x + 1, pocket.y + 1, 21, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(pocket.x, pocket.y, 17, 0, Math.PI * 2);
+      ctx.arc(pocket.x, pocket.y, 20, 0, Math.PI * 2);
       ctx.fillStyle = '#2a2a2a';
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(pocket.x, pocket.y, 17, 0, Math.PI * 2);
+      ctx.arc(pocket.x, pocket.y, 20, 0, Math.PI * 2);
       ctx.strokeStyle = '#555555';
       ctx.lineWidth = 1.5;
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(pocket.x, pocket.y, 14, 0, Math.PI * 2);
+      ctx.arc(pocket.x, pocket.y, 17, 0, Math.PI * 2);
       ctx.fillStyle = '#0a0a0a';
       ctx.fill();
       ctx.beginPath();
