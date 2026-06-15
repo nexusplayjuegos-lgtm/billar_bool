@@ -112,6 +112,7 @@ export function getTableDesign(tableId: string, rarity?: string): TableDesign | 
   const normalizedTableId = normalizeTableDesignId(tableId);
   const design = TABLE_DESIGNS.find(d => d.id === normalizedTableId);
   if (design) return design;
+  console.warn(`[tableDesigns] ID de mesa não reconhecido: "${tableId}" (normalizado: "${normalizedTableId}"). Usando fallback.`);
   const fallbackId = rarity ? RARITY_FALLBACK[rarity] : undefined;
   return fallbackId ? TABLE_DESIGNS.find(d => d.id === fallbackId) : undefined;
 }

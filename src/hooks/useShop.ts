@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useUserStore } from '@/lib/store/userStore';
 import { FALLBACK_SHOP_ITEMS } from '@/lib/shop/fallbackCatalog';
+import { normalizeTableDesignId } from '@/lib/shop/tableDesigns';
 import type { ShopItem, PlayerInventoryItem, FlashDeal, PurchaseResult, ShopCategory } from '@/types';
 
 interface ShopState {
@@ -242,8 +243,9 @@ export function useShop() {
             equipment.currentCue = purchasedItem.id;
           }
           if (purchasedItem.category === 'table') {
-            equipment.ownedTables = Array.from(new Set([...equipment.ownedTables, purchasedItem.id]));
-            equipment.currentTable = purchasedItem.id;
+            const normalizedTable = normalizeTableDesignId(purchasedItem.id);
+            equipment.ownedTables = Array.from(new Set([...equipment.ownedTables, normalizedTable]));
+            equipment.currentTable = normalizedTable;
           }
           return {
             profile: {
@@ -297,7 +299,7 @@ export function useShop() {
           useUserStore.setState((current) => {
             const equipment = { ...current.profile.equipment };
             if (item.category === 'cue') equipment.currentCue = item.id;
-            if (item.category === 'table') equipment.currentTable = item.id;
+            if (item.category === 'table') equipment.currentTable = normalizeTableDesignId(item.id);
             return { profile: { ...current.profile, equipment } };
           });
         }
