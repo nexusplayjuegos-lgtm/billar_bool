@@ -36,6 +36,7 @@ function adaptShopItem(raw: Record<string, unknown>): ShopItem {
     rarity: String(data.rarity ?? 'common') as ShopItem['rarity'],
     stats: (data.stats as ShopItem['stats']) || {},
     imageUrl: data.imageUrl ? String(data.imageUrl) : null,
+    designKey: data.designKey ? String(data.designKey) : undefined,
     isLimited: Boolean(data.isLimited ?? false),
     availableFrom: String(data.availableFrom ?? ''),
     availableUntil: data.availableUntil ? String(data.availableUntil) : null,
@@ -94,24 +95,32 @@ export function useShop() {
     (items: ShopItem[]): PlayerInventoryItem[] => {
       const localProfile = useUserStore.getState().profile;
       const now = new Date().toISOString();
-      const cueItems = localProfile.equipment.ownedCues.map((itemId) => ({
-        id: `local-${localProfile.id}-${itemId}`,
-        profileId: localProfile.id,
-        itemId,
-        equipped: localProfile.equipment.currentCue === itemId,
-        purchasedAt: now,
-        expiresAt: null,
-        item: items.find((item) => item.id === itemId),
-      }));
-      const tableItems = localProfile.equipment.ownedTables.map((itemId) => ({
-        id: `local-${localProfile.id}-${itemId}`,
-        profileId: localProfile.id,
-        itemId,
-        equipped: localProfile.equipment.currentTable === itemId,
-        purchasedAt: now,
-        expiresAt: null,
-        item: items.find((item) => item.id === itemId),
-      }));
+      const cueItems = localProfile.equipment.ownedCues.map((itemId) => {
+        const catalogItem = items.find((i) => i.id === itemId);
+        return {
+          id: `local-${localProfile.id}-${itemId}`,
+          profileId: localProfile.id,
+          itemId,
+          equipped: localProfile.equipment.currentCue === itemId ||
+            (catalogItem?.designKey != null && localProfile.equipment.currentCue === catalogItem.designKey),
+          purchasedAt: now,
+          expiresAt: null,
+          item: catalogItem,
+        };
+      });
+      const tableItems = localProfile.equipment.ownedTables.map((itemId) => {
+        const catalogItem = items.find((i) => i.id === itemId);
+        return {
+          id: `local-${localProfile.id}-${itemId}`,
+          profileId: localProfile.id,
+          itemId,
+          equipped: localProfile.equipment.currentTable === itemId ||
+            (catalogItem?.designKey != null && localProfile.equipment.currentTable === catalogItem.designKey),
+          purchasedAt: now,
+          expiresAt: null,
+          item: catalogItem,
+        };
+      });
       return [...cueItems, ...tableItems];
     },
     []
@@ -273,8 +282,8 @@ export function useShop() {
     async (itemId: string): Promise<boolean> => {
       const item = state.items.find((catalogItem) => catalogItem.id === itemId);
       if (!userId && isGuest && item) {
-        if (item.category === 'cue') await equipCue(itemId);
-        if (item.category === 'table') await equipTable(itemId);
+        if (item.category === 'cue') await equipCue(itemId, item.designKey);
+        if (item.category === 'table') await equipTable(itemId, item.designKey);
         setState((prev) => ({
           ...prev,
           inventory: buildLocalInventory(prev.items.length > 0 ? prev.items : FALLBACK_SHOP_ITEMS),
@@ -296,12 +305,18 @@ export function useShop() {
 
         await fetchInventory();
         if (item) {
+          const designKey = item.designKey ?? (item.category === 'table' ? normalizeTableDesignId(item.id) : item.id);
           useUserStore.setState((current) => {
             const equipment = { ...current.profile.equipment };
-            if (item.category === 'cue') equipment.currentCue = item.id;
-            if (item.category === 'table') equipment.currentTable = normalizeTableDesignId(item.id);
+            if (item.category === 'cue') equipment.currentCue = designKey;
+            if (item.category === 'table') equipment.currentTable = designKey;
             return { profile: { ...current.profile, equipment } };
           });
+          if (item.category === 'cue') {
+            await supabase.from('profiles').update({ current_cue: designKey }).eq('id', userId);
+          } else if (item.category === 'table') {
+            await supabase.from('profiles').update({ current_table: designKey }).eq('id', userId);
+          }
         }
         return true;
       } catch (err) {

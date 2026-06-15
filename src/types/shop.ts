@@ -23,6 +23,7 @@ export interface ShopItem {
   rarity: ShopRarity;
   stats: ShopItemStats;
   imageUrl: string | null;
+  designKey?: string;
   isLimited: boolean;
   availableFrom: string;
   availableUntil: string | null;

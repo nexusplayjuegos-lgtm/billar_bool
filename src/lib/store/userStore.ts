@@ -190,9 +190,9 @@ interface UserState {
   addXP: (amount: number) => Promise<void>;
   saveMatchResult: (result: MatchResult) => Promise<void>;
   buyCue: (cueId: string, price: number) => Promise<void>;
-  equipCue: (cueId: string) => Promise<void>;
+  equipCue: (cueId: string, designKey?: string) => Promise<void>;
   buyTable: (tableId: string, price: Price) => Promise<void>;
-  equipTable: (tableId: string) => Promise<void>;
+  equipTable: (tableId: string, designKey?: string) => Promise<void>;
   addPoolPoints: (amount: number, seasonId?: string) => Promise<void>;
   updateStats: (result: 'win' | 'loss', coinsWon?: number) => Promise<void>;
 }
@@ -293,7 +293,7 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      equipCue: async (cueId: string) => {
+      equipCue: async (cueId: string, designKey?: string) => {
         const { profile, session, isGuest } = get();
         if (!profile) return;
 
@@ -302,9 +302,10 @@ export const useUserStore = create<UserState>()(
           return;
         }
 
+        const effectiveCueKey = designKey ?? cueId;
         const updatedProfile = {
           ...profile,
-          equipment: { ...profile.equipment, currentCue: cueId },
+          equipment: { ...profile.equipment, currentCue: effectiveCueKey },
         };
 
         set({ profile: updatedProfile });
@@ -313,7 +314,7 @@ export const useUserStore = create<UserState>()(
         if (session) {
           const { error } = await supabase
             .from('profiles')
-            .update({ current_cue: cueId })
+            .update({ current_cue: effectiveCueKey })
             .eq('id', session.user.id);
 
           if (error) {
@@ -648,17 +649,18 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      equipTable: async (tableId) => {
+      equipTable: async (tableId, designKey?) => {
         const { profile, session, isGuest } = get();
         if (!profile) return;
         const normalizedTableId = normalizeTableId(tableId);
         if (!profile.equipment.ownedTables.includes(normalizedTableId)) return;
 
+        const effectiveTableKey = designKey ?? normalizedTableId;
         const updatedProfile = {
           ...profile,
           equipment: {
             ...profile.equipment,
-            currentTable: normalizedTableId,
+            currentTable: effectiveTableKey,
           },
         };
 
@@ -668,7 +670,7 @@ export const useUserStore = create<UserState>()(
         if (session) {
           await supabase
             .from('profiles')
-            .update({ current_table: normalizedTableId })
+            .update({ current_table: effectiveTableKey })
             .eq('id', session.user.id);
         }
       },
