@@ -55,11 +55,19 @@ export function useMultiplayer() {
       },
 
       onOpponentShot: (shot: RoomShot) => {
-        setState((prev) => ({
-          ...prev,
-          opponentShot: shot,
-          isMyTurn: true, // Oponente jogou → agora é a nossa vez
-        }));
+        setState((prev) => {
+          const nextPlayer = (shot.game_state as { currentPlayer?: number } | null)
+            ?.currentPlayer;
+          const isMyTurn =
+            nextPlayer !== undefined && prev.playerNumber !== null
+              ? nextPlayer === prev.playerNumber
+              : false;
+          return {
+            ...prev,
+            opponentShot: shot,
+            isMyTurn,
+          };
+        });
       },
 
       onOpponentShotStart: (shot: ShotStart) => {
