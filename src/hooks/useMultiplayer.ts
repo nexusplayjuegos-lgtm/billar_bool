@@ -253,8 +253,7 @@ export function useMultiplayer() {
         }
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.isMyTurn, userId],
+    [state.isConnected, state.isMyTurn, userId],
   );
 
   const sendShotStart = useCallback(
