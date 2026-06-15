@@ -129,6 +129,11 @@ export function getCueDesign(cueId: string, rarity?: string): CueDesign | undefi
     'cue_golden_dragon':  'mezz-ec7',
     'cue_shadow_assassin': 'shadow-legend',
   };
-  const designId = map[cueId] || (rarity ? RARITY_FALLBACK[rarity] : undefined);
-  return designId ? CUE_DESIGNS.find(d => d.id === designId) : undefined;
+  const designId = map[cueId];
+  if (!designId) {
+    const fallbackId = rarity ? RARITY_FALLBACK[rarity] : undefined;
+    if (!fallbackId) console.warn(`[cueDesigns] ID de taco não reconhecido: "${cueId}". Sem design disponível.`);
+    return fallbackId ? CUE_DESIGNS.find(d => d.id === fallbackId) : undefined;
+  }
+  return CUE_DESIGNS.find(d => d.id === designId);
 }
