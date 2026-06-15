@@ -19,6 +19,7 @@ interface MatchTableProps {
   playerType?: 'solid' | 'stripe' | null;
   gameMode?: '8ball' | 'brazilian';
   tableId?: string;
+  cueId?: string;
   onSizeChange?: (size: { width: number; height: number }) => void;
 }
 
@@ -36,6 +37,7 @@ export function MatchTable({
   playerType,
   gameMode,
   tableId,
+  cueId,
   onSizeChange,
 }: MatchTableProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -83,7 +85,7 @@ export function MatchTable({
         <div className="match-table-corner match-table-corner-bl" />
         <div className="match-table-corner match-table-corner-br" />
         <PoolTable balls={balls} className="w-full h-full" tableId={tableId} />
-        <AimOverlay balls={balls} aimAngle={aimAngle} power={power} isAiming={isAiming} showIdleCue={showIdleCue} cueStrikeActive={cueStrikeActive} isBreakShot={isBreakShot} playerType={playerType} gameMode={gameMode} />
+        <AimOverlay balls={balls} aimAngle={aimAngle} power={power} isAiming={isAiming} showIdleCue={showIdleCue} cueStrikeActive={cueStrikeActive} isBreakShot={isBreakShot} playerType={playerType} gameMode={gameMode} cueId={cueId} />
         {opponentAim && (
           <AimOverlay
             balls={balls}

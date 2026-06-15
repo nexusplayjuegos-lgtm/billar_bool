@@ -106,15 +106,27 @@ const RARITY_FALLBACK: Record<string, string> = {
   legendary: 'shadow-legend',
 };
 
-// Mapeia cue.id do mock para design.id
+// Mapeia cue.id (catálogo + legado Supabase) para design.id
 export function getCueDesign(cueId: string, rarity?: string): CueDesign | undefined {
   const map: Record<string, string> = {
-    'cue_beginner': 'maple-classic',
-    'cue_venom_striker': 'venom-striker',
-    'cue_precision_pro': 'predator-ghost',
-    'cue_fire_storm': 'dragon-fire',
-    'cue_ice_queen': 'lucasi-hybrid',
-    'cue_golden_dragon': 'mezz-ec7',
+    // IDs do catálogo fallback
+    'cue_beginner':       'maple-classic',
+    'cue_classic':        'maple-classic',
+    'cue_oak':            'maple-classic',
+    'cue_precision_pro':  'predator-ghost',
+    'cue_ebony':          'mezz-ec7',
+    'cue_bamboo':         'predator-ghost',
+    'cue_carbon':         'dragon-fire',
+    'cue_titanium':       'mezz-ec7',
+    'cue_crystal':        'lucasi-hybrid',
+    'cue_legendary':      'shadow-legend',
+    'cue_dragon':         'dragon-fire',
+    'cue_golden':         'diamond-elite',
+    // IDs legados do Supabase
+    'cue_venom_striker':  'venom-striker',
+    'cue_fire_storm':     'dragon-fire',
+    'cue_ice_queen':      'lucasi-hybrid',
+    'cue_golden_dragon':  'mezz-ec7',
     'cue_shadow_assassin': 'shadow-legend',
   };
   const designId = map[cueId] || (rarity ? RARITY_FALLBACK[rarity] : undefined);

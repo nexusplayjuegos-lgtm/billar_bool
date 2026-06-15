@@ -3,6 +3,7 @@
 import React from 'react';
 import { Ball } from '@/types';
 import { cn } from '@/lib/utils';
+import { getCueDesign } from '@/lib/shop/cueDesigns';
 
 interface AimOverlayProps {
   balls: Ball[];
@@ -15,6 +16,7 @@ interface AimOverlayProps {
   playerType?: 'solid' | 'stripe' | null;
   gameMode?: '8ball' | 'brazilian';
   cueStrikeActive?: boolean;
+  cueId?: string;
 }
 
 interface CollisionInfo {
@@ -347,6 +349,7 @@ export function AimOverlay({
   playerType,
   gameMode = '8ball',
   cueStrikeActive = false,
+  cueId,
 }: AimOverlayProps) {
   const cueBall = balls[0];
   const isVisible = isAiming || showIdleCue;
@@ -391,9 +394,13 @@ export function AimOverlay({
   const cueY = cueBall.y - Math.sin(aimAngle) * cueDistance;
   const cueRotation = (aimAngle * 180) / Math.PI;
 
-  // Get cue colors based on equipped cue (placeholder - can be passed as prop later)
   const getCueColors = () => {
-    return { shaft: '#d4a574', butt: '#8B4513', accent: '#8B4513' };
+    if (variant === 'opponent' || !cueId) {
+      return { shaft: '#d4a574', butt: '#8B4513', accent: '#8B4513' };
+    }
+    const design = getCueDesign(cueId);
+    if (!design) return { shaft: '#d4a574', butt: '#8B4513', accent: '#8B4513' };
+    return { shaft: design.shaft.color, butt: design.butt.color, accent: design.wrap.color };
   };
 
   const cueColors = getCueColors();

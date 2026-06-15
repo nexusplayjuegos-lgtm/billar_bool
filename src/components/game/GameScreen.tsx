@@ -557,6 +557,7 @@ useEffect(() => {
           playerType={isLocalPlayerTurn ? engineState.player1Type : engineState.player2Type}
           gameMode={gameMode}
           tableId={profile.equipment.currentTable}
+          cueId={profile.equipment.currentCue}
           onSizeChange={handleTableSizeChange}
         >
           {overlay && overlay(engineState, inputHandlers)}
