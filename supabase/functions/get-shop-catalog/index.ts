@@ -48,7 +48,7 @@ serve(async (req: Request) => {
   // Buscar itens ativos
   const { data: items, error } = await client
     .from('shop_items')
-    .select('*')
+    .select('id, category, name, description, price_coins, price_cash, rarity, stats, image_url, design_key, is_limited, available_from, available_until, quantity_limit, quantity_sold, is_active, created_at')
     .eq('is_active', true)
     .lte('available_from', new Date().toISOString())
     .or('available_until.is.null,available_until.gte.' + new Date().toISOString())

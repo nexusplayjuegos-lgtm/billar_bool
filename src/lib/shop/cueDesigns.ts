@@ -108,6 +108,9 @@ const RARITY_FALLBACK: Record<string, string> = {
 
 // Mapeia cue.id (catálogo + legado Supabase) para design.id
 export function getCueDesign(cueId: string, rarity?: string): CueDesign | undefined {
+  const direct = CUE_DESIGNS.find(d => d.id === cueId);
+  if (direct) return direct;
+
   const map: Record<string, string> = {
     // IDs do catálogo fallback
     'cue_beginner':       'maple-classic',

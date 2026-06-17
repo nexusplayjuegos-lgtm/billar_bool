@@ -36,7 +36,7 @@ function adaptShopItem(raw: Record<string, unknown>): ShopItem {
     rarity: String(data.rarity ?? 'common') as ShopItem['rarity'],
     stats: (data.stats as ShopItem['stats']) || {},
     imageUrl: data.imageUrl ? String(data.imageUrl) : null,
-    designKey: data.designKey ? String(data.designKey) : undefined,
+    designKey: (data.designKey ?? raw['design_key']) ? String(data.designKey ?? raw['design_key']) : undefined,
     isLimited: Boolean(data.isLimited ?? false),
     availableFrom: String(data.availableFrom ?? ''),
     availableUntil: data.availableUntil ? String(data.availableUntil) : null,
