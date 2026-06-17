@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Award, Share2 } from 'lucide-react';
-import { useLocale } from '@/hooks';
+import { useLocale, useDesignKeyMap } from '@/hooks';
 import { GameEngine, createGameEngine, EngineState } from '@/lib/engine/gameEngine';
 import { useVictoryBoxes } from '@/hooks/useVictoryBoxes';
 import { usePoolPass } from '@/hooks/usePoolPass';
@@ -16,6 +16,7 @@ import { playTick, unlockAudio } from '@/lib/audio/gameAudio';
 import { audioManager } from '@/lib/audio/audioManager';
 import { trackEvent, trackFirstGame } from '@/lib/analytics/analytics';
 import { useGameStore, useUserStore } from '@/lib/store';
+import { resolveDesignKey } from '@/lib/shop/resolveDesignKey';
 import { MatchTable } from './MatchTable';
 import { PocketedBallRack } from './PocketedBallRack';
 import { Confetti } from './Confetti';
@@ -98,6 +99,9 @@ export function GameScreen({
   const { locale } = useLocale();
   const { endGame, startGame, currentMode, modeType, potentialReward, entryFee, opponent } = useGameStore();
   const { profile, addCoins, removeCoins, addXP, isGuest, session } = useUserStore();
+  const designKeyMap = useDesignKeyMap();
+  const resolvedTableId = resolveDesignKey(profile.equipment.currentTable, designKeyMap);
+  const resolvedCueId = resolveDesignKey(profile.equipment.currentCue, designKeyMap);
   const { createBox } = useVictoryBoxes();
   const { addPoolPoints } = usePoolPass();
   const { daily, weekly, updateProgress } = useMissions();
@@ -556,8 +560,8 @@ useEffect(() => {
           scale={tableScale}
           playerType={isLocalPlayerTurn ? engineState.player1Type : engineState.player2Type}
           gameMode={gameMode}
-          tableId={profile.equipment.currentTable}
-          cueId={profile.equipment.currentCue}
+          tableId={resolvedTableId}
+          cueId={resolvedCueId}
           onSizeChange={handleTableSizeChange}
         >
           {overlay && overlay(engineState, inputHandlers)}

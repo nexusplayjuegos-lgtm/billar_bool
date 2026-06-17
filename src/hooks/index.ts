@@ -8,3 +8,4 @@ export { usePoolPass } from './usePoolPass';
 export { useVictoryBoxes } from './useVictoryBoxes';
 export { useShop } from './useShop';
 export { useAchievements } from './useAchievements';
+export { useDesignKeyMap } from './useDesignKeyMap';
