@@ -21,6 +21,7 @@ interface MatchTableProps {
   tableId?: string;
   cueId?: string;
   onSizeChange?: (size: { width: number; height: number }) => void;
+  isMobile?: boolean; // <- Nova prop para condicionar o fator mobile
 }
 
 export function MatchTable({
@@ -39,6 +40,7 @@ export function MatchTable({
   tableId,
   cueId,
   onSizeChange,
+  isMobile = false, // <- Default false (desktop) para segurança
 }: MatchTableProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 800, height: 400 });
@@ -54,7 +56,7 @@ export function MatchTable({
       const pw = el.clientWidth - horizontalPadding;
       const ph = el.clientHeight - verticalPadding;
       if (pw <= 0 || ph <= 0) return;
-      const baseScale = Math.min(pw / 800, ph / 400);
+      const baseScale = Math.min(pw / 800, ph / 400) * (isMobile ? 0.9 : 1); // <- Aplica fator 0.9 apenas em mobile
       const width = Math.max(1, 800 * baseScale);
       const height = Math.max(1, 400 * baseScale);
       const nextSize = { width, height };

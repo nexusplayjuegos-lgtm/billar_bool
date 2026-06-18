@@ -64,6 +64,7 @@ interface GameScreenProps {
   localPlayerNumber?: 1 | 2;
   opponentAim?: { angle: number; power: number } | null;
   onAimPreview?: (angle: number, power: number) => void;
+  isMobile?: boolean; // <- Nova prop repassada das telas
 }
 
 declare global {
@@ -89,6 +90,7 @@ export function GameScreen({
   localPlayerNumber = 1,
   opponentAim,
   onAimPreview,
+  isMobile = false, // <- Default false (segurança)
 }: GameScreenProps) {
   const localEngineRef = useRef<GameEngine | null>(null);
   if (!localEngineRef.current) {
@@ -563,6 +565,7 @@ useEffect(() => {
           tableId={resolvedTableId}
           cueId={resolvedCueId}
           onSizeChange={handleTableSizeChange}
+          isMobile={isMobile}
         >
           {overlay && overlay(engineState, inputHandlers)}
         </MatchTable>

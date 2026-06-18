@@ -29,7 +29,7 @@ export function DesktopGameScreen({ modeId }: DesktopGameScreenProps) {
   }, [endGame, router, locale]);
 
   return (
-    <GameScreen
+    <GameScreen isMobile={false}
       onExit={handleExit}
       gameMode={modeType === 'brazilian' ? 'brazilian' : '8ball'}
       tableScale={0.9}

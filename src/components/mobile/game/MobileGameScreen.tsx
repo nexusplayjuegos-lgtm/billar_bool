@@ -24,7 +24,7 @@ export function MobileGameScreen() {
 
   return (
     <div ref={containerRef} className="game-fullscreen">
-      <GameScreen
+      <GameScreen isMobile={true}
         blockScroll
         onExit={handleExitGame}
         tableScale={tableZoom}
