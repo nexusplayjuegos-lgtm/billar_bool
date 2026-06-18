@@ -5,6 +5,8 @@ import { Ball } from '@/types';
 import { PoolTable } from './PoolTable';
 import { AimOverlay } from './AimOverlay';
 
+const MOBILE_TABLE_FILL_RATIO = 0.9;
+
 interface MatchTableProps {
   balls: Ball[];
   aimAngle: number;
@@ -56,7 +58,7 @@ export function MatchTable({
       const pw = el.clientWidth - horizontalPadding;
       const ph = el.clientHeight - verticalPadding;
       if (pw <= 0 || ph <= 0) return;
-      const baseScale = Math.min(pw / 800, ph / 400) * (isMobile ? 0.9 : 1); // <- Aplica fator 0.9 apenas em mobile
+      const baseScale = Math.min(pw / 800, ph / 400) * (isMobile ? MOBILE_TABLE_FILL_RATIO : 1);
       const width = Math.max(1, 800 * baseScale);
       const height = Math.max(1, 400 * baseScale);
       const nextSize = { width, height };
@@ -68,7 +70,7 @@ export function MatchTable({
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [onSizeChange]);
+  }, [onSizeChange, isMobile]);
 
   return (
     <div ref={containerRef} className="match-table-stage w-full h-full flex items-center justify-center">
